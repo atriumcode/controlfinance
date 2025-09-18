@@ -107,7 +107,7 @@ export function PaymentForm({ invoice }: PaymentFormProps) {
       if (newAmountPaid >= invoice.total_amount) {
         newStatus = "paid"
       } else if (newAmountPaid > 0) {
-        newStatus = "Parcial"
+        newStatus = "partial"
       }
 
       console.log("[v0] Calculated values:", {
@@ -130,6 +130,11 @@ export function PaymentForm({ invoice }: PaymentFormProps) {
 
       if (paymentError) {
         console.log("[v0] Error inserting payment:", paymentError)
+        if (paymentError.code === "42501") {
+          throw new Error(
+            "Erro de permissão: Usuário não tem permissão para registrar pagamentos. Verifique se possui role 'admin' ou 'escrita'.",
+          )
+        }
         throw paymentError
       }
 
