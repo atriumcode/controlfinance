@@ -1,5 +1,4 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { CompanyForm } from "@/components/settings/company-form"
 import { ProfileForm } from "@/components/settings/profile-form"
@@ -13,8 +12,7 @@ export const dynamic = "force-dynamic"
 export default async function SettingsPage() {
   console.log("[v0] Settings page - loading")
 
-  const cookieStore = cookies()
-  const supabase = await createServerClient(cookieStore)
+  const supabase = await createServerClient()
 
   try {
     const {

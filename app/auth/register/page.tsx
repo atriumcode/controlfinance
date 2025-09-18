@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { createClient } from "@/lib/supabase/client"
+import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -32,7 +32,7 @@ export default function RegisterPage() {
 
     setIsCheckingCompany(true)
     try {
-      const supabase = createClient()
+      const supabase = createBrowserClient()
       const { data, error } = await supabase.from("companies").select("name").eq("cnpj", cnpjValue).single()
 
       if (data && !error) {
@@ -56,7 +56,7 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
+    const supabase = createBrowserClient()
     setIsLoading(true)
     setError(null)
 
@@ -94,13 +94,18 @@ export default function RegisterPage() {
         throw error
       }
 
-      console.log("[v0] Registration successful, redirecting...")
-      router.push("/auth/register-success")
+      if (data.user && !data.user.email_confirmed_at) {
+        console.log("[v0] Registration successful, email confirmation required")
+        router.push("/auth/register-success")
+      } else {
+        console.log("[v0] Registration successful, redirecting to dashboard")
+        router.push("/dashboard")
+      }
     } catch (error: unknown) {
       console.log("[v0] Caught registration error:", error)
       const errorMessage = error instanceof Error ? error.message : "Erro ao criar conta"
       console.log("[v0] Setting error message:", errorMessage)
-      setError(`Database error saving new user: ${errorMessage}`)
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
