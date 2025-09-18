@@ -67,6 +67,10 @@ export function PaymentForm({ invoice }: PaymentFormProps) {
     setIsLoading(true)
     setError(null)
 
+    console.log("[v0] Payment form submission started")
+    console.log("[v0] Form data:", formData)
+    console.log("[v0] Invoice ID:", invoice.id)
+
     if (!formData.payment_method) {
       setError("Selecione um método de pagamento")
       setIsLoading(false)
@@ -82,13 +86,19 @@ export function PaymentForm({ invoice }: PaymentFormProps) {
     const supabase = createClient()
 
     try {
+      console.log("[v0] Fetching current invoice data...")
       const { data: currentInvoice, error: fetchError } = await supabase
         .from("invoices")
         .select("amount_paid")
         .eq("id", invoice.id)
         .single()
 
-      if (fetchError) throw fetchError
+      if (fetchError) {
+        console.log("[v0] Error fetching invoice:", fetchError)
+        throw fetchError
+      }
+
+      console.log("[v0] Current invoice data:", currentInvoice)
 
       const currentAmountPaid = currentInvoice?.amount_paid || 0
       const newAmountPaid = currentAmountPaid + formData.amount_paid
@@ -100,29 +110,47 @@ export function PaymentForm({ invoice }: PaymentFormProps) {
         newStatus = "Parcial"
       }
 
-      const { error: paymentError } = await supabase.from("payments").insert({
+      console.log("[v0] Calculated values:", {
+        currentAmountPaid,
+        newAmountPaid,
+        newStatus,
+      })
+
+      console.log("[v0] Inserting payment record...")
+      const paymentData = {
         invoice_id: invoice.id,
         amount: formData.amount_paid,
         payment_date: formData.payment_date,
         payment_method: formData.payment_method,
         notes: formData.notes || null,
-      })
+      }
+      console.log("[v0] Payment data to insert:", paymentData)
 
-      if (paymentError) throw paymentError
+      const { error: paymentError } = await supabase.from("payments").insert(paymentData)
 
-      const { error: updateError } = await supabase
-        .from("invoices")
-        .update({
-          status: newStatus,
-          amount_paid: newAmountPaid,
-          payment_date: formData.payment_date,
-          payment_method: formData.payment_method,
-          notes: formData.notes || null,
-        })
-        .eq("id", invoice.id)
+      if (paymentError) {
+        console.log("[v0] Error inserting payment:", paymentError)
+        throw paymentError
+      }
 
-      if (updateError) throw updateError
+      console.log("[v0] Payment inserted successfully, updating invoice...")
+      const updateData = {
+        status: newStatus,
+        amount_paid: newAmountPaid,
+        payment_date: formData.payment_date,
+        payment_method: formData.payment_method,
+        notes: formData.notes || null,
+      }
+      console.log("[v0] Invoice update data:", updateData)
 
+      const { error: updateError } = await supabase.from("invoices").update(updateData).eq("id", invoice.id)
+
+      if (updateError) {
+        console.log("[v0] Error updating invoice:", updateError)
+        throw updateError
+      }
+
+      console.log("[v0] Payment registration completed successfully")
       setSuccess(true)
 
       // Redirect after a short delay
@@ -130,6 +158,7 @@ export function PaymentForm({ invoice }: PaymentFormProps) {
         router.push(`/dashboard/invoices/${invoice.id}`)
       }, 2000)
     } catch (error: unknown) {
+      console.log("[v0] Payment registration error:", error)
       setError(error instanceof Error ? error.message : "Erro ao registrar pagamento")
     } finally {
       setIsLoading(false)
