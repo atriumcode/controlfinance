@@ -25,7 +25,7 @@ interface User {
   id: string
   email: string
   full_name: string
-  role: "leitura" | "escrita" | "administrador"
+  role: "leitura" | "escrita" | "admin"
   created_at: string
 }
 
@@ -36,13 +36,13 @@ interface UsersTableProps {
 const roleLabels = {
   leitura: "Leitura",
   escrita: "Escrita",
-  administrador: "Administrador",
+  admin: "Administrador",
 }
 
 const roleColors = {
   leitura: "secondary",
   escrita: "default",
-  administrador: "destructive",
+  admin: "destructive",
 } as const
 
 export function UsersTable({ users }: UsersTableProps) {
