@@ -61,5 +61,5 @@ export async function requireRole(requiredRole: UserRole | UserRole[]): Promise<
 }
 
 export async function requireAdmin(): Promise<AuthUser> {
-  return requireRole("administrador")
+  return requireRole("admin")
 }

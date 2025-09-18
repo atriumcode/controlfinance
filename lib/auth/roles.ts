@@ -31,26 +31,22 @@ export const ROLE_PERMISSIONS = {
 }
 
 export function hasPermission(userRole: UserRole, permission: keyof (typeof ROLE_PERMISSIONS)[UserRole]) {
-  return true
-  // Original code commented out:
-  // return ROLE_PERMISSIONS[userRole][permission]
+  return ROLE_PERMISSIONS[userRole][permission]
 }
 
 export function canAccessRoute(userRole: UserRole, route: string): boolean {
-  return true
-  // Original code commented out:
-  // // Admin routes
-  // if (route.startsWith("/dashboard/admin") || route.startsWith("/dashboard/users")) {
-  //   return hasPermission(userRole, "canManageUsers")
-  // }
-  //
-  // // Write operations (new, edit, delete)
-  // if (route.includes("/new") || route.includes("/edit") || route.includes("/delete")) {
-  //   return hasPermission(userRole, "canWrite")
-  // }
-  //
-  // // All users can read
-  // return hasPermission(userRole, "canRead")
+  // Admin routes
+  if (route.startsWith("/dashboard/admin") || route.startsWith("/dashboard/users")) {
+    return hasPermission(userRole, "canManageUsers")
+  }
+
+  // Write operations (new, edit, delete)
+  if (route.includes("/new") || route.includes("/edit") || route.includes("/delete")) {
+    return hasPermission(userRole, "canWrite")
+  }
+
+  // All users can read
+  return hasPermission(userRole, "canRead")
 }
 
 export function getRoleLabel(role: UserRole): string {
