@@ -3,8 +3,8 @@
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { getCurrentUser, hasRole } from "@/lib/auth/simple-auth"
-import type { User } from "@/lib/auth/simple-auth"
+import { getCurrentUser, hasRole } from "@/lib/auth/client"
+import type { User } from "@/lib/auth/actions"
 import { hasPermission } from "@/lib/auth/roles"
 import type { UserRole } from "@/lib/auth/roles"
 

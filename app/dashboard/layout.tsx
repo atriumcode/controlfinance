@@ -1,5 +1,5 @@
 import type React from "react"
-import { requireAuth } from "@/lib/auth/simple-auth"
+import { requireAuth } from "@/lib/auth/actions"
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { createClient } from "@/lib/supabase/server"
