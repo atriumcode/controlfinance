@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -58,10 +58,10 @@ export default function InvoicesPage() {
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    async function fetchInvoices() {
-      const supabase = createClient()
+  const supabase = createClient()
 
+  const fetchInvoices = useCallback(async () => {
+    try {
       const { data: userData, error: userError } = await supabase.auth.getUser()
       if (userError || !userData?.user) {
         redirect("/auth/login")
@@ -94,11 +94,16 @@ export default function InvoicesPage() {
         .order("created_at", { ascending: false })
 
       setInvoices(invoicesData || [])
+    } catch (error) {
+      console.error("[v0] Error fetching invoices:", error)
+    } finally {
       setLoading(false)
     }
+  }, [supabase])
 
+  useEffect(() => {
     fetchInvoices()
-  }, [])
+  }, [fetchInvoices])
 
   const cityGroups: CityGroup[] = invoices.reduce((groups: CityGroup[], invoice) => {
     const cityKey = `${invoice.clients.city}, ${invoice.clients.state}`

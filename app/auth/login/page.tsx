@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Receipt, Shield, TrendingUp } from "lucide-react"
 
 export default function LoginPage() {
@@ -16,8 +16,48 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isCheckingUser, setIsCheckingUser] = useState(true)
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  const supabase = createBrowserClient()
+
+  const checkUser = useCallback(async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      console.log("[v0] Login page - checking existing user:", {
+        hasUser: !!user,
+        userId: user?.id,
+        email: user?.email,
+        confirmed: !!user?.email_confirmed_at,
+      })
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id, role, company_id")
+          .eq("id", user.id)
+          .single()
+
+        console.log("[v0] User profile check:", { profile })
+
+        if (profile) {
+          console.log("[v0] User already authenticated with profile, redirecting to dashboard")
+          router.replace("/dashboard")
+          return
+        } else {
+          console.log("[v0] User exists but no profile found, staying on login")
+        }
+      }
+    } catch (error) {
+      console.error("[v0] Error checking user:", error)
+    } finally {
+      setIsCheckingUser(false)
+    }
+  }, [supabase, router])
 
   useEffect(() => {
     const errorParam = searchParams.get("error")
@@ -47,43 +87,15 @@ export default function LoginPage() {
       console.log("[v0] Auth callback error:", { errorParam, errorCode, errorDescription })
     }
 
-    const checkUser = async () => {
-      const supabase = createBrowserClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      console.log("[v0] Login page - checking existing user:", {
-        hasUser: !!user,
-        userId: user?.id,
-        email: user?.email,
-        confirmed: !!user?.email_confirmed_at,
-      })
-
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id, role, company_id")
-          .eq("id", user.id)
-          .single()
-
-        console.log("[v0] User profile check:", { profile })
-
-        if (profile) {
-          console.log("[v0] User already authenticated with profile, redirecting to dashboard")
-          router.replace("/dashboard")
-        } else {
-          console.log("[v0] User exists but no profile found, staying on login")
-        }
-      }
+    if (!errorParam && isCheckingUser) {
+      checkUser()
+    } else if (errorParam) {
+      setIsCheckingUser(false)
     }
-
-    checkUser()
-  }, [router, searchParams])
+  }, [searchParams, checkUser, isCheckingUser])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createBrowserClient()
     setIsLoading(true)
     setError(null)
 
@@ -121,7 +133,6 @@ export default function LoginPage() {
       return
     }
 
-    const supabase = createBrowserClient()
     setIsLoading(true)
 
     try {
@@ -144,6 +155,17 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (isCheckingUser) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-slate-600">Verificando autenticação...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

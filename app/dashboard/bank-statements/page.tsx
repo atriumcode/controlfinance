@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { TrendingUp, TrendingDown, FileText } from "lucide-react"
@@ -24,18 +24,12 @@ export default function BankStatementsPage() {
   const [importedFiles, setImportedFiles] = useState<ImportedFile[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load existing data on component mount
-  useEffect(() => {
-    loadBankStatements()
-  }, [])
-
-  const loadBankStatements = async () => {
+  const loadBankStatements = useCallback(async () => {
     try {
       setIsLoading(true)
       // Here you would fetch from your database
       // For now, we'll start with empty arrays
       const mockTransactions: OFXTransaction[] = []
-
       const mockFiles: ImportedFile[] = []
 
       setTransactions(mockTransactions)
@@ -45,7 +39,12 @@ export default function BankStatementsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
+
+  // Load existing data on component mount
+  useEffect(() => {
+    loadBankStatements()
+  }, [loadBankStatements])
 
   const handleUploadComplete = async (ofxDataArray: OFXData[]) => {
     try {

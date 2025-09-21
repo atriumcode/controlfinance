@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { hasPermission } from "@/lib/auth/roles"
@@ -24,17 +24,20 @@ export function RoleGuard({
 }: RoleGuardProps) {
   const [userRole, setUserRole] = useState<UserRole | null>(null)
   const [loading, setLoading] = useState(true)
+  const [hasRedirected, setHasRedirected] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    async function checkUserRole() {
-      const supabase = createClient()
+  const supabase = createClient()
 
+  const checkUserRole = useCallback(async () => {
+    try {
       const {
         data: { user },
       } = await supabase.auth.getUser()
+
       if (!user) {
-        if (redirectTo) {
+        if (redirectTo && !hasRedirected) {
+          setHasRedirected(true)
           router.push(redirectTo)
         }
         setLoading(false)
@@ -48,10 +51,22 @@ export function RoleGuard({
       }
 
       setLoading(false)
+    } catch (error) {
+      console.error("[v0] Error checking user role:", error)
+      setLoading(false)
     }
+  }, [supabase, redirectTo, hasRedirected, router])
 
+  useEffect(() => {
     checkUserRole()
-  }, [router, redirectTo])
+  }, [checkUserRole])
+
+  useEffect(() => {
+    if (!loading && !userRole && redirectTo && !hasRedirected) {
+      setHasRedirected(true)
+      router.push(redirectTo)
+    }
+  }, [loading, userRole, redirectTo, hasRedirected, router])
 
   if (loading) {
     return <div>Carregando...</div>
@@ -65,7 +80,8 @@ export function RoleGuard({
   if (requiredRole) {
     const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
     if (!allowedRoles.includes(userRole)) {
-      if (redirectTo) {
+      if (redirectTo && !hasRedirected) {
+        setHasRedirected(true)
         router.push(redirectTo)
         return null
       }
@@ -75,7 +91,8 @@ export function RoleGuard({
 
   // Check permission requirement
   if (requiredPermission && !hasPermission(userRole, requiredPermission as any)) {
-    if (redirectTo) {
+    if (redirectTo && !hasRedirected) {
+      setHasRedirected(true)
       router.push(redirectTo)
       return null
     }
