@@ -4,22 +4,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Mail, CheckCircle, AlertCircle, RefreshCw } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 
 export default function SignUpSuccessPage() {
   const [isResending, setIsResending] = useState(false)
   const [resendMessage, setResendMessage] = useState("")
-  const [email, setEmail] = useState<string | null>(null)
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    setEmail(urlParams.get("email"))
-  }, [])
+  const [email, setEmail] = useState("")
 
   const handleResendConfirmation = async () => {
-    if (!email) {
-      setResendMessage("Email não encontrado. Tente se cadastrar novamente.")
+    if (!email.trim()) {
+      setResendMessage("Por favor, digite seu email para reenviar a confirmação.")
       return
     }
 
@@ -71,7 +66,6 @@ export default function SignUpSuccessPage() {
                   <p className="text-sm text-blue-700">
                     Enviamos um link de confirmação para seu email. Clique no link para ativar sua conta.
                   </p>
-                  {email && <p className="text-xs text-blue-600 mt-1 font-mono">{email}</p>}
                 </div>
               </div>
             </div>
@@ -89,27 +83,36 @@ export default function SignUpSuccessPage() {
             </div>
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="space-y-2">
                 <h4 className="font-semibold text-slate-900">Não recebeu o email?</h4>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResendConfirmation}
-                  disabled={isResending || !email}
-                  className="text-xs bg-transparent"
-                >
-                  {isResending ? (
-                    <>
-                      <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <Mail className="w-3 h-3 mr-1" />
-                      Reenviar
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    placeholder="Digite seu email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResendConfirmation}
+                    disabled={isResending || !email.trim()}
+                    className="text-xs bg-transparent"
+                  >
+                    {isResending ? (
+                      <>
+                        <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-3 h-3 mr-1" />
+                        Reenviar
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
 
               {resendMessage && (
