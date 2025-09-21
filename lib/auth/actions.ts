@@ -60,9 +60,12 @@ export async function registerUserAction(formData: FormData): Promise<AuthResult
     // Handle company creation/lookup
     let companyId: string
 
-    if (cnpj) {
+    if (cnpj && cnpj.trim()) {
+      // Clean CNPJ (remove formatting)
+      const cleanCnpj = cnpj.replace(/\D/g, "")
+
       // Check if company exists
-      const { data: existingCompany } = await supabase.from("companies").select("id").eq("cnpj", cnpj).single()
+      const { data: existingCompany } = await supabase.from("companies").select("id").eq("cnpj", cleanCnpj).single()
 
       if (existingCompany) {
         companyId = existingCompany.id
@@ -72,12 +75,17 @@ export async function registerUserAction(formData: FormData): Promise<AuthResult
           .from("companies")
           .insert({
             name: company_name || "Nova Empresa",
-            cnpj: cnpj,
+            cnpj: cleanCnpj,
           })
           .select("id")
           .single()
 
-        if (companyError || !newCompany) {
+        if (companyError) {
+          console.error("Company creation error:", companyError)
+          return { success: false, error: "Erro ao criar empresa: " + companyError.message }
+        }
+
+        if (!newCompany) {
           return { success: false, error: "Erro ao criar empresa" }
         }
 
@@ -93,13 +101,18 @@ export async function registerUserAction(formData: FormData): Promise<AuthResult
         const { data: newCompany, error: companyError } = await supabase
           .from("companies")
           .insert({
-            name: "Empresa Padrão",
+            name: company_name || "Empresa Padrão",
             cnpj: "00000000000000",
           })
           .select("id")
           .single()
 
-        if (companyError || !newCompany) {
+        if (companyError) {
+          console.error("Default company creation error:", companyError)
+          return { success: false, error: "Erro ao criar empresa padrão: " + companyError.message }
+        }
+
+        if (!newCompany) {
           return { success: false, error: "Erro ao criar empresa padrão" }
         }
 
@@ -121,7 +134,12 @@ export async function registerUserAction(formData: FormData): Promise<AuthResult
       .select("id, email, full_name, role, company_id, is_active")
       .single()
 
-    if (userError || !newUser) {
+    if (userError) {
+      console.error("User creation error:", userError)
+      return { success: false, error: "Erro ao criar usuário: " + userError.message }
+    }
+
+    if (!newUser) {
       return { success: false, error: "Erro ao criar usuário" }
     }
 
@@ -131,7 +149,10 @@ export async function registerUserAction(formData: FormData): Promise<AuthResult
     }
   } catch (error) {
     console.error("Registration error:", error)
-    return { success: false, error: "Erro interno do servidor" }
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Erro interno do servidor",
+    }
   }
 }
 
