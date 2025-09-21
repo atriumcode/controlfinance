@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { registerUser } from "@/lib/auth/client"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -41,23 +41,29 @@ export default function RegisterPage() {
     }
 
     try {
-      const result = await registerUser({
+      const supabase = createClient()
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
-        full_name: fullName,
-        company_name: companyName,
-        cnpj: cnpj || undefined,
-        role,
+        options: {
+          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
+          data: {
+            full_name: fullName,
+            role: role,
+            cnpj: cnpj || null,
+            company_name: companyName || null,
+          },
+        },
       })
 
-      if (result.success) {
-        router.push("/auth/login?message=Conta criada com sucesso! Faça login para continuar.")
-      } else {
-        setError(result.error || "Erro ao criar conta")
+      if (signUpError) {
+        throw signUpError
       }
+
+      router.push("/auth/sign-up-success")
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Erro ao criar conta"
-      setError(errorMessage)
+      setError(`Erro ao criar usuário: ${errorMessage}`)
     } finally {
       setIsLoading(false)
     }
