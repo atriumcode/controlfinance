@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
 import { Receipt, Shield, TrendingUp } from "lucide-react"
 
@@ -17,8 +17,36 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   useEffect(() => {
+    const errorParam = searchParams.get("error")
+    const errorCode = searchParams.get("error_code")
+    const errorDescription = searchParams.get("error_description")
+
+    if (errorParam) {
+      let errorMessage = "Erro na autenticação"
+
+      if (errorCode === "otp_expired") {
+        errorMessage = "O link de confirmação expirou. Solicite um novo link de confirmação."
+      } else if (errorParam === "access_denied") {
+        errorMessage = "Acesso negado. Verifique se você confirmou seu email."
+      } else if (errorParam === "profile_not_found") {
+        errorMessage = "Perfil não encontrado. Entre em contato com o suporte."
+      } else if (errorParam === "confirmation_failed") {
+        errorMessage = "Falha na confirmação do email. Tente novamente."
+      } else if (errorParam === "callback_error") {
+        errorMessage = "Erro no processo de confirmação. Tente fazer login novamente."
+      } else if (errorParam === "no_code") {
+        errorMessage = "Link de confirmação inválido."
+      } else if (errorDescription) {
+        errorMessage = decodeURIComponent(errorDescription)
+      }
+
+      setError(errorMessage)
+      console.log("[v0] Auth callback error:", { errorParam, errorCode, errorDescription })
+    }
+
     const checkUser = async () => {
       const supabase = createBrowserClient()
       const {
@@ -51,7 +79,7 @@ export default function LoginPage() {
     }
 
     checkUser()
-  }, [router])
+  }, [router, searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -82,6 +110,37 @@ export default function LoginPage() {
     } catch (error: unknown) {
       console.error("[v0] Login error:", error)
       setError(error instanceof Error ? error.message : "Erro ao fazer login")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleResendConfirmation = async () => {
+    if (!email) {
+      setError("Digite seu email para reenviar a confirmação.")
+      return
+    }
+
+    const supabase = createBrowserClient()
+    setIsLoading(true)
+
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: email,
+        options: {
+          emailRedirectTo:
+            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`,
+        },
+      })
+
+      if (error) throw error
+
+      setError(null)
+      alert("Email de confirmação reenviado! Verifique sua caixa de entrada.")
+    } catch (error: unknown) {
+      console.error("[v0] Resend confirmation error:", error)
+      setError(error instanceof Error ? error.message : "Erro ao reenviar confirmação")
     } finally {
       setIsLoading(false)
     }
@@ -202,6 +261,16 @@ export default function LoginPage() {
                 {error && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                     <p className="text-sm text-red-600">{error}</p>
+                    {error.includes("expirou") && (
+                      <button
+                        type="button"
+                        onClick={handleResendConfirmation}
+                        className="mt-2 text-sm text-indigo-600 hover:text-indigo-700 underline"
+                        disabled={isLoading}
+                      >
+                        Reenviar email de confirmação
+                      </button>
+                    )}
                   </div>
                 )}
 

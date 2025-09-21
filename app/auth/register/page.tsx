@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { createBrowserClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -32,7 +32,7 @@ export default function RegisterPage() {
 
     setIsCheckingCompany(true)
     try {
-      const supabase = createBrowserClient()
+      const supabase = createClient()
       const { data, error } = await supabase.from("companies").select("name").eq("cnpj", cnpjValue).single()
 
       if (data && !error) {
@@ -50,13 +50,12 @@ export default function RegisterPage() {
 
   const handleCnpjChange = (value: string) => {
     setCnpj(value)
-    // Simple debounce - check company after user stops typing
     setTimeout(() => checkExistingCompany(value), 500)
   }
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createBrowserClient()
+    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
@@ -79,7 +78,8 @@ export default function RegisterPage() {
         email,
         password,
         options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
+          emailRedirectTo:
+            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`,
           data: {
             full_name: fullName,
             company_name: companyName,
@@ -116,41 +116,8 @@ export default function RegisterPage() {
           confirmed: !!data.user.email_confirmed_at,
         })
 
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-
-        let profile = null
-        let attempts = 0
-        const maxAttempts = 5
-
-        while (!profile && attempts < maxAttempts) {
-          const { data: profileData, error: profileError } = await supabase
-            .from("profiles")
-            .select("id, role, full_name, company_id")
-            .eq("id", data.user.id)
-            .single()
-
-          if (profileData && !profileError) {
-            profile = profileData
-            break
-          }
-
-          attempts++
-          console.log(`[v0] Profile check attempt ${attempts}:`, { profileData, profileError })
-
-          if (attempts < maxAttempts) {
-            await new Promise((resolve) => setTimeout(resolve, 1000))
-          }
-        }
-
-        console.log("[v0] Final profile check result:", { profile, attempts })
-
-        if (!data.user.email_confirmed_at) {
-          console.log("[v0] Registration successful, email confirmation required")
-          router.push("/auth/register-success")
-        } else {
-          console.log("[v0] Registration successful, redirecting to dashboard")
-          router.push("/dashboard")
-        }
+        console.log("[v0] Registration successful, redirecting to success page")
+        router.push("/auth/register-success")
       } else {
         console.log("[v0] No user returned from registration")
         setError("Erro inesperado durante o cadastro. Tente novamente.")
