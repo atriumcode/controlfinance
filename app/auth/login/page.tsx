@@ -35,7 +35,8 @@ export default function LoginPage() {
         confirmed: !!user?.email_confirmed_at,
       })
 
-      if (user) {
+      if (user && user.email_confirmed_at) {
+        // Only check profile if user is confirmed
         const { data: profile } = await supabase
           .from("profiles")
           .select("id, role, company_id")
@@ -84,15 +85,12 @@ export default function LoginPage() {
       }
 
       setError(errorMessage)
-      console.log("[v0] Auth callback error:", { errorParam, errorCode, errorDescription })
-    }
-
-    if (!errorParam && isCheckingUser) {
-      checkUser()
-    } else if (errorParam) {
       setIsCheckingUser(false)
+    } else {
+      // Only check user once when component mounts and there's no error
+      checkUser()
     }
-  }, [searchParams, checkUser, isCheckingUser])
+  }, [searchParams, checkUser])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
