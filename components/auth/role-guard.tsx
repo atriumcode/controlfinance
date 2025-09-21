@@ -3,7 +3,8 @@
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import { getCurrentUser, hasRole } from "@/lib/auth/simple-auth"
+import type { User } from "@/lib/auth/simple-auth"
 import { hasPermission } from "@/lib/auth/roles"
 import type { UserRole } from "@/lib/auth/roles"
 
@@ -19,67 +20,59 @@ export function RoleGuard({
   children,
   requiredRole,
   requiredPermission,
-  fallback = <div>Acesso negado</div>,
+  fallback = <div className="p-4 text-center text-red-600">Acesso negado</div>,
   redirectTo,
 }: RoleGuardProps) {
-  const [userRole, setUserRole] = useState<UserRole | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [hasRedirected, setHasRedirected] = useState(false)
   const router = useRouter()
 
-  const supabase = createClient()
-
-  const checkUserRole = useCallback(async () => {
+  const checkUser = useCallback(async () => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const currentUser = await getCurrentUser()
+      setUser(currentUser)
 
-      if (!user) {
-        if (redirectTo && !hasRedirected) {
-          setHasRedirected(true)
-          router.push(redirectTo)
-        }
-        setLoading(false)
-        return
+      if (!currentUser && redirectTo && !hasRedirected) {
+        setHasRedirected(true)
+        router.push(redirectTo)
       }
-
-      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-
-      if (profile) {
-        setUserRole(profile.role as UserRole)
-      }
-
-      setLoading(false)
     } catch (error) {
-      console.error("[v0] Error checking user role:", error)
+      console.error("[v0] Error checking user:", error)
+      setUser(null)
+    } finally {
       setLoading(false)
     }
-  }, [supabase, redirectTo, hasRedirected, router])
+  }, [redirectTo, hasRedirected, router])
 
   useEffect(() => {
-    checkUserRole()
-  }, [checkUserRole])
+    checkUser()
+  }, [checkUser])
 
   useEffect(() => {
-    if (!loading && !userRole && redirectTo && !hasRedirected) {
+    if (!loading && !user && redirectTo && !hasRedirected) {
       setHasRedirected(true)
       router.push(redirectTo)
     }
-  }, [loading, userRole, redirectTo, hasRedirected, router])
+  }, [loading, user, redirectTo, hasRedirected, router])
 
   if (loading) {
-    return <div>Carregando...</div>
+    return (
+      <div className="flex items-center justify-center p-4">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+        <span className="ml-2 text-slate-600">Carregando...</span>
+      </div>
+    )
   }
 
-  if (!userRole) {
+  if (!user) {
     return fallback
   }
 
   // Check role requirement
   if (requiredRole) {
     const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
-    if (!allowedRoles.includes(userRole)) {
+    if (!hasRole(user, allowedRoles)) {
       if (redirectTo && !hasRedirected) {
         setHasRedirected(true)
         router.push(redirectTo)
@@ -90,7 +83,7 @@ export function RoleGuard({
   }
 
   // Check permission requirement
-  if (requiredPermission && !hasPermission(userRole, requiredPermission as any)) {
+  if (requiredPermission && !hasPermission(user.role, requiredPermission as any)) {
     if (redirectTo && !hasRedirected) {
       setHasRedirected(true)
       router.push(redirectTo)
@@ -100,4 +93,50 @@ export function RoleGuard({
   }
 
   return <>{children}</>
+}
+
+// Hook for using role guard in components
+export function useRoleGuard() {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const currentUser = await getCurrentUser()
+        setUser(currentUser)
+      } catch (error) {
+        console.error("[v0] Error checking user:", error)
+        setUser(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkUser()
+  }, [])
+
+  const hasRequiredRole = useCallback(
+    (requiredRole: UserRole | UserRole[]) => {
+      if (!user) return false
+      const allowedRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
+      return hasRole(user, allowedRoles)
+    },
+    [user],
+  )
+
+  const hasRequiredPermission = useCallback(
+    (permission: string) => {
+      if (!user) return false
+      return hasPermission(user.role, permission as any)
+    },
+    [user],
+  )
+
+  return {
+    user,
+    loading,
+    hasRequiredRole,
+    hasRequiredPermission,
+  }
 }

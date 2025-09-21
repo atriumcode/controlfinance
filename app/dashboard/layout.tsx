@@ -1,8 +1,8 @@
 import type React from "react"
-import { createServerClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { requireAuth } from "@/lib/auth/simple-auth"
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
+import { createClient } from "@/lib/supabase/server"
 
 export const dynamic = "force-dynamic"
 
@@ -11,32 +11,22 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createServerClient()
+  const user = await requireAuth()
 
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
-    redirect("/auth/login")
-  }
-
-  // Get user profile and company info
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(`
-      *,
-      companies (
-        name,
-        cnpj
-      )
-    `)
-    .eq("id", data.user.id)
-    .single()
+  // Get company info using the user's company_id
+  const supabase = await createClient()
+  const { data: company } = await supabase.from("companies").select("name, cnpj").eq("id", user.company_id).single()
 
   return (
     <div className="flex min-h-screen w-full">
-      <DashboardSidebar />
+      <DashboardSidebar userRole={user.role} />
 
       <div className="flex flex-1 flex-col md:ml-64 min-w-0 overflow-hidden">
-        <DashboardHeader companyName={profile?.companies?.name} userName={profile?.full_name || data.user.email} />
+        <DashboardHeader
+          companyName={company?.name || "Empresa"}
+          userName={user.full_name || user.email}
+          userRole={user.role}
+        />
 
         <main className="flex-1 p-4 md:p-6 overflow-auto">{children}</main>
       </div>

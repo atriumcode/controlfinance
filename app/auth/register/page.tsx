@@ -1,12 +1,12 @@
 "use client"
 
 import type React from "react"
-
-import { createClient } from "@/lib/supabase/client"
+import { registerUser } from "@/lib/auth/simple-auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -18,44 +18,13 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("")
   const [companyName, setCompanyName] = useState("")
   const [cnpj, setCnpj] = useState("")
+  const [role, setRole] = useState("user")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [existingCompany, setExistingCompany] = useState<{ name: string } | null>(null)
-  const [isCheckingCompany, setIsCheckingCompany] = useState(false)
   const router = useRouter()
-
-  const checkExistingCompany = async (cnpjValue: string) => {
-    if (!cnpjValue || cnpjValue.length < 14) {
-      setExistingCompany(null)
-      return
-    }
-
-    setIsCheckingCompany(true)
-    try {
-      const supabase = createClient()
-      const { data, error } = await supabase.from("companies").select("name").eq("cnpj", cnpjValue).single()
-
-      if (data && !error) {
-        setExistingCompany(data)
-        setCompanyName(data.name) // Auto-fill company name
-      } else {
-        setExistingCompany(null)
-      }
-    } catch (error) {
-      setExistingCompany(null)
-    } finally {
-      setIsCheckingCompany(false)
-    }
-  }
-
-  const handleCnpjChange = (value: string) => {
-    setCnpj(value)
-    setTimeout(() => checkExistingCompany(value), 500)
-  }
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
@@ -65,67 +34,29 @@ export default function RegisterPage() {
       return
     }
 
-    try {
-      console.log("[v0] Starting registration with data:", {
-        email,
-        full_name: fullName,
-        company_name: companyName,
-        cnpj: cnpj,
-        existing_company: existingCompany,
-      })
+    if (password.length < 6) {
+      setError("A senha deve ter pelo menos 6 caracteres")
+      setIsLoading(false)
+      return
+    }
 
-      const { data, error } = await supabase.auth.signUp({
+    try {
+      const result = await registerUser({
         email,
         password,
-        options: {
-          emailRedirectTo:
-            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`,
-          data: {
-            full_name: fullName,
-            company_name: companyName,
-            cnpj: cnpj,
-          },
-        },
+        full_name: fullName,
+        company_name: companyName,
+        cnpj: cnpj || undefined,
+        role,
       })
 
-      console.log("[v0] Registration response:", {
-        user: data.user ? { id: data.user.id, email: data.user.email, confirmed: data.user.email_confirmed_at } : null,
-        session: data.session ? "exists" : "null",
-        error: error ? { message: error.message, status: error.status } : null,
-      })
-
-      if (error) {
-        console.log("[v0] Registration error details:", error)
-        if (error.message.includes("User already registered")) {
-          setError("Este email já está cadastrado. Tente fazer login.")
-        } else if (error.message.includes("Password")) {
-          setError("A senha deve ter pelo menos 6 caracteres.")
-        } else if (error.message.includes("Email")) {
-          setError("Email inválido. Verifique o formato do email.")
-        } else {
-          setError(`Erro no cadastro: ${error.message}`)
-        }
-        setIsLoading(false)
-        return
-      }
-
-      if (data.user) {
-        console.log("[v0] User created successfully:", {
-          id: data.user.id,
-          email: data.user.email,
-          confirmed: !!data.user.email_confirmed_at,
-        })
-
-        console.log("[v0] Registration successful, redirecting to success page")
-        router.push("/auth/register-success")
+      if (result.success) {
+        router.push("/auth/login?message=Conta criada com sucesso! Faça login para continuar.")
       } else {
-        console.log("[v0] No user returned from registration")
-        setError("Erro inesperado durante o cadastro. Tente novamente.")
+        setError(result.error || "Erro ao criar conta")
       }
     } catch (error: unknown) {
-      console.log("[v0] Caught registration error:", error)
       const errorMessage = error instanceof Error ? error.message : "Erro ao criar conta"
-      console.log("[v0] Setting error message:", errorMessage)
       setError(errorMessage)
     } finally {
       setIsLoading(false)
@@ -155,37 +86,6 @@ export default function RegisterPage() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="cnpj">CNPJ</Label>
-                    <Input
-                      id="cnpj"
-                      type="text"
-                      placeholder="00.000.000/0000-00"
-                      required
-                      value={cnpj}
-                      onChange={(e) => handleCnpjChange(e.target.value)}
-                    />
-                    {isCheckingCompany && <p className="text-sm text-muted-foreground">Verificando empresa...</p>}
-                    {existingCompany && (
-                      <p className="text-sm text-green-600">
-                        ✓ Empresa encontrada: {existingCompany.name}. Você será associado a esta empresa.
-                      </p>
-                    )}
-                    {cnpj && !existingCompany && !isCheckingCompany && cnpj.length >= 14 && (
-                      <p className="text-sm text-blue-600">Nova empresa será criada com este CNPJ.</p>
-                    )}
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="companyName">Nome da Empresa</Label>
-                    <Input
-                      id="companyName"
-                      type="text"
-                      required
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      disabled={!!existingCompany}
-                    />
-                  </div>
-                  <div className="grid gap-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
@@ -194,6 +94,39 @@ export default function RegisterPage() {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="role">Função</Label>
+                    <Select value={role} onValueChange={setRole}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione sua função" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="user">Usuário</SelectItem>
+                        <SelectItem value="accountant">Contador</SelectItem>
+                        <SelectItem value="manager">Gerente</SelectItem>
+                        <SelectItem value="admin">Administrador</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="cnpj">CNPJ (Opcional)</Label>
+                    <Input
+                      id="cnpj"
+                      type="text"
+                      placeholder="00.000.000/0000-00"
+                      value={cnpj}
+                      onChange={(e) => setCnpj(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="companyName">Nome da Empresa (Opcional)</Label>
+                    <Input
+                      id="companyName"
+                      type="text"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
                     />
                   </div>
                   <div className="grid gap-2">

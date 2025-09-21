@@ -1,14 +1,14 @@
 "use client"
 
 import type React from "react"
-import { createBrowserClient } from "@/lib/supabase/client"
+import { loginUser } from "@/lib/auth/simple-auth"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { Receipt, Shield, TrendingUp } from "lucide-react"
 
 export default function LoginPage() {
@@ -16,54 +16,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [isCheckingUser, setIsCheckingUser] = useState(true)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
-
-  const supabase = createBrowserClient()
-
-  const checkUser = useCallback(async () => {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      console.log("[v0] Login page - checking existing user:", {
-        hasUser: !!user,
-        userId: user?.id,
-        email: user?.email,
-        confirmed: !!user?.email_confirmed_at,
-      })
-
-      if (user && user.email_confirmed_at) {
-        // Only check profile if user is confirmed
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id, role, company_id")
-          .eq("id", user.id)
-          .single()
-
-        console.log("[v0] User profile check:", { profile })
-
-        if (profile) {
-          console.log("[v0] User already authenticated with profile, redirecting to dashboard")
-          router.replace("/dashboard")
-          return
-        } else {
-          console.log("[v0] User exists but no profile found, staying on login")
-        }
-      }
-    } catch (error) {
-      console.error("[v0] Error checking user:", error)
-    } finally {
-      setIsCheckingUser(false)
-    }
-  }, [supabase, router])
 
   useEffect(() => {
     const errorParam = searchParams.get("error")
     const errorCode = searchParams.get("error_code")
     const errorDescription = searchParams.get("error_description")
+    const message = searchParams.get("message")
 
     if (errorParam) {
       let errorMessage = "Erro na autenticação"
@@ -85,37 +46,25 @@ export default function LoginPage() {
       }
 
       setError(errorMessage)
-      setIsCheckingUser(false)
-    } else {
-      // Only check user once when component mounts and there's no error
-      checkUser()
+    } else if (message) {
+      setSuccessMessage(decodeURIComponent(message))
     }
-  }, [searchParams, checkUser])
+  }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
-
-    console.log("[v0] Attempting login for email:", email)
+    setSuccessMessage(null)
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const result = await loginUser(email, password)
 
-      console.log("[v0] Login result:", {
-        success: !error,
-        hasUser: !!data?.user,
-        error: error?.message,
-      })
-
-      if (error) throw error
-
-      if (data?.user) {
-        console.log("[v0] Login successful, redirecting to dashboard")
-        window.location.href = "/dashboard"
+      if (result.success && result.user) {
+        console.log("[v0] Login successful for user:", result.user.email)
+        router.push("/dashboard")
+      } else {
+        setError(result.error || "Erro ao fazer login")
       }
     } catch (error: unknown) {
       console.error("[v0] Login error:", error)
@@ -123,47 +72,6 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const handleResendConfirmation = async () => {
-    if (!email) {
-      setError("Digite seu email para reenviar a confirmação.")
-      return
-    }
-
-    setIsLoading(true)
-
-    try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email: email,
-        options: {
-          emailRedirectTo:
-            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`,
-        },
-      })
-
-      if (error) throw error
-
-      setError(null)
-      alert("Email de confirmação reenviado! Verifique sua caixa de entrada.")
-    } catch (error: unknown) {
-      console.error("[v0] Resend confirmation error:", error)
-      setError(error instanceof Error ? error.message : "Erro ao reenviar confirmação")
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  if (isCheckingUser) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">Verificando autenticação...</p>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -278,19 +186,15 @@ export default function LoginPage() {
                   />
                 </div>
 
+                {successMessage && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-600">{successMessage}</p>
+                  </div>
+                )}
+
                 {error && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                     <p className="text-sm text-red-600">{error}</p>
-                    {error.includes("expirou") && (
-                      <button
-                        type="button"
-                        onClick={handleResendConfirmation}
-                        className="mt-2 text-sm text-indigo-600 hover:text-indigo-700 underline"
-                        disabled={isLoading}
-                      >
-                        Reenviar email de confirmação
-                      </button>
-                    )}
                   </div>
                 )}
 
