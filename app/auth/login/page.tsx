@@ -1,13 +1,11 @@
 "use client"
-
-import type React from "react"
-import { loginUser } from "@/lib/auth/simple-auth"
+import { loginUserAction } from "@/lib/auth/actions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
 import { Receipt, Shield, TrendingUp } from "lucide-react"
 
@@ -17,7 +15,6 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const router = useRouter()
   const searchParams = useSearchParams()
 
   useEffect(() => {
@@ -51,24 +48,21 @@ export default function LoginPage() {
     }
   }, [searchParams])
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleLogin = async (formData: FormData) => {
     setIsLoading(true)
     setError(null)
     setSuccessMessage(null)
 
     try {
-      const result = await loginUser(email, password)
+      const result = await loginUserAction(formData)
 
-      if (result.success && result.user) {
-        console.log("[v0] Login successful for user:", result.user.email)
-        router.push("/dashboard")
-      } else {
+      if (!result.success) {
         setError(result.error || "Erro ao fazer login")
       }
+      // Success case is handled by redirect in server action
     } catch (error: unknown) {
       console.error("[v0] Login error:", error)
-      setError(error instanceof Error ? error.message : "Erro ao fazer login")
+      setError("Erro ao fazer login")
     } finally {
       setIsLoading(false)
     }
@@ -157,18 +151,17 @@ export default function LoginPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <form onSubmit={handleLogin} className="space-y-6">
+              <form action={handleLogin} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-slate-700 font-medium">
                     Email
                   </Label>
                   <Input
                     id="email"
+                    name="email"
                     type="email"
                     placeholder="seu@email.com"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
                     className="h-12 border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
                   />
                 </div>
@@ -178,10 +171,9 @@ export default function LoginPage() {
                   </Label>
                   <Input
                     id="password"
+                    name="password"
                     type="password"
                     required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
                     className="h-12 border-slate-200 focus:border-indigo-500 focus:ring-indigo-500"
                   />
                 </div>
