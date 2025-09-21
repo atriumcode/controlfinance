@@ -187,6 +187,11 @@ export default function LoginPage() {
                 {error && (
                   <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                     <p className="text-sm text-red-600">{error}</p>
+                    {error.includes("Email ou senha incorretos") && (
+                      <p className="text-xs text-red-500 mt-2">
+                        💡 Dica: Se você acabou de se cadastrar, verifique se confirmou seu email antes de fazer login.
+                      </p>
+                    )}
                   </div>
                 )}
 

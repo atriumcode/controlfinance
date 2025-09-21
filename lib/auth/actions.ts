@@ -66,9 +66,24 @@ export async function loginUserAction(formData: FormData) {
   })
 
   if (error) {
+    console.log("[v0] Login error:", error.message)
+
+    // Provide more specific error messages in Portuguese
+    let errorMessage = "Credenciais inválidas"
+
+    if (error.message.includes("Email not confirmed")) {
+      errorMessage = "Email não confirmado. Verifique sua caixa de entrada e clique no link de confirmação."
+    } else if (error.message.includes("Invalid login credentials")) {
+      errorMessage = "Email ou senha incorretos. Verifique suas credenciais e tente novamente."
+    } else if (error.message.includes("Too many requests")) {
+      errorMessage = "Muitas tentativas de login. Aguarde alguns minutos antes de tentar novamente."
+    } else if (error.message.includes("User not found")) {
+      errorMessage = "Usuário não encontrado. Verifique se você já se cadastrou."
+    }
+
     return {
       success: false,
-      error: error.message,
+      error: errorMessage,
     }
   }
 
