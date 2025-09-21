@@ -46,7 +46,7 @@ export default function RegisterPage() {
         email,
         password,
         options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
+          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/login`,
           data: {
             full_name: fullName,
             role: role,
@@ -60,7 +60,7 @@ export default function RegisterPage() {
         throw signUpError
       }
 
-      router.push("/auth/sign-up-success")
+      router.push(`/auth/sign-up-success?email=${encodeURIComponent(email)}`)
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : "Erro ao criar conta"
       setError(`Erro ao criar usuário: ${errorMessage}`)

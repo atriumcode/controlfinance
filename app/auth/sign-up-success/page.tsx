@@ -1,9 +1,51 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Mail, CheckCircle, AlertCircle } from "lucide-react"
+import { Mail, CheckCircle, AlertCircle, RefreshCw } from "lucide-react"
+import { useState } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { useSearchParams } from "next/navigation"
 
 export default function SignUpSuccessPage() {
+  const [isResending, setIsResending] = useState(false)
+  const [resendMessage, setResendMessage] = useState("")
+  const searchParams = useSearchParams()
+  const email = searchParams.get("email")
+
+  const handleResendConfirmation = async () => {
+    if (!email) {
+      setResendMessage("Email não encontrado. Tente se cadastrar novamente.")
+      return
+    }
+
+    setIsResending(true)
+    setResendMessage("")
+
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: email,
+        options: {
+          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/login`,
+        },
+      })
+
+      if (error) {
+        throw error
+      }
+
+      setResendMessage("Email de confirmação reenviado com sucesso! Verifique sua caixa de entrada.")
+    } catch (error) {
+      console.error("Erro ao reenviar email:", error)
+      setResendMessage("Erro ao reenviar email. Tente novamente em alguns minutos.")
+    } finally {
+      setIsResending(false)
+    }
+  }
+
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-md">
@@ -26,6 +68,7 @@ export default function SignUpSuccessPage() {
                   <p className="text-sm text-blue-700">
                     Enviamos um link de confirmação para seu email. Clique no link para ativar sua conta.
                   </p>
+                  {email && <p className="text-xs text-blue-600 mt-1 font-mono">{email}</p>}
                 </div>
               </div>
             </div>
@@ -40,6 +83,43 @@ export default function SignUpSuccessPage() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-slate-900">Não recebeu o email?</h4>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResendConfirmation}
+                  disabled={isResending || !email}
+                  className="text-xs bg-transparent"
+                >
+                  {isResending ? (
+                    <>
+                      <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-3 h-3 mr-1" />
+                      Reenviar
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {resendMessage && (
+                <div
+                  className={`text-sm p-3 rounded-lg ${
+                    resendMessage.includes("sucesso")
+                      ? "bg-green-50 text-green-700 border border-green-200"
+                      : "bg-red-50 text-red-700 border border-red-200"
+                  }`}
+                >
+                  {resendMessage}
+                </div>
+              )}
             </div>
 
             <div className="space-y-3">
@@ -70,9 +150,7 @@ export default function SignUpSuccessPage() {
               <Link href="/auth/login">Ir para Login</Link>
             </Button>
 
-            <p className="text-xs text-slate-500 text-center">
-              Não recebeu o email? Verifique sua caixa de spam ou entre em contato com o suporte.
-            </p>
+            <p className="text-xs text-slate-500 text-center">Problemas com o email? Entre em contato com o suporte.</p>
           </CardContent>
         </Card>
       </div>

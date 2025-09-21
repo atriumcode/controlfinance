@@ -1,72 +1,53 @@
-import { NextResponse, type NextRequest } from "next/server"
 import { createServerClient } from "@supabase/ssr"
+import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
+  const supabaseResponse = NextResponse.next({
     request,
   })
 
-  // Check for session token in cookies
-  const sessionToken = request.cookies.get("session_token")?.value
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value)
+            supabaseResponse.cookies.set(name, value, options)
+          })
+        },
+      },
+    },
+  )
 
-  // If no session token, redirect to login for protected routes
-  if (!sessionToken && request.nextUrl.pathname !== "/" && !request.nextUrl.pathname.startsWith("/auth")) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // Handle auth confirmation callback
+  if (request.nextUrl.pathname === "/auth/confirm") {
+    return supabaseResponse
+  }
+
+  // Redirect authenticated users away from auth pages
+  if (user && request.nextUrl.pathname.startsWith("/auth") && !request.nextUrl.pathname.startsWith("/auth/confirm")) {
+    const url = request.nextUrl.clone()
+    url.pathname = "/dashboard"
+    return NextResponse.redirect(url)
+  }
+
+  // Redirect unauthenticated users to login for protected routes
+  if (!user && !request.nextUrl.pathname.startsWith("/auth") && request.nextUrl.pathname !== "/") {
     const url = request.nextUrl.clone()
     url.pathname = "/auth/login"
     return NextResponse.redirect(url)
   }
 
-  // If we have a session token, verify it's valid
-  if (sessionToken) {
-    try {
-      const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            getAll() {
-              return request.cookies.getAll()
-            },
-            setAll(cookiesToSet) {
-              cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-              response = NextResponse.next({ request })
-              cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
-            },
-          },
-        },
-      )
-
-      // Check if session is valid and not expired
-      const { data: session } = await supabase
-        .from("user_sessions")
-        .select("expires_at, user_id")
-        .eq("session_token", sessionToken)
-        .single()
-
-      if (!session || new Date(session.expires_at) < new Date()) {
-        // Session expired or invalid, clear cookie and redirect to login
-        response.cookies.delete("session_token")
-
-        if (request.nextUrl.pathname !== "/" && !request.nextUrl.pathname.startsWith("/auth")) {
-          const url = request.nextUrl.clone()
-          url.pathname = "/auth/login"
-          return NextResponse.redirect(url)
-        }
-      }
-    } catch (error) {
-      console.error("Middleware session check error:", error)
-      // On error, clear session and redirect if on protected route
-      response.cookies.delete("session_token")
-
-      if (request.nextUrl.pathname !== "/" && !request.nextUrl.pathname.startsWith("/auth")) {
-        const url = request.nextUrl.clone()
-        url.pathname = "/auth/login"
-        return NextResponse.redirect(url)
-      }
-    }
-  }
-
-  return response
+  return supabaseResponse
 }
 
 export const config = {
