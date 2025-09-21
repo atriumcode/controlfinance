@@ -24,11 +24,29 @@ export default function LoginPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      console.log("[v0] Login page - checking existing user:", !!user)
+
+      console.log("[v0] Login page - checking existing user:", {
+        hasUser: !!user,
+        userId: user?.id,
+        email: user?.email,
+        confirmed: !!user?.email_confirmed_at,
+      })
 
       if (user) {
-        console.log("[v0] User already authenticated, redirecting to dashboard")
-        router.replace("/dashboard")
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id, role, company_id")
+          .eq("id", user.id)
+          .single()
+
+        console.log("[v0] User profile check:", { profile })
+
+        if (profile) {
+          console.log("[v0] User already authenticated with profile, redirecting to dashboard")
+          router.replace("/dashboard")
+        } else {
+          console.log("[v0] User exists but no profile found, staying on login")
+        }
       }
     }
 

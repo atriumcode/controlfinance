@@ -88,7 +88,11 @@ export default function RegisterPage() {
         },
       })
 
-      console.log("[v0] Registration response:", { data, error })
+      console.log("[v0] Registration response:", {
+        user: data.user ? { id: data.user.id, email: data.user.email, confirmed: data.user.email_confirmed_at } : null,
+        session: data.session ? "exists" : "null",
+        error: error ? { message: error.message, status: error.status } : null,
+      })
 
       if (error) {
         console.log("[v0] Registration error details:", error)
@@ -96,6 +100,8 @@ export default function RegisterPage() {
           setError("Este email já está cadastrado. Tente fazer login.")
         } else if (error.message.includes("Password")) {
           setError("A senha deve ter pelo menos 6 caracteres.")
+        } else if (error.message.includes("Email")) {
+          setError("Email inválido. Verifique o formato do email.")
         } else {
           setError(`Erro no cadastro: ${error.message}`)
         }
@@ -103,12 +109,33 @@ export default function RegisterPage() {
         return
       }
 
-      if (data.user && !data.user.email_confirmed_at) {
-        console.log("[v0] Registration successful, email confirmation required")
-        router.push("/auth/register-success")
+      if (data.user) {
+        console.log("[v0] User created successfully:", {
+          id: data.user.id,
+          email: data.user.email,
+          confirmed: !!data.user.email_confirmed_at,
+        })
+
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, role, full_name")
+          .eq("id", data.user.id)
+          .single()
+
+        console.log("[v0] Profile check result:", { profile, profileError })
+
+        if (!data.user.email_confirmed_at) {
+          console.log("[v0] Registration successful, email confirmation required")
+          router.push("/auth/register-success")
+        } else {
+          console.log("[v0] Registration successful, redirecting to dashboard")
+          router.push("/dashboard")
+        }
       } else {
-        console.log("[v0] Registration successful, redirecting to dashboard")
-        router.push("/dashboard")
+        console.log("[v0] No user returned from registration")
+        setError("Erro inesperado durante o cadastro. Tente novamente.")
       }
     } catch (error: unknown) {
       console.log("[v0] Caught registration error:", error)
