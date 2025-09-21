@@ -4,15 +4,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Mail, CheckCircle, AlertCircle, RefreshCw } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { useSearchParams } from "next/navigation"
 
 export default function SignUpSuccessPage() {
   const [isResending, setIsResending] = useState(false)
   const [resendMessage, setResendMessage] = useState("")
-  const searchParams = useSearchParams()
-  const email = searchParams.get("email")
+  const [email, setEmail] = useState<string | null>(null)
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    setEmail(urlParams.get("email"))
+  }, [])
 
   const handleResendConfirmation = async () => {
     if (!email) {
