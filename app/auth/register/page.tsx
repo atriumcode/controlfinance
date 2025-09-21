@@ -116,15 +116,33 @@ export default function RegisterPage() {
           confirmed: !!data.user.email_confirmed_at,
         })
 
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, 2000))
 
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("id, role, full_name")
-          .eq("id", data.user.id)
-          .single()
+        let profile = null
+        let attempts = 0
+        const maxAttempts = 5
 
-        console.log("[v0] Profile check result:", { profile, profileError })
+        while (!profile && attempts < maxAttempts) {
+          const { data: profileData, error: profileError } = await supabase
+            .from("profiles")
+            .select("id, role, full_name, company_id")
+            .eq("id", data.user.id)
+            .single()
+
+          if (profileData && !profileError) {
+            profile = profileData
+            break
+          }
+
+          attempts++
+          console.log(`[v0] Profile check attempt ${attempts}:`, { profileData, profileError })
+
+          if (attempts < maxAttempts) {
+            await new Promise((resolve) => setTimeout(resolve, 1000))
+          }
+        }
+
+        console.log("[v0] Final profile check result:", { profile, attempts })
 
         if (!data.user.email_confirmed_at) {
           console.log("[v0] Registration successful, email confirmation required")

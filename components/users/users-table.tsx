@@ -25,7 +25,7 @@ interface User {
   id: string
   email: string
   full_name: string
-  role: "leitura" | "escrita" | "admin"
+  role: "admin" | "user" | "viewer"
   created_at: string
 }
 
@@ -34,14 +34,14 @@ interface UsersTableProps {
 }
 
 const roleLabels = {
-  leitura: "Leitura",
-  escrita: "Escrita",
+  viewer: "Visualização",
+  user: "Usuário",
   admin: "Administrador",
 }
 
 const roleColors = {
-  leitura: "secondary",
-  escrita: "default",
+  viewer: "secondary",
+  user: "default",
   admin: "destructive",
 } as const
 

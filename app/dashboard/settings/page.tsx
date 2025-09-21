@@ -1,9 +1,8 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { CompanyForm } from "@/components/settings/company-form"
-import { ProfileForm } from "@/components/settings/profile-form"
-import { BackupForm } from "@/components/settings/backup-form"
 import { ThemeSelector } from "@/components/settings/theme-selector"
+import { BackupForm } from "@/components/settings/backup-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -47,9 +46,8 @@ export default async function SettingsPage() {
         </div>
 
         <Tabs defaultValue="company" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="company">Empresa</TabsTrigger>
-            <TabsTrigger value="profile">Perfil</TabsTrigger>
             <TabsTrigger value="appearance">Aparência</TabsTrigger>
             <TabsTrigger value="backup">Backup</TabsTrigger>
           </TabsList>
@@ -62,18 +60,6 @@ export default async function SettingsPage() {
               </CardHeader>
               <CardContent>
                 <CompanyForm company={company} userId={user.id} profileId={profile?.id} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="profile">
-            <Card>
-              <CardHeader>
-                <CardTitle>Perfil do Usuário</CardTitle>
-                <CardDescription>Gerencie suas informações pessoais e preferências</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ProfileForm profile={profile} userId={user.id} />
               </CardContent>
             </Card>
           </TabsContent>

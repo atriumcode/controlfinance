@@ -1,5 +1,5 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { requireAuth } from "@/lib/auth/server"
+import { requireAdmin } from "@/lib/auth/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { UsersTable } from "@/components/users/users-table"
@@ -8,7 +8,7 @@ import Link from "next/link"
 export const dynamic = "force-dynamic"
 
 export default async function UsersPage() {
-  const user = await requireAuth()
+  const user = await requireAdmin()
 
   const supabase = await createServerClient()
 

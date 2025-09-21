@@ -1,20 +1,20 @@
-export type UserRole = "leitura" | "escrita" | "admin"
+export type UserRole = "admin" | "user" | "viewer"
 
 export const ROLES = {
-  LEITURA: "leitura" as const,
-  ESCRITA: "escrita" as const,
+  VIEWER: "viewer" as const,
+  USER: "user" as const,
   ADMIN: "admin" as const,
 }
 
 export const ROLE_PERMISSIONS = {
-  [ROLES.LEITURA]: {
+  [ROLES.VIEWER]: {
     canRead: true,
     canWrite: false,
     canDelete: false,
     canManageUsers: false,
     canAccessAdmin: false,
   },
-  [ROLES.ESCRITA]: {
+  [ROLES.USER]: {
     canRead: true,
     canWrite: true,
     canDelete: false,
@@ -51,8 +51,8 @@ export function canAccessRoute(userRole: UserRole, route: string): boolean {
 
 export function getRoleLabel(role: UserRole): string {
   const labels = {
-    leitura: "Leitura",
-    escrita: "Escrita",
+    viewer: "Visualização",
+    user: "Usuário",
     admin: "Administrador",
   }
   return labels[role]
@@ -60,8 +60,8 @@ export function getRoleLabel(role: UserRole): string {
 
 export function getRoleDescription(role: UserRole): string {
   const descriptions = {
-    leitura: "Apenas visualizar dados",
-    escrita: "Visualizar e editar dados",
+    viewer: "Apenas visualizar dados",
+    user: "Visualizar e editar dados",
     admin: "Acesso completo ao sistema",
   }
   return descriptions[role]
