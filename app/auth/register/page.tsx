@@ -72,6 +72,7 @@ export default function RegisterPage() {
         full_name: fullName,
         company_name: companyName,
         cnpj: cnpj,
+        existing_company: existingCompany,
       })
 
       const { data, error } = await supabase.auth.signUp({
@@ -91,7 +92,15 @@ export default function RegisterPage() {
 
       if (error) {
         console.log("[v0] Registration error details:", error)
-        throw error
+        if (error.message.includes("User already registered")) {
+          setError("Este email já está cadastrado. Tente fazer login.")
+        } else if (error.message.includes("Password")) {
+          setError("A senha deve ter pelo menos 6 caracteres.")
+        } else {
+          setError(`Erro no cadastro: ${error.message}`)
+        }
+        setIsLoading(false)
+        return
       }
 
       if (data.user && !data.user.email_confirmed_at) {
