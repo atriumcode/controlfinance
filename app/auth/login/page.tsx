@@ -1,12 +1,18 @@
 "use client"
 import { loginUserAction } from "@/lib/auth/actions"
+import type React from "react"
+
+import { useEffect } from "react"
+
+import { useSearchParams } from "next/navigation"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { Receipt, Shield, TrendingUp } from "lucide-react"
 
 export default function LoginPage() {
@@ -16,6 +22,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const searchParams = useSearchParams()
+  const router = useRouter()
 
   useEffect(() => {
     const errorParam = searchParams.get("error")
@@ -48,21 +55,25 @@ export default function LoginPage() {
     }
   }, [searchParams])
 
-  const handleLogin = async (formData: FormData) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     setIsLoading(true)
     setError(null)
-    setSuccessMessage(null)
+
+    const formData = new FormData(e.currentTarget)
 
     try {
       const result = await loginUserAction(formData)
 
       if (!result.success) {
         setError(result.error || "Erro ao fazer login")
+      } else {
+        // Redirecionar para o dashboard após login bem-sucedido
+        router.push("/dashboard")
       }
-      // Success case is handled by redirect in server action
-    } catch (error: unknown) {
+    } catch (error) {
       console.error("[v0] Login error:", error)
-      setError("Erro ao fazer login")
+      setError("Erro ao fazer login. Tente novamente.")
     } finally {
       setIsLoading(false)
     }
@@ -151,7 +162,7 @@ export default function LoginPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <form action={handleLogin} className="space-y-6">
+              <form onSubmit={handleLogin} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-slate-700 font-medium">
                     Email

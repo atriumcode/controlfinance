@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createClient } from "@/lib/supabase/client"
+import { registerUserAction } from "@/lib/auth/actions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,58 +12,29 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 export default function RegisterPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [fullName, setFullName] = useState("")
-  const [companyName, setCompanyName] = useState("")
-  const [cnpj, setCnpj] = useState("")
-  const [role, setRole] = useState("user")
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
 
-    if (password !== confirmPassword) {
-      setError("As senhas não coincidem")
-      setIsLoading(false)
-      return
-    }
-
-    if (password.length < 6) {
-      setError("A senha deve ter pelo menos 6 caracteres")
-      setIsLoading(false)
-      return
-    }
+    const formData = new FormData(e.currentTarget)
 
     try {
-      const supabase = createClient()
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/login`,
-          data: {
-            full_name: fullName,
-            role: role,
-            cnpj: cnpj || null,
-            company_name: companyName || null,
-          },
-        },
-      })
+      const result = await registerUserAction(formData)
 
-      if (signUpError) {
-        throw signUpError
+      if (!result.success) {
+        setError(result.error || "Erro ao criar conta")
+      } else {
+        // Redirecionar para o dashboard após registro bem-sucedido
+        router.push("/dashboard")
       }
-
-      router.push(`/auth/sign-up-success?email=${encodeURIComponent(email)}`)
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Erro ao criar conta"
-      setError(`Erro ao criar usuário: ${errorMessage}`)
+    } catch (error) {
+      console.error("[v0] Registration error:", error)
+      setError("Erro ao criar conta. Tente novamente.")
     } finally {
       setIsLoading(false)
     }
@@ -83,28 +54,15 @@ export default function RegisterPage() {
                 <div className="flex flex-col gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="fullName">Nome Completo</Label>
-                    <Input
-                      id="fullName"
-                      type="text"
-                      required
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                    />
+                    <Input id="fullName" name="fullName" type="text" required />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
+                    <Input id="email" name="email" type="email" placeholder="seu@email.com" required />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="role">Função</Label>
-                    <Select value={role} onValueChange={setRole}>
+                    <Select name="role" defaultValue="admin">
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione sua função" />
                       </SelectTrigger>
@@ -118,42 +76,19 @@ export default function RegisterPage() {
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="cnpj">CNPJ (Opcional)</Label>
-                    <Input
-                      id="cnpj"
-                      type="text"
-                      placeholder="00.000.000/0000-00"
-                      value={cnpj}
-                      onChange={(e) => setCnpj(e.target.value)}
-                    />
+                    <Input id="cnpj" name="cnpj" type="text" placeholder="00.000.000/0000-00" />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="companyName">Nome da Empresa (Opcional)</Label>
-                    <Input
-                      id="companyName"
-                      type="text"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                    />
+                    <Input id="companyName" name="companyName" type="text" />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="password">Senha</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
+                    <Input id="password" name="password" type="password" required />
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="confirmPassword">Confirmar Senha</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      required
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                    />
+                    <Input id="confirmPassword" name="confirmPassword" type="password" required />
                   </div>
                   {error && <p className="text-sm text-red-500">{error}</p>}
                   <Button type="submit" className="w-full" disabled={isLoading}>
