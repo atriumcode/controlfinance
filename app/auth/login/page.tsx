@@ -5,15 +5,14 @@ import type React from "react"
 import { useEffect } from "react"
 
 import { useSearchParams } from "next/navigation"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Receipt, Shield, TrendingUp } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -62,17 +61,26 @@ export default function LoginPage() {
 
     const formData = new FormData(e.currentTarget)
 
+    const email = formData.get("email")
+    const password = formData.get("password")
+    console.log("[v0] Client - Attempting login with email:", email)
+    console.log("[v0] Client - Password length:", password?.toString().length)
+
     try {
+      console.log("[v0] Client - Calling loginUserAction...")
       const result = await loginUserAction(formData)
+      console.log("[v0] Client - Login result:", result)
 
       if (!result.success) {
+        console.log("[v0] Client - Login failed:", result.error)
         setError(result.error || "Erro ao fazer login")
       } else {
+        console.log("[v0] Client - Login successful, redirecting to dashboard")
         // Redirecionar para o dashboard após login bem-sucedido
         router.push("/dashboard")
       }
     } catch (error) {
-      console.error("[v0] Login error:", error)
+      console.error("[v0] Client - Login error:", error)
       setError("Erro ao fazer login. Tente novamente.")
     } finally {
       setIsLoading(false)
