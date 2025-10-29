@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { formatCPF, formatCNPJ } from "@/lib/utils/document-validation"
 import { Edit, ArrowLeft } from "lucide-react"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
 interface ClientDetailPageProps {
   params: Promise<{ id: string }>
@@ -15,13 +16,14 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
   const { id } = await params
   const supabase = await createClient()
 
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
+  const user = await getAuthenticatedUser()
+
+  if (!user) {
     redirect("/auth/login")
   }
 
   // Get user's company
-  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", data.user.id).single()
+  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
 
   if (!profile?.company_id) {
     redirect("/auth/login")

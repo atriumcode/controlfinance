@@ -1,14 +1,11 @@
-import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { ClientForm } from "@/components/clients/client-form"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
 export default async function NewClientPage() {
-  const supabase = await createClient()
+  await getAuthenticatedUser()
 
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
-    redirect("/auth/login")
-  }
+  const supabase = await createClient()
 
   return (
     <div className="space-y-6">

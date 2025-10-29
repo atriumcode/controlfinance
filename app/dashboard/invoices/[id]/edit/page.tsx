@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import { InvoiceForm } from "@/components/invoices/invoice-form"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
 interface EditInvoicePageProps {
   params: Promise<{ id: string }>
@@ -11,13 +12,14 @@ export default async function EditInvoicePage({ params }: EditInvoicePageProps) 
   const { id } = await params
   const supabase = await createClient()
 
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
+  const user = await getAuthenticatedUser()
+
+  if (!user) {
     redirect("/auth/login")
   }
 
   // Get user's company
-  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", data.user.id).single()
+  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
 
   if (!profile?.company_id) {
     redirect("/auth/login")

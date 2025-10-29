@@ -1,16 +1,19 @@
-import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import { ImportUploader } from "@/components/import/import-uploader"
 import { ImportHistory } from "@/components/import/import-history"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
 export default async function ImportPage() {
+  await getAuthenticatedUser()
+
   const supabase = await createClient()
 
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
-    redirect("/auth/login")
-  }
+  // Removed Supabase auth check since it's handled by custom auth
+  // const { data, error } = await supabase.auth.getUser()
+  // if (error || !data?.user) {
+  //   redirect("/auth/login")
+  // }
 
   return (
     <div className="flex min-h-screen w-full flex-col">

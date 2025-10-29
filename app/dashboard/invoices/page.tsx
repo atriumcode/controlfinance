@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -57,26 +57,20 @@ export default function InvoicesPage() {
   const [expandedCities, setExpandedCities] = useState<Set<string>>(new Set())
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   const supabase = createClient()
 
   const fetchInvoices = useCallback(async () => {
     try {
-      const { data: userData, error: userError } = await supabase.auth.getUser()
-      if (userError || !userData?.user) {
-        redirect("/auth/login")
+      const response = await fetch("/api/user/profile")
+      const profileData = await response.json()
+
+      if (!profileData.company_id) {
+        router.push("/auth/login")
         return
       }
 
-      // Get user's company
-      const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", userData.user.id).single()
-
-      if (!profile?.company_id) {
-        redirect("/auth/login")
-        return
-      }
-
-      // Get invoices for the company
       const { data: invoicesData } = await supabase
         .from("invoices")
         .select(`
@@ -90,16 +84,17 @@ export default function InvoicesPage() {
             state
           )
         `)
-        .eq("company_id", profile.company_id)
+        .eq("company_id", profileData.company_id)
         .order("created_at", { ascending: false })
 
       setInvoices(invoicesData || [])
     } catch (error) {
       console.error("[v0] Error fetching invoices:", error)
+      router.push("/auth/login")
     } finally {
       setLoading(false)
     }
-  }, [supabase])
+  }, [router, supabase])
 
   useEffect(() => {
     fetchInvoices()
@@ -122,7 +117,6 @@ export default function InvoicesPage() {
       groups.push(cityGroup)
     }
 
-    // Find or create client group within this city
     const clientKey = invoice.clients.document
     let clientGroup = cityGroup.clientGroups.find((g) => g.client.document === clientKey)
 
@@ -144,7 +138,6 @@ export default function InvoicesPage() {
     clientGroup.totalPaid += invoice.amount_paid || 0
     clientGroup.totalPending += invoice.total_amount - (invoice.amount_paid || 0)
 
-    // Update city totals
     cityGroup.totalInvoices++
     cityGroup.totalAmount += invoice.total_amount
     cityGroup.totalPaid += invoice.amount_paid || 0
@@ -265,7 +258,6 @@ export default function InvoicesPage() {
                   </CardHeader>
                 </Card>
 
-                {/* Client Groups within City */}
                 {expandedCities.has(cityKey) && (
                   <div className="ml-6 space-y-3">
                     {cityGroup.clientGroups.map((group) => (
