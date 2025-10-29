@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [errorDetails, setErrorDetails] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const searchParams = useSearchParams()
@@ -58,6 +59,7 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
+    setErrorDetails(null)
 
     const formData = new FormData(e.currentTarget)
 
@@ -74,9 +76,12 @@ export default function LoginPage() {
       if (!result.success) {
         console.log("[v0] Client - Login failed:", result.error)
         setError(result.error || "Erro ao fazer login")
+        if ("details" in result && result.details) {
+          setErrorDetails(result.details as string)
+          console.log("[v0] Client - Error details:", result.details)
+        }
       } else {
         console.log("[v0] Client - Login successful, redirecting to dashboard")
-        // Redirecionar para o dashboard após login bem-sucedido
         router.push("/dashboard")
       }
     } catch (error) {
@@ -212,11 +217,21 @@ export default function LoginPage() {
                 )}
 
                 {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-600">{error}</p>
-                    {error.includes("Email ou senha incorretos") && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg space-y-2">
+                    <p className="text-sm text-red-600 font-medium">{error}</p>
+                    {errorDetails && (
+                      <p className="text-xs text-red-500 font-mono bg-red-100 p-2 rounded">
+                        Detalhes técnicos: {errorDetails}
+                      </p>
+                    )}
+                    {error.includes("Sistema não configurado") && (
                       <p className="text-xs text-red-500 mt-2">
-                        💡 Dica: Se você acabou de se cadastrar, verifique se confirmou seu email antes de fazer login.
+                        💡 Execute o script SQL 'setup-complete-auth.sql' para configurar o banco de dados.
+                      </p>
+                    )}
+                    {error.includes("Email ou senha incorretos") && !errorDetails && (
+                      <p className="text-xs text-red-500 mt-2">
+                        💡 Dica: Verifique se você já criou uma conta ou se o banco de dados foi configurado.
                       </p>
                     )}
                   </div>

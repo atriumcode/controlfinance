@@ -108,7 +108,7 @@ export async function loginUserAction(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
 
-  console.log("[v0] Login attempt for email:", email)
+  console.log("[v0] Server - Login attempt for email:", email)
 
   if (!email || !password) {
     return {
@@ -120,7 +120,7 @@ export async function loginUserAction(formData: FormData) {
   try {
     const supabase = await createClient()
 
-    console.log("[v0] Searching for user in database...")
+    console.log("[v0] Server - Searching for user in database...")
 
     // Buscar usuário
     const { data: user, error: userError } = await supabase
@@ -129,17 +129,41 @@ export async function loginUserAction(formData: FormData) {
       .eq("email", email)
       .single()
 
-    console.log("[v0] User query result:", { found: !!user, error: userError?.message })
+    console.log("[v0] Server - User query result:", {
+      found: !!user,
+      error: userError?.message,
+      errorCode: userError?.code,
+      errorDetails: userError?.details,
+    })
 
-    if (userError || !user) {
-      console.log("[v0] User not found or error:", userError)
-      return {
-        success: false,
-        error: "Email ou senha incorretos",
+    if (userError) {
+      console.error("[v0] Server - Database error details:", {
+        message: userError.message,
+        code: userError.code,
+        details: userError.details,
+        hint: userError.hint,
+      })
+
+      // Check if table doesn't exist
+      if (userError.code === "42P01" || userError.message.includes("does not exist")) {
+        return {
+          success: false,
+          error: "Sistema não configurado. Execute o script SQL primeiro.",
+          details: "Tabela 'profiles' não existe no banco de dados",
+        }
       }
     }
 
-    console.log("[v0] User found, checking if active:", user.is_active)
+    if (!user) {
+      console.log("[v0] Server - User not found")
+      return {
+        success: false,
+        error: "Email ou senha incorretos",
+        details: "Usuário não encontrado no banco de dados",
+      }
+    }
+
+    console.log("[v0] Server - User found, checking if active:", user.is_active)
 
     if (!user.is_active) {
       return {
@@ -148,21 +172,23 @@ export async function loginUserAction(formData: FormData) {
       }
     }
 
-    console.log("[v0] Verifying password...")
+    console.log("[v0] Server - Verifying password...")
+    console.log("[v0] Server - Password hash exists:", !!user.password_hash)
 
     // Verificar senha
     const isPasswordValid = await verifyPassword(password, user.password_hash)
 
-    console.log("[v0] Password verification result:", isPasswordValid)
+    console.log("[v0] Server - Password verification result:", isPasswordValid)
 
     if (!isPasswordValid) {
       return {
         success: false,
         error: "Email ou senha incorretos",
+        details: "Senha não corresponde ao hash armazenado",
       }
     }
 
-    console.log("[v0] Login successful, creating session...")
+    console.log("[v0] Server - Login successful, creating session...")
 
     // Atualizar último login
     await supabase.from("profiles").update({ last_login: new Date().toISOString() }).eq("id", user.id)
@@ -170,16 +196,17 @@ export async function loginUserAction(formData: FormData) {
     // Criar sessão
     await createSession(user.id)
 
-    console.log("[v0] Session created successfully")
+    console.log("[v0] Server - Session created successfully")
 
     return {
       success: true,
     }
   } catch (error) {
-    console.error("[v0] Login error:", error)
+    console.error("[v0] Server - Login error:", error)
     return {
       success: false,
       error: "Erro ao fazer login. Tente novamente.",
+      details: error instanceof Error ? error.message : "Erro desconhecido",
     }
   }
 }
