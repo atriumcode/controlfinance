@@ -63,14 +63,25 @@ export default function InvoicesPage() {
 
   const fetchInvoices = useCallback(async () => {
     try {
+      console.log("[v0] Invoices - Fetching user profile")
       const response = await fetch("/api/user/profile")
-      const profileData = await response.json()
 
-      if (!profileData.company_id) {
+      if (!response.ok) {
+        console.log("[v0] Invoices - Profile fetch failed, redirecting to login")
         router.push("/auth/login")
         return
       }
 
+      const profileData = await response.json()
+      console.log("[v0] Invoices - Profile data:", profileData)
+
+      if (!profileData.company_id) {
+        console.log("[v0] Invoices - No company_id, redirecting to login")
+        router.push("/auth/login")
+        return
+      }
+
+      console.log("[v0] Invoices - Fetching invoices for company:", profileData.company_id)
       const { data: invoicesData } = await supabase
         .from("invoices")
         .select(`
@@ -87,9 +98,10 @@ export default function InvoicesPage() {
         .eq("company_id", profileData.company_id)
         .order("created_at", { ascending: false })
 
+      console.log("[v0] Invoices - Fetched invoices:", invoicesData?.length || 0)
       setInvoices(invoicesData || [])
     } catch (error) {
-      console.error("[v0] Error fetching invoices:", error)
+      console.error("[v0] Invoices - Error fetching invoices:", error)
       router.push("/auth/login")
     } finally {
       setLoading(false)

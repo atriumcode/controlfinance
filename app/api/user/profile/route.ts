@@ -1,0 +1,35 @@
+import { NextResponse } from "next/server"
+import { getSession } from "@/lib/auth/session"
+
+export async function GET() {
+  try {
+    console.log("[v0] API - Getting user profile")
+
+    const { user, session } = await getSession()
+
+    if (!user || !session) {
+      console.log("[v0] API - No user or session found")
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
+    }
+
+    console.log("[v0] API - User found:", {
+      id: user.id,
+      email: user.email,
+      company_id: user.company_id,
+    })
+
+    return NextResponse.json({
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      role: user.role,
+      company_id: user.company_id,
+      company_name: user.company_name,
+      cnpj: user.cnpj,
+      is_active: user.is_active,
+    })
+  } catch (error) {
+    console.error("[v0] API - Error getting profile:", error)
+    return NextResponse.json({ error: "Erro ao buscar perfil" }, { status: 500 })
+  }
+}
