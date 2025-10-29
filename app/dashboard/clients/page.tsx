@@ -4,20 +4,17 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { ClientsTable } from "@/components/clients/clients-table"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
 export default async function ClientsPage() {
+  const user = await getAuthenticatedUser()
   const supabase = await createServerClient()
 
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
-    redirect("/auth/login")
-  }
-
   // Get user's company
-  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", data.user.id).single()
+  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
 
   if (!profile?.company_id) {
-    redirect("/auth/login")
+    redirect("/dashboard/settings")
   }
 
   // Get clients for the company

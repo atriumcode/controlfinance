@@ -1,16 +1,14 @@
-import { createServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
 export const dynamic = "force-dynamic"
 
 export default async function AdminPage() {
-  const supabase = await createServerClient()
-
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
+  const user = await getAuthenticatedUser()
+  if (!user) {
     redirect("/auth/login")
   }
 

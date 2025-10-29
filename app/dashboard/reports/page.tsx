@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createServerClient } from "@/lib/supabase/server"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 import Link from "next/link"
 import { ReportsOverview } from "@/components/reports/reports-overview"
 import { MonthlyReport } from "@/components/reports/monthly-report"
@@ -7,18 +8,14 @@ import { ClientsReport } from "@/components/reports/clients-report"
 import { PaymentMethodsReport } from "@/components/reports/payment-methods-report"
 
 export default async function ReportsPage() {
-  const supabase = await createClient()
-
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
-    redirect("/auth/login")
-  }
+  const user = await getAuthenticatedUser()
+  const supabase = await createServerClient()
 
   // Get user's company
-  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", data.user.id).single()
+  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
 
   if (!profile?.company_id) {
-    redirect("/auth/login")
+    redirect("/dashboard/settings")
   }
 
   // Get comprehensive data for reports
