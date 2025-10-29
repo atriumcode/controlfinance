@@ -27,11 +27,8 @@ export async function registerUserAction(formData: FormData) {
   const cnpj = formData.get("cnpj") as string
   const companyName = formData.get("companyName") as string
 
-  console.log("[v0] Server - Registration attempt:", { email, fullName, role })
-
   // Validações
   if (!email || !password || !fullName) {
-    console.log("[v0] Server - Missing required fields")
     return {
       success: false,
       error: "Preencha todos os campos obrigatórios",
@@ -39,7 +36,6 @@ export async function registerUserAction(formData: FormData) {
   }
 
   if (password !== confirmPassword) {
-    console.log("[v0] Server - Passwords don't match")
     return {
       success: false,
       error: "As senhas não coincidem",
@@ -48,7 +44,6 @@ export async function registerUserAction(formData: FormData) {
 
   const passwordValidation = validatePassword(password)
   if (!passwordValidation.valid) {
-    console.log("[v0] Server - Password validation failed:", passwordValidation.error)
     return {
       success: false,
       error: passwordValidation.error,
@@ -57,21 +52,13 @@ export async function registerUserAction(formData: FormData) {
 
   try {
     const supabase = await createClient()
-    console.log("[v0] Server - Supabase client created")
 
-    console.log("[v0] Server - Checking for existing users...")
     const { data: existingUsers, error: countError } = await supabase
       .from("profiles")
       .select("id", { count: "exact", head: true })
 
-    console.log("[v0] Server - Count query result:", {
-      error: countError?.message,
-      errorCode: countError?.code,
-      hasData: !!existingUsers,
-    })
-
     if (countError) {
-      console.error("[v0] Server - Error checking users:", countError)
+      console.error("Error checking users:", countError)
 
       // Check if table doesn't exist
       if (countError.code === "42P01" || countError.message.includes("does not exist")) {
@@ -84,23 +71,15 @@ export async function registerUserAction(formData: FormData) {
     }
 
     const isFirstUser = !countError && (!existingUsers || existingUsers.length === 0)
-    console.log("[v0] Server - Is first user:", isFirstUser)
 
     // Verificar se o email já existe
-    console.log("[v0] Server - Checking if email already exists...")
     const { data: existingUser, error: checkError } = await supabase
       .from("profiles")
       .select("id")
       .eq("email", email)
       .single()
 
-    console.log("[v0] Server - Email check result:", {
-      exists: !!existingUser,
-      error: checkError?.message,
-    })
-
     if (existingUser) {
-      console.log("[v0] Server - Email already registered")
       return {
         success: false,
         error: "Este email já está cadastrado",
@@ -108,12 +87,9 @@ export async function registerUserAction(formData: FormData) {
     }
 
     // Hash da senha
-    console.log("[v0] Server - Hashing password...")
     const passwordHash = await hashPassword(password)
-    console.log("[v0] Server - Password hashed successfully")
 
     const finalRole = isFirstUser ? "admin" : role || "user"
-    console.log("[v0] Server - Creating user with role:", finalRole)
 
     // Criar usuário
     const { data: newUser, error: insertError } = await supabase
@@ -131,12 +107,7 @@ export async function registerUserAction(formData: FormData) {
       .single()
 
     if (insertError) {
-      console.error("[v0] Server - Insert error:", {
-        message: insertError.message,
-        code: insertError.code,
-        details: insertError.details,
-        hint: insertError.hint,
-      })
+      console.error("Insert error:", insertError)
       return {
         success: false,
         error: "Erro ao criar usuário. Tente novamente.",
@@ -144,19 +115,15 @@ export async function registerUserAction(formData: FormData) {
       }
     }
 
-    console.log("[v0] Server - User created successfully:", newUser.id)
-
     // Criar sessão automaticamente
-    console.log("[v0] Server - Creating session...")
     await createSession(newUser.id)
-    console.log("[v0] Server - Session created successfully")
 
     return {
       success: true,
       isFirstUser,
     }
   } catch (error) {
-    console.error("[v0] Server - Registration exception:", error)
+    console.error("Registration exception:", error)
     return {
       success: false,
       error: "Erro ao criar usuário. Tente novamente.",
@@ -169,8 +136,6 @@ export async function loginUserAction(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
 
-  console.log("[v0] Server - Login attempt for email:", email)
-
   if (!email || !password) {
     return {
       success: false,
@@ -181,8 +146,6 @@ export async function loginUserAction(formData: FormData) {
   try {
     const supabase = await createClient()
 
-    console.log("[v0] Server - Searching for user in database...")
-
     // Buscar usuário
     const { data: user, error: userError } = await supabase
       .from("profiles")
@@ -190,20 +153,8 @@ export async function loginUserAction(formData: FormData) {
       .eq("email", email)
       .single()
 
-    console.log("[v0] Server - User query result:", {
-      found: !!user,
-      error: userError?.message,
-      errorCode: userError?.code,
-      errorDetails: userError?.details,
-    })
-
     if (userError) {
-      console.error("[v0] Server - Database error details:", {
-        message: userError.message,
-        code: userError.code,
-        details: userError.details,
-        hint: userError.hint,
-      })
+      console.error("Database error:", userError)
 
       // Check if table doesn't exist
       if (userError.code === "42P01" || userError.message.includes("does not exist")) {
@@ -216,15 +167,12 @@ export async function loginUserAction(formData: FormData) {
     }
 
     if (!user) {
-      console.log("[v0] Server - User not found")
       return {
         success: false,
         error: "Email ou senha incorretos",
         details: "Usuário não encontrado no banco de dados",
       }
     }
-
-    console.log("[v0] Server - User found, checking if active:", user.is_active)
 
     if (!user.is_active) {
       return {
@@ -233,13 +181,8 @@ export async function loginUserAction(formData: FormData) {
       }
     }
 
-    console.log("[v0] Server - Verifying password...")
-    console.log("[v0] Server - Password hash exists:", !!user.password_hash)
-
     // Verificar senha
     const isPasswordValid = await verifyPassword(password, user.password_hash)
-
-    console.log("[v0] Server - Password verification result:", isPasswordValid)
 
     if (!isPasswordValid) {
       return {
@@ -249,21 +192,17 @@ export async function loginUserAction(formData: FormData) {
       }
     }
 
-    console.log("[v0] Server - Login successful, creating session...")
-
     // Atualizar último login
     await supabase.from("profiles").update({ last_login: new Date().toISOString() }).eq("id", user.id)
 
     // Criar sessão
     await createSession(user.id)
 
-    console.log("[v0] Server - Session created successfully")
-
     return {
       success: true,
     }
   } catch (error) {
-    console.error("[v0] Server - Login error:", error)
+    console.error("Login error:", error)
     return {
       success: false,
       error: "Erro ao fazer login. Tente novamente.",

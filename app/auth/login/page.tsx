@@ -63,29 +63,19 @@ export default function LoginPage() {
 
     const formData = new FormData(e.currentTarget)
 
-    const email = formData.get("email")
-    const password = formData.get("password")
-    console.log("[v0] Client - Attempting login with email:", email)
-    console.log("[v0] Client - Password length:", password?.toString().length)
-
     try {
-      console.log("[v0] Client - Calling loginUserAction...")
       const result = await loginUserAction(formData)
-      console.log("[v0] Client - Login result:", result)
 
       if (!result.success) {
-        console.log("[v0] Client - Login failed:", result.error)
         setError(result.error || "Erro ao fazer login")
         if ("details" in result && result.details) {
           setErrorDetails(result.details as string)
-          console.log("[v0] Client - Error details:", result.details)
         }
       } else {
-        console.log("[v0] Client - Login successful, redirecting to dashboard")
         router.push("/dashboard")
       }
     } catch (error) {
-      console.error("[v0] Client - Login error:", error)
+      console.error("Login error:", error)
       setError("Erro ao fazer login. Tente novamente.")
     } finally {
       setIsLoading(false)

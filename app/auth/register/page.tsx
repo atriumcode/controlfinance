@@ -25,33 +25,19 @@ export default function RegisterPage() {
 
     const formData = new FormData(e.currentTarget)
 
-    console.log("[v0] Client - Starting registration")
-    console.log("[v0] Client - Email:", formData.get("email"))
-    console.log("[v0] Client - Full Name:", formData.get("fullName"))
-    console.log("[v0] Client - Role:", formData.get("role"))
-    console.log("[v0] Client - Password length:", (formData.get("password") as string)?.length)
-
     try {
-      console.log("[v0] Client - Calling registerUserAction...")
       const result = await registerUserAction(formData)
-      console.log("[v0] Client - Registration result:", result)
 
       if (!result.success) {
-        console.log("[v0] Client - Registration failed:", result.error)
-        if (result.details) {
-          console.log("[v0] Client - Error details:", result.details)
-        }
         setError(result.error || "Erro ao criar conta")
       } else {
-        console.log("[v0] Client - Registration successful!")
         if (result.isFirstUser) {
-          console.log("[v0] Client - This is the first user (admin)")
           setSuccessMessage("Primeira conta criada! Você é o administrador do sistema.")
         }
         setTimeout(() => router.push("/dashboard"), 1500)
       }
     } catch (error) {
-      console.error("[v0] Client - Registration exception:", error)
+      console.error("Registration exception:", error)
       setError("Erro ao criar conta. Tente novamente.")
     } finally {
       setIsLoading(false)

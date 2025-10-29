@@ -12,33 +12,55 @@ import { PaymentStatusChart } from "@/components/dashboard/payment-status-chart"
 export const dynamic = "force-dynamic"
 
 export default async function DashboardPage() {
-  console.log("[v0] Dashboard - checking user authentication")
-
   const { user } = await getSession()
 
   if (!user) {
-    console.log("[v0] Dashboard - no user session found, redirecting to login")
     redirect("/auth/login")
   }
 
-  console.log("[v0] Dashboard - user authenticated:", user.id)
-
   const supabase = await createClient()
 
-  // Get user profile and company info
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select(`
-      *,
-      companies (
-        name,
-        cnpj
-      )
-    `)
-    .eq("id", user.id)
-    .single()
+  const [profileResult, invoicesResult, clientsCountResult] = await Promise.all([
+    // Get user profile and company info
+    supabase
+      .from("profiles")
+      .select(`
+        *,
+        companies (
+          name,
+          cnpj
+        )
+      `)
+      .eq("id", user.id)
+      .single(),
 
-  console.log("[v0] Dashboard - profile data:", { hasProfile: !!profile, hasCompany: !!profile?.company_id })
+    // Get only last 90 days of invoices for performance (not ALL invoices)
+    supabase
+      .from("invoices")
+      .select(`
+        *,
+        amount_paid,
+        clients (
+          name,
+          document,
+          document_type
+        )
+      `)
+      .eq("company_id", user.company_id || "")
+      .gte("created_at", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
+      .order("created_at", { ascending: false })
+      .limit(100), // Limit to 100 most recent
+
+    // Get clients count
+    supabase
+      .from("clients")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", user.company_id || ""),
+  ])
+
+  const profile = profileResult.data
+  const invoices = invoicesResult.data
+  const clientsCount = clientsCountResult.count
 
   if (!profile?.company_id) {
     return (
@@ -57,27 +79,6 @@ export default async function DashboardPage() {
       </div>
     )
   }
-
-  // Get all invoices for analytics
-  const { data: invoices } = await supabase
-    .from("invoices")
-    .select(`
-      *,
-      amount_paid,
-      clients (
-        name,
-        document,
-        document_type
-      )
-    `)
-    .eq("company_id", profile.company_id)
-    .order("created_at", { ascending: false })
-
-  // Get clients count
-  const { count: clientsCount } = await supabase
-    .from("clients")
-    .select("*", { count: "exact", head: true })
-    .eq("company_id", profile.company_id)
 
   return (
     <div className="flex min-h-screen w-full flex-col">

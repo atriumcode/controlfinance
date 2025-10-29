@@ -1,57 +1,46 @@
 import { cookies } from "next/headers"
+import { cache } from "react"
 import { createServerClient } from "@/lib/supabase/server"
 
 const SESSION_COOKIE_NAME = "auth_session"
 
-export async function getAuthenticatedUser() {
-  console.log("[v0] getAuthenticatedUser - checking authentication")
-
+export const getAuthenticatedUser = cache(async () => {
   const cookieStore = await cookies()
   const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value
 
-  console.log("[v0] getAuthenticatedUser - session token found:", !!sessionToken)
-
   if (!sessionToken) {
-    console.log("[v0] getAuthenticatedUser - no session token")
     return null
   }
 
   const supabase = await createServerClient()
 
-  // Validate session
-  const { data: session, error: sessionError } = await supabase
+  const { data, error } = await supabase
     .from("sessions")
-    .select("*")
+    .select(`
+      expires_at,
+      profiles:user_id (
+        id,
+        email,
+        full_name,
+        role,
+        company_name,
+        cnpj,
+        company_id,
+        is_active
+      )
+    `)
     .eq("token", sessionToken)
     .single()
 
-  console.log("[v0] getAuthenticatedUser - session found:", !!session, "error:", sessionError?.message)
-
-  if (!session || sessionError) {
-    console.log("[v0] getAuthenticatedUser - invalid session")
+  if (error || !data || !data.profiles) {
     return null
   }
 
   // Check if session is expired
-  if (new Date(session.expires_at) < new Date()) {
-    console.log("[v0] getAuthenticatedUser - session expired")
+  if (new Date(data.expires_at) < new Date()) {
     return null
   }
 
-  // Get user profile
-  const { data: user, error: userError } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", session.user_id)
-    .single()
-
-  console.log("[v0] getAuthenticatedUser - user found:", !!user, "error:", userError?.message)
-
-  if (!user || userError) {
-    console.log("[v0] getAuthenticatedUser - user not found")
-    return null
-  }
-
-  console.log("[v0] getAuthenticatedUser - authentication successful for user:", user.email)
-  return user
-}
+  // Return the user profile (profiles is an object, not an array)
+  return data.profiles as any
+})
