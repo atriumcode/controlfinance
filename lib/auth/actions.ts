@@ -27,8 +27,11 @@ export async function registerUserAction(formData: FormData) {
   const cnpj = formData.get("cnpj") as string
   const companyName = formData.get("companyName") as string
 
+  console.log("[v0] Server - Registration attempt:", { email, fullName, role })
+
   // Validações
   if (!email || !password || !fullName) {
+    console.log("[v0] Server - Missing required fields")
     return {
       success: false,
       error: "Preencha todos os campos obrigatórios",
@@ -36,6 +39,7 @@ export async function registerUserAction(formData: FormData) {
   }
 
   if (password !== confirmPassword) {
+    console.log("[v0] Server - Passwords don't match")
     return {
       success: false,
       error: "As senhas não coincidem",
@@ -44,6 +48,7 @@ export async function registerUserAction(formData: FormData) {
 
   const passwordValidation = validatePassword(password)
   if (!passwordValidation.valid) {
+    console.log("[v0] Server - Password validation failed:", passwordValidation.error)
     return {
       success: false,
       error: passwordValidation.error,
@@ -52,19 +57,50 @@ export async function registerUserAction(formData: FormData) {
 
   try {
     const supabase = await createClient()
+    console.log("[v0] Server - Supabase client created")
 
+    console.log("[v0] Server - Checking for existing users...")
     const { data: existingUsers, error: countError } = await supabase
       .from("profiles")
       .select("id", { count: "exact", head: true })
 
-    const isFirstUser = !countError && (!existingUsers || existingUsers.length === 0)
+    console.log("[v0] Server - Count query result:", {
+      error: countError?.message,
+      errorCode: countError?.code,
+      hasData: !!existingUsers,
+    })
 
+    if (countError) {
+      console.error("[v0] Server - Error checking users:", countError)
+
+      // Check if table doesn't exist
+      if (countError.code === "42P01" || countError.message.includes("does not exist")) {
+        return {
+          success: false,
+          error: "Sistema não configurado. Execute o script SQL primeiro.",
+          details: "Tabela 'profiles' não existe no banco de dados",
+        }
+      }
+    }
+
+    const isFirstUser = !countError && (!existingUsers || existingUsers.length === 0)
     console.log("[v0] Server - Is first user:", isFirstUser)
 
     // Verificar se o email já existe
-    const { data: existingUser } = await supabase.from("profiles").select("id").eq("email", email).single()
+    console.log("[v0] Server - Checking if email already exists...")
+    const { data: existingUser, error: checkError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .single()
+
+    console.log("[v0] Server - Email check result:", {
+      exists: !!existingUser,
+      error: checkError?.message,
+    })
 
     if (existingUser) {
+      console.log("[v0] Server - Email already registered")
       return {
         success: false,
         error: "Este email já está cadastrado",
@@ -72,10 +108,11 @@ export async function registerUserAction(formData: FormData) {
     }
 
     // Hash da senha
+    console.log("[v0] Server - Hashing password...")
     const passwordHash = await hashPassword(password)
+    console.log("[v0] Server - Password hashed successfully")
 
     const finalRole = isFirstUser ? "admin" : role || "user"
-
     console.log("[v0] Server - Creating user with role:", finalRole)
 
     // Criar usuário
@@ -94,25 +131,36 @@ export async function registerUserAction(formData: FormData) {
       .single()
 
     if (insertError) {
-      console.error("[v0] Registration error:", insertError)
+      console.error("[v0] Server - Insert error:", {
+        message: insertError.message,
+        code: insertError.code,
+        details: insertError.details,
+        hint: insertError.hint,
+      })
       return {
         success: false,
         error: "Erro ao criar usuário. Tente novamente.",
+        details: insertError.message,
       }
     }
 
+    console.log("[v0] Server - User created successfully:", newUser.id)
+
     // Criar sessão automaticamente
+    console.log("[v0] Server - Creating session...")
     await createSession(newUser.id)
+    console.log("[v0] Server - Session created successfully")
 
     return {
       success: true,
       isFirstUser,
     }
   } catch (error) {
-    console.error("[v0] Registration error:", error)
+    console.error("[v0] Server - Registration exception:", error)
     return {
       success: false,
       error: "Erro ao criar usuário. Tente novamente.",
+      details: error instanceof Error ? error.message : "Erro desconhecido",
     }
   }
 }
