@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation"
-import { createServerClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
+import { getSession } from "@/lib/auth/session"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -11,17 +12,18 @@ import { PaymentStatusChart } from "@/components/dashboard/payment-status-chart"
 export const dynamic = "force-dynamic"
 
 export default async function DashboardPage() {
-  const supabase = await createServerClient()
-
   console.log("[v0] Dashboard - checking user authentication")
 
-  const { data, error } = await supabase.auth.getUser()
-  if (error || !data?.user) {
-    console.log("[v0] Dashboard - no user found, redirecting to login", { error: error?.message })
+  const { user } = await getSession()
+
+  if (!user) {
+    console.log("[v0] Dashboard - no user session found, redirecting to login")
     redirect("/auth/login")
   }
 
-  console.log("[v0] Dashboard - user authenticated:", data.user.id)
+  console.log("[v0] Dashboard - user authenticated:", user.id)
+
+  const supabase = await createClient()
 
   // Get user profile and company info
   const { data: profile } = await supabase
@@ -33,7 +35,7 @@ export default async function DashboardPage() {
         cnpj
       )
     `)
-    .eq("id", data.user.id)
+    .eq("id", user.id)
     .single()
 
   console.log("[v0] Dashboard - profile data:", { hasProfile: !!profile, hasCompany: !!profile?.company_id })
