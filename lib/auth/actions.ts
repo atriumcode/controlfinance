@@ -53,6 +53,14 @@ export async function registerUserAction(formData: FormData) {
   try {
     const supabase = await createClient()
 
+    const { data: existingUsers, error: countError } = await supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+
+    const isFirstUser = !countError && (!existingUsers || existingUsers.length === 0)
+
+    console.log("[v0] Server - Is first user:", isFirstUser)
+
     // Verificar se o email já existe
     const { data: existingUser } = await supabase.from("profiles").select("id").eq("email", email).single()
 
@@ -66,13 +74,17 @@ export async function registerUserAction(formData: FormData) {
     // Hash da senha
     const passwordHash = await hashPassword(password)
 
+    const finalRole = isFirstUser ? "admin" : role || "user"
+
+    console.log("[v0] Server - Creating user with role:", finalRole)
+
     // Criar usuário
     const { data: newUser, error: insertError } = await supabase
       .from("profiles")
       .insert({
         email,
         full_name: fullName,
-        role: role || "user",
+        role: finalRole,
         cnpj: cnpj || null,
         company_name: companyName || null,
         password_hash: passwordHash,
@@ -94,6 +106,7 @@ export async function registerUserAction(formData: FormData) {
 
     return {
       success: true,
+      isFirstUser,
     }
   } catch (error) {
     console.error("[v0] Registration error:", error)

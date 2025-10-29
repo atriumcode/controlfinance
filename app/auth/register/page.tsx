@@ -14,12 +14,14 @@ import { useState } from "react"
 export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const router = useRouter()
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
+    setSuccessMessage(null)
 
     const formData = new FormData(e.currentTarget)
 
@@ -29,8 +31,10 @@ export default function RegisterPage() {
       if (!result.success) {
         setError(result.error || "Erro ao criar conta")
       } else {
-        // Redirecionar para o dashboard após registro bem-sucedido
-        router.push("/dashboard")
+        if (result.isFirstUser) {
+          setSuccessMessage("Primeira conta criada! Você é o administrador do sistema.")
+        }
+        setTimeout(() => router.push("/dashboard"), 1500)
       }
     } catch (error) {
       console.error("[v0] Registration error:", error)
@@ -90,6 +94,9 @@ export default function RegisterPage() {
                     <Label htmlFor="confirmPassword">Confirmar Senha</Label>
                     <Input id="confirmPassword" name="confirmPassword" type="password" required />
                   </div>
+                  {successMessage && (
+                    <div className="rounded-md bg-green-50 p-3 text-sm text-green-800">{successMessage}</div>
+                  )}
                   {error && <p className="text-sm text-red-500">{error}</p>}
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Criando conta..." : "Criar Conta"}
