@@ -108,6 +108,8 @@ export async function loginUserAction(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
 
+  console.log("[v0] Login attempt for email:", email)
+
   if (!email || !password) {
     return {
       success: false,
@@ -118,6 +120,8 @@ export async function loginUserAction(formData: FormData) {
   try {
     const supabase = await createClient()
 
+    console.log("[v0] Searching for user in database...")
+
     // Buscar usuário
     const { data: user, error: userError } = await supabase
       .from("profiles")
@@ -125,12 +129,17 @@ export async function loginUserAction(formData: FormData) {
       .eq("email", email)
       .single()
 
+    console.log("[v0] User query result:", { found: !!user, error: userError?.message })
+
     if (userError || !user) {
+      console.log("[v0] User not found or error:", userError)
       return {
         success: false,
         error: "Email ou senha incorretos",
       }
     }
+
+    console.log("[v0] User found, checking if active:", user.is_active)
 
     if (!user.is_active) {
       return {
@@ -139,8 +148,12 @@ export async function loginUserAction(formData: FormData) {
       }
     }
 
+    console.log("[v0] Verifying password...")
+
     // Verificar senha
     const isPasswordValid = await verifyPassword(password, user.password_hash)
+
+    console.log("[v0] Password verification result:", isPasswordValid)
 
     if (!isPasswordValid) {
       return {
@@ -149,11 +162,15 @@ export async function loginUserAction(formData: FormData) {
       }
     }
 
+    console.log("[v0] Login successful, creating session...")
+
     // Atualizar último login
     await supabase.from("profiles").update({ last_login: new Date().toISOString() }).eq("id", user.id)
 
     // Criar sessão
     await createSession(user.id)
+
+    console.log("[v0] Session created successfully")
 
     return {
       success: true,
