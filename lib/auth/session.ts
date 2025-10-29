@@ -31,7 +31,7 @@ export async function createSession(userId: string): Promise<string> {
   const token = generateToken()
   const expiresAt = new Date(Date.now() + SESSION_DURATION)
 
-  const { error } = await supabase.from("user_sessions").insert({
+  const { error } = await supabase.from("sessions").insert({
     user_id: userId,
     token,
     expires_at: expiresAt.toISOString(),
@@ -69,11 +69,7 @@ export async function getSession(): Promise<{
   const supabase = await createClient()
 
   // Buscar sessão
-  const { data: session, error: sessionError } = await supabase
-    .from("user_sessions")
-    .select("*")
-    .eq("token", token)
-    .single()
+  const { data: session, error: sessionError } = await supabase.from("sessions").select("*").eq("token", token).single()
 
   if (sessionError || !session) {
     return { session: null, user: null }
@@ -105,7 +101,7 @@ export async function deleteSession(token?: string): Promise<void> {
 
   if (sessionToken) {
     const supabase = await createClient()
-    await supabase.from("user_sessions").delete().eq("token", sessionToken)
+    await supabase.from("sessions").delete().eq("token", sessionToken)
   }
 
   cookieStore.delete(SESSION_COOKIE_NAME)
