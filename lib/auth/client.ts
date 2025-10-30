@@ -1,37 +1,28 @@
 "use client"
 
-import { createClient } from "@/lib/supabase/client"
 import type { User } from "./actions"
 
 export async function getCurrentUser(): Promise<User | null> {
-  const supabase = createClient()
+  try {
+    const response = await fetch("/api/user/profile")
+    if (!response.ok) return null
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
+    const profile = await response.json()
+    if (!profile) return null
 
-  if (error || !user) {
+    return {
+      id: profile.id,
+      email: profile.email,
+      full_name: profile.full_name,
+      role: profile.role,
+      company_id: profile.company_id,
+      cnpj: profile.cnpj,
+      company_name: profile.company_name,
+      created_at: profile.created_at,
+      updated_at: profile.updated_at,
+    }
+  } catch (error) {
     return null
-  }
-
-  // Get user profile from profiles table
-  const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", user.id).single()
-
-  if (profileError || !profile) {
-    return null
-  }
-
-  return {
-    id: profile.id,
-    email: profile.email,
-    full_name: profile.full_name,
-    role: profile.role,
-    company_id: profile.company_id,
-    cnpj: profile.cnpj,
-    company_name: profile.company_name,
-    created_at: profile.created_at,
-    updated_at: profile.updated_at,
   }
 }
 

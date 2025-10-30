@@ -124,19 +124,15 @@ export function InvoiceForm({ clients, invoice }: InvoiceFormProps) {
     const supabase = createClient()
 
     try {
-      // Get user's company
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) throw new Error("Usuário não autenticado")
+      const response = await fetch("/api/user/profile")
+      if (!response.ok) throw new Error("Usuário não autenticado")
 
-      const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
-
-      if (!profile?.company_id) throw new Error("Empresa não encontrada")
+      const { company_id } = await response.json()
+      if (!company_id) throw new Error("Empresa não encontrada")
 
       const invoiceData = {
         ...formData,
-        company_id: profile.company_id,
+        company_id,
         client_id: formData.client_id || null,
         total_amount: totalAmount,
         net_amount: totalAmount,

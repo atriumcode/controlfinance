@@ -29,14 +29,11 @@ export function ImportHistory() {
     const fetchImportHistory = async () => {
       const supabase = createClient()
 
-      // Get user's company
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
+      const response = await fetch("/api/user/profile")
+      if (!response.ok) return
 
-      const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
-      if (!profile?.company_id) return
+      const { company_id } = await response.json()
+      if (!company_id) return
 
       // Get recent imported invoices (those with XML content)
       const { data } = await supabase
@@ -55,7 +52,7 @@ export function ImportHistory() {
           )
         `,
         )
-        .eq("company_id", profile.company_id)
+        .eq("company_id", company_id)
         .not("xml_content", "is", null)
         .order("created_at", { ascending: false })
         .limit(10)

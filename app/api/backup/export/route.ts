@@ -1,28 +1,17 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("[v0] API backup export - starting")
-    const supabase = await createServerClient()
+    const user = await getAuthenticatedUser()
 
-    // Check authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-    if (authError || !user) {
+    if (!user || !user.company_id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get user's company
-    const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
-
-    if (!profile?.company_id) {
-      return NextResponse.json({ error: "Company not found" }, { status: 404 })
-    }
-
-    const companyId = profile.company_id
+    const companyId = user.company_id
+    const supabase = await createServerClient()
 
     // Export all company data
     const [{ data: company }, { data: profiles }, { data: clients }, { data: invoices }, { data: audit_logs }] =
@@ -63,8 +52,6 @@ export async function GET(request: NextRequest) {
         version: "1.0",
       },
     }
-
-    console.log("[v0] API backup export - completed:", backupData.metadata.total_records, "records")
 
     return NextResponse.json(backupData, {
       headers: {

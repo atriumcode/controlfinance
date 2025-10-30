@@ -9,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import { registerUserAction } from "@/lib/auth/actions"
 
 export function NewUserForm() {
   const [isLoading, setIsLoading] = useState(false)
@@ -43,65 +43,41 @@ export function NewUserForm() {
     }
 
     try {
-      const supabase = createClient()
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
+      const response = await fetch("/api/user/profile")
+      if (!response.ok) {
         setError("Usuário não autenticado")
         setIsLoading(false)
         return
       }
 
-      const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
-
-      if (!profile?.company_id) {
+      const { company_id } = await response.json()
+      if (!company_id) {
         setError("Empresa não encontrada")
         setIsLoading(false)
         return
       }
 
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      // Use our custom registration action
+      const result = await registerUserAction({
         email,
         password,
-        options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
-          data: {
-            full_name: fullName,
-            role: role,
-            company_id: profile.company_id,
-          },
-        },
+        fullName,
+        role,
+        companyId: company_id,
       })
 
-      if (signUpError) {
-        console.error("[v0] SignUp error:", signUpError)
-
-        if (signUpError.message.includes("already registered")) {
-          setError("Este email já está cadastrado")
-        } else if (signUpError.message.includes("Password")) {
-          setError("A senha deve ter pelo menos 6 caracteres")
-        } else if (signUpError.message.includes("Invalid email")) {
-          setError("Email inválido")
-        } else {
-          setError(`Erro na criação: ${signUpError.message}`)
-        }
+      if (!result.success) {
+        setError(result.error || "Erro ao criar usuário")
         setIsLoading(false)
         return
       }
 
-      if (data.user) {
-        console.log("[v0] User created successfully:", data.user.id)
-        setSuccess(true)
-
-        setTimeout(() => {
-          router.push("/dashboard/users?success=user-created")
-        }, 2000)
-      }
+      setSuccess(true)
+      setTimeout(() => {
+        router.push("/dashboard/users?success=user-created")
+      }, 2000)
     } catch (error: any) {
-      console.error("[v0] Unexpected error:", error)
+      console.error("Unexpected error:", error)
       setError(error.message || "Erro inesperado na criação do usuário")
     } finally {
       setIsLoading(false)
