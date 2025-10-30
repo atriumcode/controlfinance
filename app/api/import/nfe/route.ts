@@ -8,18 +8,14 @@ export async function POST(request: NextRequest) {
 
   try {
     console.log("[v0] Iniciando autenticação...")
-    let user
-    try {
-      const authResult = await getAuthenticatedUser()
-      user = authResult.user
-      console.log("[v0] Usuário autenticado:", user.id, "company_id:", user.company_id)
-    } catch (authError) {
-      console.log("[v0] Erro de autenticação:", authError)
-      return NextResponse.json(
-        { error: "Erro de autenticação", details: authError instanceof Error ? authError.message : String(authError) },
-        { status: 401 },
-      )
+    const user = await getAuthenticatedUser()
+
+    if (!user) {
+      console.log("[v0] Usuário não autenticado")
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
     }
+
+    console.log("[v0] Usuário autenticado:", user.id, "company_id:", user.company_id)
 
     if (!user.company_id) {
       console.log("[v0] Empresa não configurada")
