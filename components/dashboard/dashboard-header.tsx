@@ -9,6 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
+import { redirect } from "next/navigation"
+import { deleteSession } from "@/lib/auth/session"
 
 interface DashboardHeaderProps {
   companyName?: string
@@ -46,7 +48,14 @@ export function DashboardHeader({ companyName, userName }: DashboardHeaderProps)
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <form action="/auth/logout" method="post" className="w-full">
+            <form
+              action={async () => {
+                "use server"
+                await deleteSession()
+                redirect("/auth/login")
+              }}
+              className="w-full"
+            >
               <button type="submit" className="w-full text-left">
                 Sair
               </button>
