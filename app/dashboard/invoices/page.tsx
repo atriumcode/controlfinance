@@ -108,6 +108,11 @@ export default function InvoicesPage() {
   }, [fetchInvoices])
 
   const cityGroups: CityGroup[] = invoices.reduce((groups: CityGroup[], invoice) => {
+    if (!invoice.clients || !invoice.clients.city || !invoice.clients.state) {
+      console.warn(`Invoice ${invoice.invoice_number} has missing client data, skipping grouping`)
+      return groups
+    }
+
     const cityKey = `${invoice.clients.city}, ${invoice.clients.state}`
     let cityGroup = groups.find((g) => `${g.city}, ${g.state}` === cityKey)
 
