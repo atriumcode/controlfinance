@@ -47,6 +47,8 @@ export function ImportUploader() {
       try {
         const fileContent = await uploadedFile.file.text()
 
+        console.log("[v0] Enviando requisição para /api/import/nfe")
+
         const response = await fetch("/api/import/nfe", {
           method: "POST",
           headers: {
@@ -58,16 +60,28 @@ export function ImportUploader() {
           }),
         })
 
-        const data = await response.json()
+        let data
+        try {
+          data = await response.json()
+          console.log("[v0] Resposta da API:", data)
+        } catch (e) {
+          console.error("[v0] Erro ao parsear resposta JSON:", e)
+          throw new Error("Erro ao processar resposta do servidor")
+        }
 
         if (!response.ok) {
-          throw new Error(data.error || "Erro ao processar arquivo")
+          const errorMessage = data.details
+            ? `${data.error}: ${data.details}`
+            : data.error || "Erro ao processar arquivo"
+          console.error("[v0] Erro da API:", errorMessage)
+          throw new Error(errorMessage)
         }
 
         setUploadedFiles((prev) =>
           prev.map((f, index) => (index === i ? { ...f, status: "success", result: data.nfe_data } : f)),
         )
       } catch (error) {
+        console.error("[v0] Erro ao processar arquivo:", error)
         setUploadedFiles((prev) =>
           prev.map((f, index) =>
             index === i
