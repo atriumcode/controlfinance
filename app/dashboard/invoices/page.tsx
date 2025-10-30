@@ -179,14 +179,18 @@ export default function InvoicesPage() {
   }
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "paid":
+      case "paga":
         return "bg-green-100 text-green-800"
-      case "Parcial":
+      case "partial":
+      case "parcial":
         return "bg-yellow-100 text-yellow-800"
       case "pending":
+      case "pendente":
         return "bg-blue-100 text-blue-800"
       case "overdue":
+      case "vencida":
         return "bg-red-100 text-red-800"
       default:
         return "bg-gray-100 text-gray-800"
@@ -194,14 +198,18 @@ export default function InvoicesPage() {
   }
 
   const getStatusLabel = (status: string) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case "paid":
+      case "paga":
         return "Paga"
-      case "Parcial":
+      case "partial":
+      case "parcial":
         return "Parcial"
       case "pending":
+      case "pendente":
         return "Pendente"
       case "overdue":
+      case "vencida":
         return "Vencida"
       default:
         return status
@@ -359,9 +367,19 @@ export default function InvoicesPage() {
                                         {getStatusLabel(invoice.status)}
                                       </Badge>
                                       {(invoice.status === "pending" ||
+                                        invoice.status === "Pendente" ||
+                                        invoice.status === "pendente" ||
                                         invoice.status === "partial" ||
-                                        invoice.status === "Parcial") && (
-                                        <Button size="sm" variant="default" asChild className="gap-2">
+                                        invoice.status === "Parcial" ||
+                                        invoice.status === "parcial" ||
+                                        invoice.amount_paid < invoice.total_amount) && (
+                                        <Button
+                                          size="sm"
+                                          variant="default"
+                                          asChild
+                                          className="gap-2 shrink-0"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
                                           <Link href={`/dashboard/invoices/${invoice.id}/payment`}>
                                             <CreditCard className="h-4 w-4" />
                                             Registrar Pagamento
