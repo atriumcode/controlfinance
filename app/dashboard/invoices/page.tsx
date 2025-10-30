@@ -78,39 +78,48 @@ export default function InvoicesPage() {
         return
       }
 
-      const { data: invoicesData, error: queryError } = await supabase
+      const { data: invoicesData, error: invoicesError } = await supabase
         .from("invoices")
-        .select(`
-          *,
-          amount_paid,
-          clients (
-            name,
-            document,
-            document_type,
-            city,
-            state
-          )
-        `)
+        .select("*")
         .eq("company_id", profileData.company_id)
         .order("created_at", { ascending: false })
         .limit(200)
 
-      console.log("[v0] Query error:", queryError)
-      console.log("[v0] Total invoices fetched:", invoicesData?.length)
-      console.log("[v0] Sample invoice data:", invoicesData?.[0])
-      console.log(
-        "[v0] Invoices with client_id but no clients object:",
-        invoicesData?.filter((inv) => inv.client_id && !inv.clients).length,
-      )
+      if (invoicesError) {
+        console.error("[v0] Error fetching invoices:", invoicesError)
+        setInvoices([])
+        setLoading(false)
+        return
+      }
 
-      // Log each invoice's client status
-      invoicesData?.forEach((inv) => {
-        console.log(
-          `[v0] Invoice ${inv.invoice_number}: client_id=${inv.client_id}, has clients object=${!!inv.clients}`,
-        )
-      })
+      // Get unique client IDs
+      const clientIds = [...new Set(invoicesData?.map((inv) => inv.client_id).filter(Boolean))]
 
-      setInvoices(invoicesData || [])
+      // Fetch clients separately
+      const { data: clientsData, error: clientsError } = await supabase
+        .from("clients")
+        .select("id, name, document, document_type, city, state")
+        .in("id", clientIds)
+
+      if (clientsError) {
+        console.error("[v0] Error fetching clients:", clientsError)
+      }
+
+      // Create a map of clients by ID
+      const clientsMap = new Map(clientsData?.map((client) => [client.id, client]) || [])
+
+      // Join invoices with clients manually
+      const invoicesWithClients = invoicesData?.map((invoice) => ({
+        ...invoice,
+        clients: invoice.client_id ? clientsMap.get(invoice.client_id) || null : null,
+      }))
+
+      console.log("[v0] Total invoices fetched:", invoicesWithClients?.length)
+      console.log("[v0] Total clients fetched:", clientsData?.length)
+      console.log("[v0] Invoices with client data:", invoicesWithClients?.filter((inv) => inv.clients).length)
+      console.log("[v0] Invoices without client data:", invoicesWithClients?.filter((inv) => !inv.clients).length)
+
+      setInvoices(invoicesWithClients || [])
     } catch (error) {
       console.error("Error fetching invoices:", error)
       router.push("/auth/login")
@@ -146,14 +155,6 @@ export default function InvoicesPage() {
 
   const cityGroups: CityGroup[] = invoices.reduce((groups: CityGroup[], invoice, index) => {
     if (!invoice.clients || !invoice.clients.city || !invoice.clients.state) {
-      console.warn(`Invoice ${invoice.invoice_number} has missing client data, adding to "Sem Cliente" group`)
-      console.log(`[v0] Invoice ${invoice.invoice_number} details:`, {
-        id: invoice.id,
-        client_id: invoice.client_id,
-        has_clients_object: !!invoice.clients,
-        clients_data: invoice.clients,
-      })
-
       const cityKey = "Sem Cliente"
       let cityGroup = groups.find((g) => g.city === cityKey)
 
