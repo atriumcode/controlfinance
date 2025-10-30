@@ -41,6 +41,18 @@ export default async function PaymentsPage() {
   // Get all invoices to calculate totals
   const { data: invoices } = await supabase.from("invoices").select("*").eq("company_id", profile.company_id)
 
+  console.log("[v0] Total de notas fiscais:", invoices?.length)
+  console.log(
+    "[v0] Notas por status:",
+    invoices?.reduce(
+      (acc, inv) => {
+        acc[inv.status] = (acc[inv.status] || 0) + 1
+        return acc
+      },
+      {} as Record<string, number>,
+    ),
+  )
+
   // Calculate totals
   const now = new Date()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -49,15 +61,39 @@ export default async function PaymentsPage() {
   const totalReceived =
     payments?.filter((p) => new Date(p.payment_date) >= startOfMonth).reduce((sum, p) => sum + Number(p.amount), 0) || 0
 
+  const pendingInvoices = invoices?.filter(
+    (inv) =>
+      inv.status === "pending" ||
+      inv.status === "Pendente" ||
+      inv.status === "pendente" ||
+      inv.status === "Parcial" ||
+      inv.status === "parcial",
+  )
+
+  console.log("[v0] Notas pendentes encontradas:", pendingInvoices?.length)
+  pendingInvoices?.forEach((inv) => {
+    console.log(
+      `[v0] NF ${inv.invoice_number}: Total=${inv.total_amount}, Pago=${inv.amount_paid || 0}, Restante=${Number(inv.total_amount) - Number(inv.amount_paid || 0)}`,
+    )
+  })
+
   const totalPending =
-    invoices
-      ?.filter((inv) => inv.status === "pending" || inv.status === "Parcial")
-      .reduce((sum, inv) => sum + (Number(inv.total_amount) - Number(inv.amount_paid || 0)), 0) || 0
+    pendingInvoices?.reduce((sum, inv) => {
+      const remaining = Number(inv.total_amount) - Number(inv.amount_paid || 0)
+      return sum + remaining
+    }, 0) || 0
+
+  console.log("[v0] Total A Receber calculado:", totalPending)
 
   const totalOverdue =
     invoices
-      ?.filter((inv) => inv.status === "pending" && inv.due_date && new Date(inv.due_date) < now)
-      .reduce((sum, inv) => sum + Number(inv.total_amount), 0) || 0
+      ?.filter(
+        (inv) =>
+          (inv.status === "pending" || inv.status === "Pendente" || inv.status === "pendente") &&
+          inv.due_date &&
+          new Date(inv.due_date) < now,
+      )
+      .reduce((sum, inv) => sum + (Number(inv.total_amount) - Number(inv.amount_paid || 0)), 0) || 0
 
   const last7Days =
     payments?.filter((p) => new Date(p.payment_date) >= sevenDaysAgo).reduce((sum, p) => sum + Number(p.amount), 0) || 0
