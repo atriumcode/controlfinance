@@ -57,6 +57,7 @@ export default function InvoicesPage() {
   const [expandedCities, setExpandedCities] = useState<Set<string>>(new Set())
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
+  const [initialExpansionDone, setInitialExpansionDone] = useState(false)
   const router = useRouter()
 
   const supabase = createClient()
@@ -106,6 +107,27 @@ export default function InvoicesPage() {
   useEffect(() => {
     fetchInvoices()
   }, [fetchInvoices])
+
+  useEffect(() => {
+    if (!initialExpansionDone && invoices.length > 0) {
+      const allCities = new Set<string>()
+      const allClients = new Set<string>()
+
+      invoices.forEach((invoice) => {
+        if (!invoice.clients || !invoice.clients.city || !invoice.clients.state) {
+          allCities.add("Sem Cliente, ")
+          allClients.add("unknown")
+        } else {
+          allCities.add(`${invoice.clients.city}, ${invoice.clients.state}`)
+          allClients.add(invoice.clients.document)
+        }
+      })
+
+      setExpandedCities(allCities)
+      setExpandedClients(allClients)
+      setInitialExpansionDone(true)
+    }
+  }, [invoices, initialExpansionDone])
 
   const cityGroups: CityGroup[] = invoices.reduce((groups: CityGroup[], invoice) => {
     if (!invoice.clients || !invoice.clients.city || !invoice.clients.state) {
