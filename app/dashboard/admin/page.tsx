@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
+import Link from "next/link"
 
 export const dynamic = "force-dynamic"
 
@@ -32,9 +33,10 @@ export default async function AdminPage() {
             <div className="space-y-2">
               <div className="text-2xl font-bold">0</div>
               <p className="text-xs text-muted-foreground">Empresas ativas</p>
-              <Button variant="outline" size="sm" className="w-full bg-transparent">
+              <Button variant="outline" size="sm" className="w-full bg-transparent" disabled>
                 Gerenciar
               </Button>
+              <p className="text-xs text-muted-foreground mt-1">Em desenvolvimento</p>
             </div>
           </CardContent>
         </Card>
@@ -48,9 +50,10 @@ export default async function AdminPage() {
             <div className="space-y-2">
               <div className="text-2xl font-bold">3</div>
               <p className="text-xs text-muted-foreground">Planos disponíveis</p>
-              <Button variant="outline" size="sm" className="w-full bg-transparent">
+              <Button variant="outline" size="sm" className="w-full bg-transparent" disabled>
                 Configurar
               </Button>
+              <p className="text-xs text-muted-foreground mt-1">Em desenvolvimento</p>
             </div>
           </CardContent>
         </Card>
@@ -64,8 +67,8 @@ export default async function AdminPage() {
             <div className="space-y-2">
               <div className="text-2xl font-bold">0</div>
               <p className="text-xs text-muted-foreground">Eventos hoje</p>
-              <Button variant="outline" size="sm" className="w-full bg-transparent">
-                Ver Logs
+              <Button variant="outline" size="sm" className="w-full bg-transparent" asChild>
+                <Link href="/dashboard/audit">Ver Logs</Link>
               </Button>
             </div>
           </CardContent>

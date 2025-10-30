@@ -2,7 +2,6 @@ import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
 
 export const dynamic = "force-dynamic"
 
@@ -19,9 +18,7 @@ export default async function PaymentMethodsPage() {
           <h2 className="text-3xl font-bold tracking-tight">Métodos de Pagamento</h2>
           <p className="text-muted-foreground">Configure formas de pagamento aceitas</p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/payment-methods/new">Adicionar Método</Link>
-        </Button>
+        {/* Removed "Adicionar Método" button since payment methods are hardcoded */}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

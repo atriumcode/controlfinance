@@ -132,6 +132,10 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
     invoice?.status === "overdue" ||
     (invoice?.amount_paid > 0 && invoice?.amount_paid < invoice?.total_amount)
 
+  console.log("[v0] Invoice ID:", id)
+  console.log("[v0] Invoice items count:", invoice?.invoice_items?.length || 0)
+  console.log("[v0] Invoice items:", invoice?.invoice_items)
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -279,20 +283,24 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
                 <CardTitle>Itens da Nota Fiscal</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {invoice.invoice_items?.map((item: any, index: number) => (
-                    <div key={index} className="flex justify-between items-start p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <p className="font-medium">{item.description}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Qtd: {item.quantity} × {formatCurrency(item.unit_price)}
-                          {item.tax_rate > 0 && <span className="ml-2">({item.tax_rate}% imposto)</span>}
-                        </p>
+                {!invoice.invoice_items || invoice.invoice_items.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum item encontrado nesta nota fiscal.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {invoice.invoice_items.map((item: any, index: number) => (
+                      <div key={index} className="flex justify-between items-start p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <p className="font-medium">{item.description}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Qtd: {item.quantity} × {formatCurrency(item.unit_price)}
+                            {item.tax_rate > 0 && <span className="ml-2">({item.tax_rate}% imposto)</span>}
+                          </p>
+                        </div>
+                        <p className="font-medium">{formatCurrency(item.total_price)}</p>
                       </div>
-                      <p className="font-medium">{formatCurrency(item.total_price)}</p>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
