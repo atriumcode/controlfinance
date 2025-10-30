@@ -109,7 +109,56 @@ export default function InvoicesPage() {
 
   const cityGroups: CityGroup[] = invoices.reduce((groups: CityGroup[], invoice) => {
     if (!invoice.clients || !invoice.clients.city || !invoice.clients.state) {
-      console.warn(`Invoice ${invoice.invoice_number} has missing client data, skipping grouping`)
+      console.warn(`Invoice ${invoice.invoice_number} has missing client data, adding to "Sem Cliente" group`)
+
+      const cityKey = "Sem Cliente"
+      let cityGroup = groups.find((g) => g.city === cityKey)
+
+      if (!cityGroup) {
+        cityGroup = {
+          city: cityKey,
+          state: "",
+          clientGroups: [],
+          totalInvoices: 0,
+          totalAmount: 0,
+          totalPaid: 0,
+          totalPending: 0,
+        }
+        groups.push(cityGroup)
+      }
+
+      const clientKey = "unknown"
+      let clientGroup = cityGroup.clientGroups.find((g) => g.client.document === clientKey)
+
+      if (!clientGroup) {
+        clientGroup = {
+          client: {
+            name: "Cliente Não Identificado",
+            document: "N/A",
+            document_type: "N/A",
+            city: "N/A",
+            state: "N/A",
+          },
+          invoices: [],
+          totalInvoices: 0,
+          totalAmount: 0,
+          totalPaid: 0,
+          totalPending: 0,
+        }
+        cityGroup.clientGroups.push(clientGroup)
+      }
+
+      clientGroup.invoices.push(invoice)
+      clientGroup.totalInvoices++
+      clientGroup.totalAmount += invoice.total_amount
+      clientGroup.totalPaid += invoice.amount_paid || 0
+      clientGroup.totalPending += invoice.total_amount - (invoice.amount_paid || 0)
+
+      cityGroup.totalInvoices++
+      cityGroup.totalAmount += invoice.total_amount
+      cityGroup.totalPaid += invoice.amount_paid || 0
+      cityGroup.totalPending += invoice.total_amount - (invoice.amount_paid || 0)
+
       return groups
     }
 
