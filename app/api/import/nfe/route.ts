@@ -109,19 +109,38 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Processando cliente...")
     let clientId = null
+    console.log("[v0] nfeData.client existe?", !!nfeData.client)
+    console.log("[v0] Dados do cliente:", JSON.stringify(nfeData.client, null, 2))
+
     if (nfeData.client) {
       try {
-        const { data: existingClient } = await supabase
+        console.log("[v0] Buscando cliente existente com documento:", nfeData.client.document)
+        const { data: existingClient, error: findError } = await supabase
           .from("clients")
           .select("id")
           .eq("company_id", user.company_id)
           .eq("document", nfeData.client.document)
           .maybeSingle()
 
+        console.log("[v0] Resultado da busca:", { existingClient, findError })
+
         if (existingClient) {
           clientId = existingClient.id
           console.log("[v0] Cliente existente encontrado:", clientId)
         } else {
+          console.log("[v0] Cliente não encontrado, criando novo...")
+          console.log("[v0] Dados para inserção:", {
+            company_id: user.company_id,
+            name: nfeData.client.name,
+            document: nfeData.client.document,
+            document_type: nfeData.client.document_type,
+            email: nfeData.client.email,
+            address: nfeData.client.address,
+            city: nfeData.client.city,
+            state: nfeData.client.state,
+            zip_code: nfeData.client.zip_code,
+          })
+
           const { data: newClient, error: clientError } = await supabase
             .from("clients")
             .insert({
@@ -137,6 +156,8 @@ export async function POST(request: NextRequest) {
             })
             .select("id")
             .single()
+
+          console.log("[v0] Resultado da criação:", { newClient, clientError })
 
           if (clientError) {
             console.log("[v0] Erro ao criar cliente:", clientError)
@@ -155,36 +176,45 @@ export async function POST(request: NextRequest) {
           { status: 500 },
         )
       }
+    } else {
+      console.log("[v0] AVISO: nfeData.client é null/undefined - nota será criada sem cliente!")
     }
 
+    console.log("[v0] clientId final antes de criar nota:", clientId)
     console.log("[v0] Criando nota fiscal...")
     let invoice
     try {
-      const { data: invoiceData, error: invoiceError } = await supabase
+      const invoiceData = {
+        company_id: user.company_id,
+        client_id: clientId,
+        invoice_number: nfeData.invoice.number,
+        nfe_key: nfeData.invoice.nfe_key,
+        issue_date: nfeData.invoice.issue_date,
+        due_date: nfeData.invoice.due_date,
+        total_amount: nfeData.invoice.total_amount,
+        tax_amount: nfeData.invoice.tax_amount,
+        discount_amount: nfeData.invoice.discount_amount,
+        net_amount: nfeData.invoice.net_amount,
+        status: "pending",
+        xml_content: xmlContent,
+      }
+
+      console.log("[v0] Dados da nota para inserção:", JSON.stringify(invoiceData, null, 2))
+
+      const { data: invoiceResult, error: invoiceError } = await supabase
         .from("invoices")
-        .insert({
-          company_id: user.company_id,
-          client_id: clientId,
-          invoice_number: nfeData.invoice.number,
-          nfe_key: nfeData.invoice.nfe_key,
-          issue_date: nfeData.invoice.issue_date,
-          due_date: nfeData.invoice.due_date,
-          total_amount: nfeData.invoice.total_amount,
-          tax_amount: nfeData.invoice.tax_amount,
-          discount_amount: nfeData.invoice.discount_amount,
-          net_amount: nfeData.invoice.net_amount,
-          status: "pending",
-          xml_content: xmlContent,
-        })
-        .select("id")
+        .insert(invoiceData)
+        .select("id, client_id")
         .single()
+
+      console.log("[v0] Resultado da criação da nota:", { invoiceResult, invoiceError })
 
       if (invoiceError) {
         console.log("[v0] Erro ao criar nota fiscal:", invoiceError)
         return NextResponse.json({ error: "Erro ao criar nota fiscal", details: invoiceError.message }, { status: 500 })
       }
-      invoice = invoiceData
-      console.log("[v0] Nota fiscal criada:", invoice.id)
+      invoice = invoiceResult
+      console.log("[v0] Nota fiscal criada:", invoice.id, "com client_id:", invoice.client_id)
     } catch (invoiceError) {
       console.log("[v0] Erro ao processar nota fiscal:", invoiceError)
       return NextResponse.json(

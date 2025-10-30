@@ -46,10 +46,15 @@ export async function parseNFeXML(xmlContent: string): Promise<NFEData> {
     const result = parser.parse(xmlContent)
     console.log("[v0] XML parsed successfully, extracting data...")
 
+    console.log("[v0] Full XML structure keys:", Object.keys(result))
+    console.log("[v0] Full XML structure:", JSON.stringify(result, null, 2).substring(0, 1000))
+
     // Navigate through the XML structure
     const nfeProc = result.nfeProc || result
     const nfe = nfeProc.NFe || nfeProc.nfe || nfeProc
     const infNFe = nfe.infNFe || nfe.infNfe || {}
+
+    console.log("[v0] infNFe keys:", Object.keys(infNFe))
 
     // Extract NFe key from Id attribute
     const nfeKey = (infNFe["@_Id"] || infNFe["@_id"] || "").replace("NFe", "")
@@ -73,12 +78,14 @@ export async function parseNFeXML(xmlContent: string): Promise<NFEData> {
     const dest = infNFe.dest || {}
     let client = null
 
+    console.log("[v0] dest object:", JSON.stringify(dest, null, 2))
     console.log("[v0] Extracting client data from dest:", {
       hasDest: !!dest,
       hasXNome: !!dest.xNome,
       hasCNPJ: !!dest.CNPJ,
       hasCPF: !!dest.CPF,
       destKeys: Object.keys(dest),
+      destStringified: JSON.stringify(dest).substring(0, 500),
     })
 
     if (dest && (dest.xNome || dest.CNPJ || dest.CPF)) {
@@ -115,10 +122,16 @@ export async function parseNFeXML(xmlContent: string): Promise<NFEData> {
         }
         console.log("[v0] Client object created successfully")
       } else {
-        console.warn("[v0] Client data incomplete - missing name or document")
+        console.warn("[v0] Client data incomplete - missing name or document", {
+          hasName: !!clientName,
+          hasDocument: !!clientDocument,
+          clientName,
+          clientDocument,
+        })
       }
     } else {
       console.warn("[v0] No client data found in XML (dest section missing or empty)")
+      console.warn("[v0] Available infNFe sections:", Object.keys(infNFe))
     }
 
     // Extract items
