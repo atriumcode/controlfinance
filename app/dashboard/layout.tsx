@@ -2,7 +2,7 @@ import type React from "react"
 import { requireAuth } from "@/lib/auth/actions"
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 
 export const dynamic = "force-dynamic"
 
@@ -13,8 +13,7 @@ export default async function DashboardLayout({
 }) {
   const user = await requireAuth()
 
-  // Get company info using the user's company_id
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data: company } = await supabase.from("companies").select("name, cnpj").eq("id", user.company_id).single()
 
   return (

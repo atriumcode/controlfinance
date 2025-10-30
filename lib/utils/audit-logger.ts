@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 
 export interface AuditLogData {
   action: string
@@ -14,7 +14,7 @@ export interface AuditLogData {
 
 export async function createAuditLog(data: AuditLogData) {
   try {
-    const supabase = createServerClient()
+    const supabase = createAdminClient()
 
     const auditLog = {
       ...data,

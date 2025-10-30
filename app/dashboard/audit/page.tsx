@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { AuditLogsTable } from "@/components/audit/audit-logs-table"
 import { AuditStats } from "@/components/audit/audit-stats"
@@ -13,7 +13,7 @@ export default async function AuditPage() {
     redirect("/auth/login")
   }
 
-  const supabase = createServerClient()
+  const supabase = createAdminClient()
 
   const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
 

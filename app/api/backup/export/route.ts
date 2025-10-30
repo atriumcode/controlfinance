@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     }
 
     const companyId = user.company_id
-    const supabase = await createServerClient()
+    const supabase = createAdminClient()
 
     // Export all company data
     const [{ data: company }, { data: profiles }, { data: clients }, { data: invoices }, { data: audit_logs }] =

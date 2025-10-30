@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { createServerClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
@@ -8,7 +8,7 @@ import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
 export default async function ClientsPage() {
   const user = await getAuthenticatedUser()
-  const supabase = await createServerClient()
+  const supabase = createAdminClient()
 
   // Get user's company
   const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()

@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { cache } from "react"
-import { createServerClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 
 const SESSION_COOKIE_NAME = "auth_session"
 
@@ -12,7 +12,7 @@ export const getAuthenticatedUser = cache(async () => {
     return null
   }
 
-  const supabase = await createServerClient()
+  const supabase = createAdminClient()
 
   const { data, error } = await supabase
     .from("sessions")

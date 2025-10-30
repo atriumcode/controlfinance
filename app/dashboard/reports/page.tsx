@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { createServerClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 import Link from "next/link"
 import { ReportsOverview } from "@/components/reports/reports-overview"
@@ -9,7 +9,7 @@ import { PaymentMethodsReport } from "@/components/reports/payment-methods-repor
 
 export default async function ReportsPage() {
   const user = await getAuthenticatedUser()
-  const supabase = await createServerClient()
+  const supabase = createAdminClient()
 
   // Get user's company
   const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()

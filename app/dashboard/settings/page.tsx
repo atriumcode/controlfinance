@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { CompanyForm } from "@/components/settings/company-form"
 import { ThemeSelector } from "@/components/settings/theme-selector"
@@ -10,26 +10,19 @@ import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 export const dynamic = "force-dynamic"
 
 export default async function SettingsPage() {
-  console.log("[v0] Settings page - loading")
-
   const user = await getAuthenticatedUser()
 
   if (!user) {
-    console.log("[v0] Settings - no user found, redirecting to login")
     redirect("/auth/login")
   }
 
-  console.log("[v0] Settings - user authenticated:", user.id)
-
-  const supabase = await createServerClient()
+  const supabase = createAdminClient()
 
   const { data: company } = await supabase
     .from("companies")
     .select("*")
     .eq("id", user.company_id || "")
     .single()
-
-  console.log("[v0] Settings - user:", !!user, "company:", !!company)
 
   return (
     <div className="container mx-auto py-6 px-4">

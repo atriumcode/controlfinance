@@ -1,6 +1,6 @@
 // Gerenciamento de sessões de usuário
 import { cookies } from "next/headers"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import crypto from "crypto"
 
 const SESSION_COOKIE_NAME = "auth_session"
@@ -27,7 +27,7 @@ function generateToken(): string {
 }
 
 export async function createSession(userId: string): Promise<string> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const token = generateToken()
   const expiresAt = new Date(Date.now() + SESSION_DURATION)
 
@@ -66,7 +66,7 @@ export async function getSession(): Promise<{
     return { session: null, user: null }
   }
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   // Buscar sessão
   const { data: session, error: sessionError } = await supabase.from("sessions").select("*").eq("token", token).single()
@@ -100,7 +100,7 @@ export async function deleteSession(token?: string): Promise<void> {
   const sessionToken = token || cookieStore.get(SESSION_COOKIE_NAME)?.value
 
   if (sessionToken) {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
     await supabase.from("sessions").delete().eq("token", sessionToken)
   }
 

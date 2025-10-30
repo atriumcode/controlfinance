@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { getSession } from "@/lib/auth/session"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,7 +18,7 @@ export default async function DashboardPage() {
     redirect("/auth/login")
   }
 
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const [profileResult, invoicesResult, clientsCountResult] = await Promise.all([
     // Get user profile and company info

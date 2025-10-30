@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { ComplianceOverview } from "@/components/compliance/compliance-overview"
 import { ComplianceReports } from "@/components/compliance/compliance-reports"
@@ -7,7 +7,7 @@ import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 export const dynamic = "force-dynamic"
 
 export default async function CompliancePage() {
-  const supabase = createServerClient()
+  const supabase = createAdminClient()
 
   try {
     const user = await getAuthenticatedUser()

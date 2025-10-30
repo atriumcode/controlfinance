@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { hashPassword, verifyPassword, validatePassword } from "./password"
 import { createSession, deleteSession, requireAuth as requireAuthSession } from "./session"
@@ -51,7 +51,7 @@ export async function registerUserAction(formData: FormData) {
   }
 
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     const { data: existingUsers, error: countError } = await supabase
       .from("profiles")
@@ -144,7 +144,7 @@ export async function loginUserAction(formData: FormData) {
   }
 
   try {
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // Buscar usuário
     const { data: user, error: userError } = await supabase
