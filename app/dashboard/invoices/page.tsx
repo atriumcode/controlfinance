@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ChevronDown, ChevronRight, FileText, MapPin } from "lucide-react"
+import { ChevronDown, ChevronRight, FileText, MapPin, CreditCard } from "lucide-react"
 import Link from "next/link"
 import { InvoiceStats } from "@/components/invoices/invoice-stats"
 
@@ -324,13 +324,15 @@ export default function InvoicesPage() {
                           <CardContent className="pt-0">
                             <div className="space-y-2">
                               {group.invoices.map((invoice) => (
-                                <Link
+                                <div
                                   key={invoice.id}
-                                  href={`/dashboard/invoices/${invoice.id}`}
-                                  className="block p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                                  className="p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                                 >
                                   <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
+                                    <Link
+                                      href={`/dashboard/invoices/${invoice.id}`}
+                                      className="flex items-center gap-3 flex-1"
+                                    >
                                       <FileText className="h-4 w-4 text-muted-foreground" />
                                       <div>
                                         <p className="font-medium">NF-e {invoice.invoice_number}</p>
@@ -338,7 +340,7 @@ export default function InvoicesPage() {
                                           Emitida em {new Date(invoice.issue_date).toLocaleDateString("pt-BR")}
                                         </p>
                                       </div>
-                                    </div>
+                                    </Link>
 
                                     <div className="flex items-center gap-4">
                                       <div className="text-right">
@@ -356,9 +358,19 @@ export default function InvoicesPage() {
                                       <Badge className={getStatusColor(invoice.status)}>
                                         {getStatusLabel(invoice.status)}
                                       </Badge>
+                                      {(invoice.status === "pending" ||
+                                        invoice.status === "partial" ||
+                                        invoice.status === "Parcial") && (
+                                        <Button size="sm" variant="default" asChild className="gap-2">
+                                          <Link href={`/dashboard/invoices/${invoice.id}/payment`}>
+                                            <CreditCard className="h-4 w-4" />
+                                            Registrar Pagamento
+                                          </Link>
+                                        </Button>
+                                      )}
                                     </div>
                                   </div>
-                                </Link>
+                                </div>
                               ))}
                             </div>
                           </CardContent>
