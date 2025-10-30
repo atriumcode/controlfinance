@@ -73,6 +73,14 @@ export async function parseNFeXML(xmlContent: string): Promise<NFEData> {
     const dest = infNFe.dest || {}
     let client = null
 
+    console.log("[v0] Extracting client data from dest:", {
+      hasDest: !!dest,
+      hasXNome: !!dest.xNome,
+      hasCNPJ: !!dest.CNPJ,
+      hasCPF: !!dest.CPF,
+      destKeys: Object.keys(dest),
+    })
+
     if (dest && (dest.xNome || dest.CNPJ || dest.CPF)) {
       const clientName = dest.xNome || ""
       const clientCNPJ = dest.CNPJ || ""
@@ -87,7 +95,13 @@ export async function parseNFeXML(xmlContent: string): Promise<NFEData> {
       const state = enderDest.UF || ""
       const zipCode = enderDest.CEP || ""
 
-      console.log("[v0] Client:", clientName, "Document:", clientDocument)
+      console.log("[v0] Client data extracted:", {
+        name: clientName,
+        document: clientDocument,
+        documentType,
+        city,
+        state,
+      })
 
       if (clientName && clientDocument) {
         client = {
@@ -99,7 +113,12 @@ export async function parseNFeXML(xmlContent: string): Promise<NFEData> {
           state,
           zip_code: String(zipCode),
         }
+        console.log("[v0] Client object created successfully")
+      } else {
+        console.warn("[v0] Client data incomplete - missing name or document")
       }
+    } else {
+      console.warn("[v0] No client data found in XML (dest section missing or empty)")
     }
 
     // Extract items
