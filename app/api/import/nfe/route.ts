@@ -5,29 +5,21 @@ import { createAdminClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("[v0] Starting NFe import process")
-
     const { user } = await getAuthenticatedUser()
-    console.log("[v0] User authenticated:", user.id, "Company:", user.company_id)
 
     if (!user.company_id) {
       return NextResponse.json({ error: "Empresa não configurada" }, { status: 400 })
     }
 
     const { xmlContent, fileName } = await request.json()
-    console.log("[v0] Received XML file:", fileName)
 
     if (!xmlContent) {
       return NextResponse.json({ error: "Conteúdo XML não fornecido" }, { status: 400 })
     }
 
-    console.log("[v0] Parsing NFe XML...")
     const nfeData = await parseNFeXML(xmlContent)
-    console.log("[v0] NFe parsed successfully:", nfeData.invoice.number, "Items:", nfeData.items.length)
-
     const supabase = createAdminClient()
 
-    console.log("[v0] Checking for duplicate invoice with key:", nfeData.invoice.nfe_key)
     const { data: existingInvoice } = await supabase
       .from("invoices")
       .select("id")
@@ -36,14 +28,11 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     if (existingInvoice) {
-      console.log("[v0] Invoice already exists:", existingInvoice.id)
       return NextResponse.json({ error: "XML já importado" }, { status: 409 })
     }
 
     let clientId = null
     if (nfeData.client) {
-      console.log("[v0] Processing client:", nfeData.client.name, nfeData.client.document)
-
       const { data: existingClient } = await supabase
         .from("clients")
         .select("id")
@@ -52,10 +41,8 @@ export async function POST(request: NextRequest) {
         .maybeSingle()
 
       if (existingClient) {
-        console.log("[v0] Client already exists:", existingClient.id)
         clientId = existingClient.id
       } else {
-        console.log("[v0] Creating new client...")
         const { data: newClient, error: clientError } = await supabase
           .from("clients")
           .insert({
@@ -73,15 +60,12 @@ export async function POST(request: NextRequest) {
           .single()
 
         if (clientError) {
-          console.error("[v0] Error creating client:", clientError)
           throw new Error(`Erro ao criar cliente: ${clientError.message}`)
         }
-        console.log("[v0] Client created:", newClient.id)
         clientId = newClient.id
       }
     }
 
-    console.log("[v0] Creating invoice...")
     const { data: invoice, error: invoiceError } = await supabase
       .from("invoices")
       .insert({
@@ -102,13 +86,10 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (invoiceError) {
-      console.error("[v0] Error creating invoice:", invoiceError)
       throw new Error(`Erro ao criar nota fiscal: ${invoiceError.message}`)
     }
-    console.log("[v0] Invoice created:", invoice.id)
 
     if (nfeData.items && nfeData.items.length > 0) {
-      console.log("[v0] Creating", nfeData.items.length, "invoice items...")
       const items = nfeData.items.map((item: any) => ({
         invoice_id: invoice.id,
         description: item.description,
@@ -121,35 +102,31 @@ export async function POST(request: NextRequest) {
       const { error: itemsError } = await supabase.from("invoice_items").insert(items)
 
       if (itemsError) {
-        console.error("[v0] Error creating invoice items:", itemsError)
         throw new Error(`Erro ao criar itens da nota: ${itemsError.message}`)
       }
-      console.log("[v0] Invoice items created successfully")
     }
 
-    console.log("[v0] Recording import history...")
-    const { error: historyError } = await supabase.from("import_history").insert({
-      company_id: user.company_id,
-      file_name: fileName,
-      file_type: "nfe",
-      status: "success",
-      records_imported: nfeData.items.length,
-      imported_by: user.id,
-    })
-
-    if (historyError) {
-      console.error("[v0] Error recording import history:", historyError)
+    try {
+      await supabase.from("import_history").insert({
+        company_id: user.company_id,
+        file_name: fileName,
+        file_type: "nfe",
+        status: "success",
+        records_imported: nfeData.items.length,
+        imported_by: user.id,
+      })
+    } catch (historyError) {
+      console.error("Failed to record import history:", historyError)
       // Don't fail the import if history recording fails
     }
 
-    console.log("[v0] NFe import completed successfully!")
     return NextResponse.json({
       success: true,
       invoice_id: invoice.id,
       nfe_data: nfeData,
     })
   } catch (error) {
-    console.error("[v0] Error processing NFe import:", error)
+    console.error("Error processing NFe import:", error)
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Erro ao processar arquivo",
