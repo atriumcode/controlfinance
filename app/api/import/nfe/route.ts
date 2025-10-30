@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 import { parseNFeXML } from "@/lib/utils/nfe-parser"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const nfeData = await parseNFeXML(xmlContent)
     console.log("[v0] NFe parsed successfully:", nfeData.invoice.number, "Items:", nfeData.items.length)
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     console.log("[v0] Checking for duplicate invoice with key:", nfeData.invoice.nfe_key)
     const { data: existingInvoice } = await supabase
