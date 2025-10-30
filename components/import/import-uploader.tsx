@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Upload, FileText, CheckCircle, XCircle, AlertCircle } from "lucide-react"
-import { parseNFeXML } from "@/lib/utils/nfe-parser"
-import { createClient } from "@/lib/supabase/client"
 
 interface UploadedFile {
   file: File
@@ -39,144 +37,49 @@ export function ImportUploader() {
 
   const processFiles = async () => {
     setIsProcessing(true)
-    const supabase = createClient()
 
-    try {
-      const profileResponse = await fetch("/api/user/profile")
-      if (!profileResponse.ok) {
-        throw new Error("Erro ao obter perfil do usuário")
-      }
+    for (let i = 0; i < uploadedFiles.length; i++) {
+      const uploadedFile = uploadedFiles[i]
+      if (uploadedFile.status !== "pending") continue
 
-      const profileData = await profileResponse.json()
-      const companyId = profileData.company_id
+      setUploadedFiles((prev) => prev.map((f, index) => (index === i ? { ...f, status: "processing" } : f)))
 
-      if (!companyId) {
-        throw new Error("Empresa não configurada")
-      }
+      try {
+        const fileContent = await uploadedFile.file.text()
 
-      for (let i = 0; i < uploadedFiles.length; i++) {
-        const uploadedFile = uploadedFiles[i]
-        if (uploadedFile.status !== "pending") continue
+        const response = await fetch("/api/import/nfe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            xmlContent: fileContent,
+            fileName: uploadedFile.file.name,
+          }),
+        })
 
-        // Update status to processing
-        setUploadedFiles((prev) => prev.map((f, index) => (index === i ? { ...f, status: "processing" } : f)))
+        const data = await response.json()
 
-        try {
-          // Read file content
-          const fileContent = await uploadedFile.file.text()
-
-          // Parse NF-e XML
-          const nfeData = await parseNFeXML(fileContent)
-
-          const { data: existingInvoice } = await supabase
-            .from("invoices")
-            .select("id")
-            .eq("company_id", companyId)
-            .eq("nfe_key", nfeData.invoice.nfe_key)
-            .single()
-
-          if (existingInvoice) {
-            throw new Error("XML já importado")
-          }
-
-          // Check if client exists or create new one
-          let clientId = null
-          if (nfeData.client) {
-            const { data: existingClient } = await supabase
-              .from("clients")
-              .select("id")
-              .eq("company_id", companyId)
-              .eq("document", nfeData.client.document)
-              .single()
-
-            if (existingClient) {
-              clientId = existingClient.id
-            } else {
-              // Create new client
-              const { data: newClient, error: clientError } = await supabase
-                .from("clients")
-                .insert([
-                  {
-                    company_id: companyId,
-                    name: nfeData.client.name,
-                    document: nfeData.client.document,
-                    document_type: nfeData.client.document_type,
-                    email: nfeData.client.email,
-                    address: nfeData.client.address,
-                    city: nfeData.client.city,
-                    state: nfeData.client.state,
-                    zip_code: nfeData.client.zip_code,
-                  },
-                ])
-                .select("id")
-                .single()
-
-              if (clientError) throw clientError
-              clientId = newClient.id
-            }
-          }
-
-          // Create invoice
-          const { data: invoice, error: invoiceError } = await supabase
-            .from("invoices")
-            .insert([
-              {
-                company_id: companyId,
-                client_id: clientId,
-                invoice_number: nfeData.invoice.number,
-                nfe_key: nfeData.invoice.nfe_key,
-                issue_date: nfeData.invoice.issue_date,
-                due_date: nfeData.invoice.due_date,
-                total_amount: nfeData.invoice.total_amount,
-                tax_amount: nfeData.invoice.tax_amount,
-                discount_amount: nfeData.invoice.discount_amount,
-                net_amount: nfeData.invoice.net_amount,
-                status: "pending",
-                xml_content: fileContent,
-              },
-            ])
-            .select("id")
-            .single()
-
-          if (invoiceError) throw invoiceError
-
-          // Create invoice items
-          if (nfeData.items && nfeData.items.length > 0) {
-            const items = nfeData.items.map((item: any) => ({
-              invoice_id: invoice.id,
-              description: item.description,
-              quantity: item.quantity,
-              unit_price: item.unit_price,
-              total_price: item.total_price,
-              tax_rate: item.tax_rate || 0,
-            }))
-
-            const { error: itemsError } = await supabase.from("invoice_items").insert(items)
-            if (itemsError) throw itemsError
-          }
-
-          // Update status to success
-          setUploadedFiles((prev) =>
-            prev.map((f, index) => (index === i ? { ...f, status: "success", result: nfeData } : f)),
-          )
-        } catch (error) {
-          // Update status to error
-          setUploadedFiles((prev) =>
-            prev.map((f, index) =>
-              index === i
-                ? {
-                    ...f,
-                    status: "error",
-                    error: error instanceof Error ? error.message : "Erro ao processar arquivo",
-                  }
-                : f,
-            ),
-          )
+        if (!response.ok) {
+          throw new Error(data.error || "Erro ao processar arquivo")
         }
+
+        setUploadedFiles((prev) =>
+          prev.map((f, index) => (index === i ? { ...f, status: "success", result: data.nfe_data } : f)),
+        )
+      } catch (error) {
+        setUploadedFiles((prev) =>
+          prev.map((f, index) =>
+            index === i
+              ? {
+                  ...f,
+                  status: "error",
+                  error: error instanceof Error ? error.message : "Erro ao processar arquivo",
+                }
+              : f,
+          ),
+        )
       }
-    } catch (error) {
-      // Handle authentication error
-      alert(error instanceof Error ? error.message : "Erro ao processar arquivos")
     }
 
     setIsProcessing(false)
@@ -187,9 +90,6 @@ export function ImportUploader() {
   }
 
   const pendingFiles = uploadedFiles.filter((f) => f.status === "pending")
-  const processedFiles = uploadedFiles.filter((f) => f.status !== "pending")
-  const successCount = uploadedFiles.filter((f) => f.status === "success").length
-  const errorCount = uploadedFiles.filter((f) => f.status === "error").length
 
   return (
     <div className="space-y-6">
