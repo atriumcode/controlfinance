@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import { ClientForm } from "@/components/clients/client-form"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
@@ -10,7 +10,7 @@ interface EditClientPageProps {
 
 export default async function EditClientPage({ params }: EditClientPageProps) {
   const { id } = await params
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const user = await getAuthenticatedUser()
 
