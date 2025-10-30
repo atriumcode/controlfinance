@@ -39,7 +39,7 @@ export async function parseNFeXML(xmlContent: string): Promise<NFEData> {
       ignoreAttributes: false,
       attributeNamePrefix: "@_",
       textNodeName: "#text",
-      parseAttributeValue: true,
+      parseAttributeValue: false,
       trimValues: true,
     })
 
@@ -83,10 +83,10 @@ export async function parseNFeXML(xmlContent: string): Promise<NFEData> {
 
     if (dest && (dest.xNome || dest.CNPJ || dest.CPF)) {
       const clientName = dest.xNome || ""
-      const clientCNPJ = dest.CNPJ || ""
-      const clientCPF = dest.CPF || ""
-      const clientDocument = clientCNPJ || clientCPF || ""
-      const documentType = clientCNPJ ? "cnpj" : "cpf"
+      const clientCNPJ = String(dest.CNPJ || "").padStart(14, "0")
+      const clientCPF = String(dest.CPF || "").padStart(11, "0")
+      const clientDocument = clientCNPJ !== "00000000000000" ? clientCNPJ : clientCPF !== "00000000000" ? clientCPF : ""
+      const documentType = clientCNPJ !== "00000000000000" ? "cnpj" : "cpf"
 
       // Extract address
       const enderDest = dest.enderDest || {}
@@ -106,12 +106,12 @@ export async function parseNFeXML(xmlContent: string): Promise<NFEData> {
       if (clientName && clientDocument) {
         client = {
           name: clientName,
-          document: String(clientDocument),
+          document: clientDocument,
           document_type: documentType as "cpf" | "cnpj",
           address,
           city,
           state,
-          zip_code: String(zipCode),
+          zip_code: String(zipCode).padStart(8, "0"),
         }
         console.log("[v0] Client object created successfully")
       } else {

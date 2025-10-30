@@ -90,9 +90,13 @@ export function ClientForm({ client }: ClientFormProps) {
       const { company_id } = await response.json()
       if (!company_id) throw new Error("Empresa não encontrada")
 
+      const cleanDocument = formData.document.replace(/\D/g, "")
+      const paddedDocument =
+        formData.document_type === "cpf" ? cleanDocument.padStart(11, "0") : cleanDocument.padStart(14, "0")
+
       const clientData = {
         ...formData,
-        document: formData.document.replace(/\D/g, ""), // Store clean document
+        document: paddedDocument,
         company_id,
       }
 
