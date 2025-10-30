@@ -66,6 +66,7 @@ export default async function PaymentsPage() {
       inv.status === "pending" ||
       inv.status === "Pendente" ||
       inv.status === "pendente" ||
+      inv.status === "partial" || // Added this - payment form uses "partial" in English
       inv.status === "Parcial" ||
       inv.status === "parcial",
   )
@@ -73,7 +74,7 @@ export default async function PaymentsPage() {
   console.log("[v0] Notas pendentes encontradas:", pendingInvoices?.length)
   pendingInvoices?.forEach((inv) => {
     console.log(
-      `[v0] NF ${inv.invoice_number}: Total=${inv.total_amount}, Pago=${inv.amount_paid || 0}, Restante=${Number(inv.total_amount) - Number(inv.amount_paid || 0)}`,
+      `[v0] NF ${inv.invoice_number}: Status=${inv.status}, Total=${inv.total_amount}, Pago=${inv.amount_paid || 0}, Restante=${Number(inv.total_amount) - Number(inv.amount_paid || 0)}`,
     )
   })
 
@@ -89,7 +90,12 @@ export default async function PaymentsPage() {
     invoices
       ?.filter(
         (inv) =>
-          (inv.status === "pending" || inv.status === "Pendente" || inv.status === "pendente") &&
+          (inv.status === "pending" ||
+            inv.status === "Pendente" ||
+            inv.status === "pendente" ||
+            inv.status === "partial" || // Added this
+            inv.status === "Parcial" ||
+            inv.status === "parcial") &&
           inv.due_date &&
           new Date(inv.due_date) < now,
       )
