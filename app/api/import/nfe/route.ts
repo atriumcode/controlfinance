@@ -250,6 +250,12 @@ export async function POST(request: NextRequest) {
       success: true,
       invoice_id: invoice.id,
       message: "NFe importada com sucesso",
+      debug: {
+        hasClient: !!nfeData.client,
+        clientData: nfeData.client,
+        invoiceNumber: nfeData.invoice.number,
+        itemsCount: nfeData.items?.length || 0,
+      },
     })
   } catch (error) {
     console.log("[v0] Erro inesperado:", error)
