@@ -4,12 +4,17 @@ import { parseNFeXML } from "@/lib/utils/nfe-parser"
 import { createAdminClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
+  console.log("[v0] API /api/import/nfe chamada")
+
   try {
+    console.log("[v0] Iniciando autenticação...")
     let user
     try {
       const authResult = await getAuthenticatedUser()
       user = authResult.user
+      console.log("[v0] Usuário autenticado:", user.id, "company_id:", user.company_id)
     } catch (authError) {
+      console.log("[v0] Erro de autenticação:", authError)
       return NextResponse.json(
         { error: "Erro de autenticação", details: authError instanceof Error ? authError.message : String(authError) },
         { status: 401 },
@@ -17,15 +22,19 @@ export async function POST(request: NextRequest) {
     }
 
     if (!user.company_id) {
+      console.log("[v0] Empresa não configurada")
       return NextResponse.json({ error: "Empresa não configurada" }, { status: 400 })
     }
 
+    console.log("[v0] Lendo dados da requisição...")
     let xmlContent, fileName
     try {
       const body = await request.json()
       xmlContent = body.xmlContent
       fileName = body.fileName
+      console.log("[v0] Arquivo:", fileName, "Tamanho XML:", xmlContent?.length)
     } catch (parseError) {
+      console.log("[v0] Erro ao ler dados:", parseError)
       return NextResponse.json(
         {
           error: "Erro ao ler dados da requisição",
@@ -36,13 +45,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (!xmlContent) {
+      console.log("[v0] Conteúdo XML vazio")
       return NextResponse.json({ error: "Conteúdo XML não fornecido" }, { status: 400 })
     }
 
+    console.log("[v0] Parseando XML...")
     let nfeData
     try {
       nfeData = await parseNFeXML(xmlContent)
+      console.log("[v0] XML parseado com sucesso. Itens:", nfeData.items?.length)
     } catch (parseError) {
+      console.log("[v0] Erro ao parsear XML:", parseError)
       return NextResponse.json(
         {
           error: "Erro ao processar XML",
@@ -52,10 +65,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log("[v0] Criando cliente admin Supabase...")
     let supabase
     try {
       supabase = createAdminClient()
+      console.log("[v0] Cliente admin criado com sucesso")
     } catch (clientError) {
+      console.log("[v0] Erro ao criar cliente:", clientError)
       return NextResponse.json(
         {
           error: "Erro ao conectar ao banco de dados",
@@ -65,18 +81,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log("[v0] Verificando duplicatas...")
     try {
-      const { data: existingInvoice } = await supabase
+      const { data: existingInvoice, error: checkError } = await supabase
         .from("invoices")
         .select("id")
         .eq("company_id", user.company_id)
         .eq("nfe_key", nfeData.invoice.nfe_key)
         .maybeSingle()
 
+      if (checkError) {
+        console.log("[v0] Erro na query de duplicatas:", checkError)
+        throw checkError
+      }
+
       if (existingInvoice) {
+        console.log("[v0] XML já importado")
         return NextResponse.json({ error: "XML já importado anteriormente" }, { status: 409 })
       }
+      console.log("[v0] Nenhuma duplicata encontrada")
     } catch (checkError) {
+      console.log("[v0] Erro ao verificar duplicatas:", checkError)
       return NextResponse.json(
         {
           error: "Erro ao verificar duplicatas",
@@ -86,6 +111,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log("[v0] Processando cliente...")
     let clientId = null
     if (nfeData.client) {
       try {
@@ -98,6 +124,7 @@ export async function POST(request: NextRequest) {
 
         if (existingClient) {
           clientId = existingClient.id
+          console.log("[v0] Cliente existente encontrado:", clientId)
         } else {
           const { data: newClient, error: clientError } = await supabase
             .from("clients")
@@ -116,11 +143,14 @@ export async function POST(request: NextRequest) {
             .single()
 
           if (clientError) {
+            console.log("[v0] Erro ao criar cliente:", clientError)
             return NextResponse.json({ error: "Erro ao criar cliente", details: clientError.message }, { status: 500 })
           }
           clientId = newClient.id
+          console.log("[v0] Novo cliente criado:", clientId)
         }
       } catch (clientError) {
+        console.log("[v0] Erro ao processar cliente:", clientError)
         return NextResponse.json(
           {
             error: "Erro ao processar cliente",
@@ -131,6 +161,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    console.log("[v0] Criando nota fiscal...")
     let invoice
     try {
       const { data: invoiceData, error: invoiceError } = await supabase
@@ -153,10 +184,13 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (invoiceError) {
+        console.log("[v0] Erro ao criar nota fiscal:", invoiceError)
         return NextResponse.json({ error: "Erro ao criar nota fiscal", details: invoiceError.message }, { status: 500 })
       }
       invoice = invoiceData
+      console.log("[v0] Nota fiscal criada:", invoice.id)
     } catch (invoiceError) {
+      console.log("[v0] Erro ao processar nota fiscal:", invoiceError)
       return NextResponse.json(
         {
           error: "Erro ao processar nota fiscal",
@@ -166,6 +200,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log("[v0] Criando itens da nota...")
     if (nfeData.items && nfeData.items.length > 0) {
       try {
         const items = nfeData.items.map((item: any) => ({
@@ -180,12 +215,15 @@ export async function POST(request: NextRequest) {
         const { error: itemsError } = await supabase.from("invoice_items").insert(items)
 
         if (itemsError) {
+          console.log("[v0] Erro ao criar itens:", itemsError)
           return NextResponse.json(
             { error: "Erro ao criar itens da nota", details: itemsError.message },
             { status: 500 },
           )
         }
+        console.log("[v0] Itens criados com sucesso:", items.length)
       } catch (itemsError) {
+        console.log("[v0] Erro ao processar itens:", itemsError)
         return NextResponse.json(
           {
             error: "Erro ao processar itens",
@@ -196,6 +234,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    console.log("[v0] Registrando histórico...")
     try {
       await supabase.from("import_history").insert({
         company_id: user.company_id,
@@ -205,16 +244,19 @@ export async function POST(request: NextRequest) {
         records_imported: nfeData.items.length,
         imported_by: user.id,
       })
+      console.log("[v0] Histórico registrado")
     } catch (historyError) {
-      // Don't fail the import if history recording fails
+      console.log("[v0] Erro ao registrar histórico (não crítico):", historyError)
     }
 
+    console.log("[v0] Importação concluída com sucesso!")
     return NextResponse.json({
       success: true,
       invoice_id: invoice.id,
       message: "NFe importada com sucesso",
     })
   } catch (error) {
+    console.log("[v0] Erro inesperado:", error)
     return NextResponse.json(
       {
         error: "Erro inesperado ao processar arquivo",
