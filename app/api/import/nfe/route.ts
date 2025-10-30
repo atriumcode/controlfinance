@@ -253,8 +253,10 @@ export async function POST(request: NextRequest) {
       debug: {
         hasClient: !!nfeData.client,
         clientData: nfeData.client,
+        clientId: clientId,
         invoiceNumber: nfeData.invoice.number,
         itemsCount: nfeData.items?.length || 0,
+        items: nfeData.items?.slice(0, 3), // First 3 items for debugging
       },
     })
   } catch (error) {
