@@ -78,7 +78,7 @@ export default function InvoicesPage() {
         return
       }
 
-      const { data: invoicesData } = await supabase
+      const { data: invoicesData, error: queryError } = await supabase
         .from("invoices")
         .select(`
           *,
@@ -94,6 +94,21 @@ export default function InvoicesPage() {
         .eq("company_id", profileData.company_id)
         .order("created_at", { ascending: false })
         .limit(200)
+
+      console.log("[v0] Query error:", queryError)
+      console.log("[v0] Total invoices fetched:", invoicesData?.length)
+      console.log("[v0] Sample invoice data:", invoicesData?.[0])
+      console.log(
+        "[v0] Invoices with client_id but no clients object:",
+        invoicesData?.filter((inv) => inv.client_id && !inv.clients).length,
+      )
+
+      // Log each invoice's client status
+      invoicesData?.forEach((inv) => {
+        console.log(
+          `[v0] Invoice ${inv.invoice_number}: client_id=${inv.client_id}, has clients object=${!!inv.clients}`,
+        )
+      })
 
       setInvoices(invoicesData || [])
     } catch (error) {
@@ -129,9 +144,15 @@ export default function InvoicesPage() {
     }
   }, [invoices, initialExpansionDone])
 
-  const cityGroups: CityGroup[] = invoices.reduce((groups: CityGroup[], invoice) => {
+  const cityGroups: CityGroup[] = invoices.reduce((groups: CityGroup[], invoice, index) => {
     if (!invoice.clients || !invoice.clients.city || !invoice.clients.state) {
       console.warn(`Invoice ${invoice.invoice_number} has missing client data, adding to "Sem Cliente" group`)
+      console.log(`[v0] Invoice ${invoice.invoice_number} details:`, {
+        id: invoice.id,
+        client_id: invoice.client_id,
+        has_clients_object: !!invoice.clients,
+        clients_data: invoice.clients,
+      })
 
       const cityKey = "Sem Cliente"
       let cityGroup = groups.find((g) => g.city === cityKey)
@@ -149,14 +170,14 @@ export default function InvoicesPage() {
         groups.push(cityGroup)
       }
 
-      const clientKey = "unknown"
+      const clientKey = `unknown-${invoice.id}`
       let clientGroup = cityGroup.clientGroups.find((g) => g.client.document === clientKey)
 
       if (!clientGroup) {
         clientGroup = {
           client: {
             name: "Cliente Não Identificado",
-            document: "N/A",
+            document: clientKey, // Use unique key per invoice
             document_type: "N/A",
             city: "N/A",
             state: "N/A",
