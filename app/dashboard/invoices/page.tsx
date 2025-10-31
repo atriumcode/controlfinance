@@ -6,9 +6,21 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ChevronDown, ChevronRight, FileText, MapPin, CreditCard } from "lucide-react"
+import { ChevronDown, ChevronRight, FileText, MapPin, CreditCard, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { InvoiceStats } from "@/components/invoices/invoice-stats"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { deleteInvoice } from "@/lib/actions/invoice-actions"
+import { useToast } from "@/hooks/use-toast"
 
 interface Invoice {
   id: string
@@ -57,7 +69,11 @@ export default function InvoicesPage() {
   const [expandedCities, setExpandedCities] = useState<Set<string>>(new Set())
   const [expandedClients, setExpandedClients] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [invoiceToDelete, setInvoiceToDelete] = useState<{ id: string; number: string } | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
 
   const supabase = createClient()
 
@@ -91,10 +107,8 @@ export default function InvoicesPage() {
         return
       }
 
-      // Get unique client IDs
       const clientIds = [...new Set(invoicesData?.map((inv) => inv.client_id).filter(Boolean))]
 
-      // Fetch clients separately
       const { data: clientsData, error: clientsError } = await supabase
         .from("clients")
         .select("id, name, document, document_type, city, state")
@@ -104,10 +118,8 @@ export default function InvoicesPage() {
         console.error("[v0] Error fetching clients:", clientsError)
       }
 
-      // Create a map of clients by ID
       const clientsMap = new Map(clientsData?.map((client) => [client.id, client]) || [])
 
-      // Join invoices with clients manually
       const invoicesWithClients = invoicesData?.map((invoice) => ({
         ...invoice,
         clients: invoice.client_id ? clientsMap.get(invoice.client_id) || null : null,
@@ -156,7 +168,7 @@ export default function InvoicesPage() {
         clientGroup = {
           client: {
             name: "Cliente Não Identificado",
-            document: clientKey, // Use unique key per invoice
+            document: clientKey,
             document_type: "N/A",
             city: "N/A",
             state: "N/A",
@@ -284,6 +296,45 @@ export default function InvoicesPage() {
         return "Vencida"
       default:
         return status
+    }
+  }
+
+  const handleDeleteClick = (invoiceId: string, invoiceNumber: string) => {
+    setInvoiceToDelete({ id: invoiceId, number: invoiceNumber })
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!invoiceToDelete) return
+
+    setIsDeleting(true)
+    try {
+      const result = await deleteInvoice(invoiceToDelete.id)
+
+      if (result.success) {
+        toast({
+          title: "Nota fiscal excluída",
+          description: `A nota fiscal ${invoiceToDelete.number} foi excluída com sucesso.`,
+        })
+        await fetchInvoices()
+      } else {
+        toast({
+          title: "Erro ao excluir",
+          description: result.error || "Não foi possível excluir a nota fiscal.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("[v0] Error deleting invoice:", error)
+      toast({
+        title: "Erro ao excluir",
+        description: "Ocorreu um erro inesperado ao excluir a nota fiscal.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeleting(false)
+      setDeleteDialogOpen(false)
+      setInvoiceToDelete(null)
     }
   }
 
@@ -457,6 +508,18 @@ export default function InvoicesPage() {
                                           </Link>
                                         </Button>
                                       )}
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        className="gap-2 shrink-0"
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleDeleteClick(invoice.id, invoice.invoice_number)
+                                        }}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                        Excluir
+                                      </Button>
                                     </div>
                                   </div>
                                 </div>
@@ -473,6 +536,36 @@ export default function InvoicesPage() {
           })}
         </div>
       </main>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a nota fiscal {invoiceToDelete?.number}? Esta ação não pode ser desfeita.
+              <br />
+              <br />
+              Serão excluídos:
+              <ul className="list-disc list-inside mt-2">
+                <li>A nota fiscal</li>
+                <li>Todos os pagamentos associados</li>
+                <li>Todos os itens da nota fiscal</li>
+              </ul>
+              <br />O cadastro do cliente será mantido.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
