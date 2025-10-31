@@ -80,10 +80,8 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
       const supabase = createBrowserClient()
       const fileExt = file.name.split(".").pop()
       const fileName = `${company?.id || userId}-${Date.now()}.${fileExt}`
-      const filePath = `company-logos/${fileName}`
 
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage.from("public").upload(filePath, file, {
+      const { error: uploadError } = await supabase.storage.from("company-logos").upload(fileName, file, {
         cacheControl: "3600",
         upsert: true,
       })
@@ -93,7 +91,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
       // Get public URL
       const {
         data: { publicUrl },
-      } = supabase.storage.from("public").getPublicUrl(filePath)
+      } = supabase.storage.from("company-logos").getPublicUrl(fileName)
 
       setLogoPreview(publicUrl)
       setFormData({ ...formData, logo_url: publicUrl })
