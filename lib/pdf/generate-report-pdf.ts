@@ -36,62 +36,79 @@ interface GenerateReportPDFOptions {
   paymentStatus: string
   selectedCity: string
   selectedClient: string
+  userEmail: string
+  userName: string
+  companyName: string
+  companyCnpj: string
 }
 
 export function generateReportPDF({
   invoices,
   clients,
   groupBy,
-  paymentStatus,
-  selectedCity,
-  selectedClient,
+  userEmail,
+  userName,
+  companyName,
+  companyCnpj,
 }: GenerateReportPDFOptions) {
   const doc = new jsPDF()
 
-  // Add title
-  doc.setFontSize(18)
-  doc.text("Relatório de Notas Fiscais", 14, 20)
+  const pageWidth = doc.internal.pageSize.getWidth()
 
-  // Add filter information
+  // Add logo placeholder (you can replace this with actual logo later)
+  doc.setFillColor(240, 240, 240)
+  doc.rect(14, 10, 30, 30, "F")
+  doc.setFontSize(8)
+  doc.setTextColor(150, 150, 150)
+  doc.text("LOGO", 29, 27, { align: "center" })
+
+  // Add company information
+  doc.setFontSize(14)
+  doc.setTextColor(0, 0, 0)
+  doc.setFont("helvetica", "bold")
+  doc.text(companyName, 50, 20)
+
+  doc.setFontSize(9)
+  doc.setFont("helvetica", "normal")
+  doc.text(`CNPJ: ${companyCnpj}`, 50, 27)
+
+  // Add report title
   doc.setFontSize(10)
-  let yPosition = 30
+  doc.setFont("helvetica", "bold")
+  doc.text("Relatório de Notas Fiscais", 50, 35)
 
-  doc.text("Filtros Aplicados:", 14, yPosition)
-  yPosition += 6
+  // Add horizontal line
+  doc.setDrawColor(200, 200, 200)
+  doc.line(14, 42, pageWidth - 14, 42)
 
-  // Payment status filter
-  const statusLabels: Record<string, string> = {
-    all: "Todos",
-    paid: "Pago",
-    pending: "A Receber",
-    partial: "Parcialmente Pago",
-  }
-  doc.text(`Status: ${statusLabels[paymentStatus] || "Todos"}`, 14, yPosition)
-  yPosition += 5
-
-  // City filter
-  if (selectedCity !== "all") {
-    doc.text(`Município: ${selectedCity}`, 14, yPosition)
-    yPosition += 5
-  }
-
-  // Client filter
-  if (selectedClient !== "all") {
-    const client = clients.find((c) => c.id === selectedClient)
-    if (client) {
-      doc.text(`Cliente: ${client.name}`, 14, yPosition)
-      yPosition += 5
-    }
-  }
-
-  doc.text(`Agrupamento: ${groupBy === "client" ? "Por Cliente" : "Por Cidade"}`, 14, yPosition)
-  yPosition += 10
+  const yPosition = 50
 
   // Generate report based on grouping
   if (groupBy === "client") {
     generateByClientReport(doc, invoices, clients, yPosition)
   } else {
     generateByCityReport(doc, invoices, clients, yPosition)
+  }
+
+  const pageCount = doc.getNumberOfPages()
+  const generationDate = new Date().toLocaleString("pt-BR")
+
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i)
+    const pageHeight = doc.internal.pageSize.getHeight()
+
+    doc.setFontSize(8)
+    doc.setTextColor(100, 100, 100)
+    doc.setFont("helvetica", "normal")
+
+    // Footer line
+    doc.setDrawColor(200, 200, 200)
+    doc.line(14, pageHeight - 20, pageWidth - 14, pageHeight - 20)
+
+    // Footer text
+    doc.text(`Gerado em: ${generationDate}`, 14, pageHeight - 14)
+    doc.text(`Usuário: ${userName} (${userEmail})`, 14, pageHeight - 10)
+    doc.text(`Página ${i} de ${pageCount}`, pageWidth - 14, pageHeight - 14, { align: "right" })
   }
 
   // Save the PDF
@@ -126,8 +143,7 @@ function generateByClientReport(doc: jsPDF, invoices: Invoice[], clients: Client
       currentY = 20
     }
 
-    // Client header
-    doc.setFontSize(12)
+    doc.setFontSize(10)
     doc.setFont("helvetica", "bold")
     doc.text(`Cliente: ${client.name}`, 14, currentY)
     currentY += 5
@@ -162,7 +178,7 @@ function generateByClientReport(doc: jsPDF, invoices: Invoice[], clients: Client
       body: tableData,
       theme: "grid",
       headStyles: { fillColor: [66, 139, 202] },
-      margin: { left: 14 },
+      margin: { left: 14, right: 14, bottom: 30 },
       styles: { fontSize: 9 },
     })
 
@@ -197,8 +213,7 @@ function generateByCityReport(doc: jsPDF, invoices: Invoice[], clients: Client[]
       currentY = 20
     }
 
-    // City header
-    doc.setFontSize(14)
+    doc.setFontSize(10)
     doc.setFont("helvetica", "bold")
     doc.text(`Cidade: ${city}`, 14, currentY)
     currentY += 10
@@ -227,8 +242,7 @@ function generateByCityReport(doc: jsPDF, invoices: Invoice[], clients: Client[]
         currentY = 20
       }
 
-      // Client subheader
-      doc.setFontSize(11)
+      doc.setFontSize(10)
       doc.setFont("helvetica", "bold")
       doc.text(`  Cliente: ${client.name}`, 14, currentY)
       currentY += 6
@@ -259,7 +273,7 @@ function generateByCityReport(doc: jsPDF, invoices: Invoice[], clients: Client[]
         body: tableData,
         theme: "grid",
         headStyles: { fillColor: [66, 139, 202] },
-        margin: { left: 20 },
+        margin: { left: 20, right: 14, bottom: 30 },
         styles: { fontSize: 8 },
       })
 
