@@ -109,6 +109,9 @@ export function ReportFilters({ invoices, clients, onFilterChange }: ReportFilte
     const companyAddress = document.querySelector("[data-company-address]")?.getAttribute("data-company-address") || ""
     const companyCity = document.querySelector("[data-company-city]")?.getAttribute("data-company-city") || ""
     const companyState = document.querySelector("[data-company-state]")?.getAttribute("data-company-state") || ""
+    const companyZipCode =
+      document.querySelector("[data-company-zip-code]")?.getAttribute("data-company-zip-code") || ""
+    const companyPhone = document.querySelector("[data-company-phone]")?.getAttribute("data-company-phone") || ""
     const companyLogo = document.querySelector("[data-company-logo]")?.getAttribute("data-company-logo") || ""
 
     generateReportPDF({
@@ -125,6 +128,8 @@ export function ReportFilters({ invoices, clients, onFilterChange }: ReportFilte
       companyAddress,
       companyCity,
       companyState,
+      companyZipCode,
+      companyPhone,
       companyLogo,
     })
   }

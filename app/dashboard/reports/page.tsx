@@ -17,7 +17,7 @@ export default async function ReportsPage() {
 
   const { data: company } = await supabase
     .from("companies")
-    .select("name, cnpj, address, city, state, logo_url")
+    .select("name, cnpj, address, city, state, zip_code, phone, logo_url")
     .eq("id", profile.company_id)
     .single()
 
@@ -49,6 +49,8 @@ export default async function ReportsPage() {
         data-company-address={company?.address || ""}
         data-company-city={company?.city || ""}
         data-company-state={company?.state || ""}
+        data-company-zip-code={company?.zip_code || ""}
+        data-company-phone={company?.phone || ""}
         data-company-logo={company?.logo_url || ""}
         style={{ display: "none" }}
       />

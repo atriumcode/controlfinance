@@ -43,6 +43,8 @@ interface GenerateReportPDFOptions {
   companyAddress: string
   companyCity: string
   companyState: string
+  companyZipCode: string
+  companyPhone: string
   companyLogo: string
 }
 
@@ -57,6 +59,8 @@ export function generateReportPDF({
   companyAddress,
   companyCity,
   companyState,
+  companyZipCode,
+  companyPhone,
   companyLogo,
 }: GenerateReportPDFOptions) {
   const doc = new jsPDF()
@@ -91,29 +95,45 @@ export function generateReportPDF({
 
   doc.setFontSize(9)
   doc.setFont("helvetica", "normal")
-  doc.text(`CNPJ: ${companyCnpj}`, 50, 21)
+  let yPos = 21
+
+  if (companyCnpj && companyCnpj !== "N/A") {
+    doc.text(`CNPJ: ${companyCnpj}`, 50, yPos)
+    yPos += 5
+  }
 
   if (companyAddress) {
-    doc.text(companyAddress, 50, 27)
-    if (companyCity && companyState) {
-      doc.text(`${companyCity}, ${companyState}`, 50, 33)
-    }
+    doc.text(companyAddress, 50, yPos)
+    yPos += 5
+  }
+
+  if (companyCity && companyState) {
+    const cityStateZip = companyZipCode
+      ? `${companyCity}, ${companyState} - CEP: ${companyZipCode}`
+      : `${companyCity}, ${companyState}`
+    doc.text(cityStateZip, 50, yPos)
+    yPos += 5
+  }
+
+  if (companyPhone) {
+    doc.text(`Tel: ${companyPhone}`, 50, yPos)
+    yPos += 5
   }
 
   doc.setDrawColor(200, 200, 200)
-  doc.line(14, 42, pageWidth - 14, 42)
+  doc.line(14, yPos + 2, pageWidth - 14, yPos + 2)
 
   doc.setFontSize(10)
   doc.setFont("helvetica", "bold")
-  doc.text("Relatório de Notas Fiscais", pageWidth / 2, 48, { align: "center" })
+  doc.text("Relatório de Notas Fiscais", pageWidth / 2, yPos + 8, { align: "center" })
 
-  const yPosition = 56
+  const contentStartY = yPos + 14
 
   // Generate report based on grouping
   if (groupBy === "client") {
-    generateByClientReport(doc, invoices, clients, yPosition)
+    generateByClientReport(doc, invoices, clients, contentStartY)
   } else {
-    generateByCityReport(doc, invoices, clients, yPosition)
+    generateByCityReport(doc, invoices, clients, contentStartY)
   }
 
   const pageCount = doc.getNumberOfPages()
@@ -172,11 +192,11 @@ function generateByClientReport(doc: jsPDF, invoices: Invoice[], clients: Client
     doc.setFontSize(10)
     doc.setFont("helvetica", "bold")
     doc.text(`Cliente: ${client.name}`, 14, currentY)
-    currentY += 5
+    currentY += 4
     doc.setFontSize(10)
     doc.setFont("helvetica", "normal")
     doc.text(`Cidade: ${client.city}, ${client.state}`, 14, currentY)
-    currentY += 3
+    currentY += 2
 
     // Create table for client's invoices
     const tableData = clientInvoices.map((invoice) => {
@@ -242,7 +262,7 @@ function generateByCityReport(doc: jsPDF, invoices: Invoice[], clients: Client[]
     doc.setFontSize(10)
     doc.setFont("helvetica", "bold")
     doc.text(`Cidade: ${city}`, 14, currentY)
-    currentY += 6
+    currentY += 5
 
     // Group by client within the city
     const invoicesByClient = cityInvoices.reduce(
@@ -271,7 +291,7 @@ function generateByCityReport(doc: jsPDF, invoices: Invoice[], clients: Client[]
       doc.setFontSize(10)
       doc.setFont("helvetica", "bold")
       doc.text(`  Cliente: ${client.name}`, 14, currentY)
-      currentY += 3
+      currentY += 2
 
       // Create table for client's invoices
       const tableData = clientInvoices.map((invoice) => {
