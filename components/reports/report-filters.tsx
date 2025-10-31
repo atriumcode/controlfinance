@@ -5,7 +5,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { X } from "lucide-react"
+import { X, FileDown } from "lucide-react"
+import { generateReportPDF } from "@/lib/pdf/generate-report-pdf"
 
 interface Client {
   id: string
@@ -40,8 +41,8 @@ export function ReportFilters({ invoices, clients, onFilterChange }: ReportFilte
   const [paymentStatus, setPaymentStatus] = useState<string>("all")
   const [selectedCity, setSelectedCity] = useState<string>("all")
   const [selectedClient, setSelectedClient] = useState<string>("all")
+  const [groupBy, setGroupBy] = useState<"client" | "city">("client")
 
-  // Get unique cities from clients
   const cities = useMemo(() => {
     const citySet = new Set<string>()
     clients.forEach((client) => {
@@ -52,11 +53,9 @@ export function ReportFilters({ invoices, clients, onFilterChange }: ReportFilte
     return Array.from(citySet).sort()
   }, [clients])
 
-  // Filter invoices based on selected filters
   const filteredInvoices = useMemo(() => {
     let filtered = [...invoices]
 
-    // Filter by payment status
     if (paymentStatus !== "all") {
       filtered = filtered.filter((invoice) => {
         const amountPaid = invoice.amount_paid || 0
@@ -75,7 +74,6 @@ export function ReportFilters({ invoices, clients, onFilterChange }: ReportFilte
       })
     }
 
-    // Filter by city
     if (selectedCity !== "all") {
       filtered = filtered.filter((invoice) => {
         if (!invoice.clients?.city || !invoice.clients?.state) return false
@@ -83,7 +81,6 @@ export function ReportFilters({ invoices, clients, onFilterChange }: ReportFilte
       })
     }
 
-    // Filter by client
     if (selectedClient !== "all") {
       filtered = filtered.filter((invoice) => invoice.client_id === selectedClient)
     }
@@ -91,7 +88,6 @@ export function ReportFilters({ invoices, clients, onFilterChange }: ReportFilte
     return filtered
   }, [invoices, paymentStatus, selectedCity, selectedClient])
 
-  // Update parent component when filters change
   useMemo(() => {
     onFilterChange(filteredInvoices)
   }, [filteredInvoices, onFilterChange])
@@ -104,21 +100,37 @@ export function ReportFilters({ invoices, clients, onFilterChange }: ReportFilte
     setSelectedClient("all")
   }
 
+  const handleGeneratePDF = () => {
+    generateReportPDF({
+      invoices: filteredInvoices,
+      clients,
+      groupBy,
+      paymentStatus,
+      selectedCity,
+      selectedClient,
+    })
+  }
+
   return (
     <Card>
       <CardContent className="pt-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Filtros</h3>
-          {hasActiveFilters && (
-            <Button variant="ghost" size="sm" onClick={clearFilters}>
-              <X className="h-4 w-4 mr-1" />
-              Limpar Filtros
+          <div className="flex gap-2">
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <X className="h-4 w-4 mr-1" />
+                Limpar Filtros
+              </Button>
+            )}
+            <Button onClick={handleGeneratePDF} size="sm">
+              <FileDown className="h-4 w-4 mr-1" />
+              Gerar PDF
             </Button>
-          )}
+          </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          {/* Payment Status Filter */}
+        <div className="grid gap-4 md:grid-cols-4">
           <div className="space-y-2">
             <Label htmlFor="payment-status">Status de Pagamento</Label>
             <Select value={paymentStatus} onValueChange={setPaymentStatus}>
@@ -134,7 +146,6 @@ export function ReportFilters({ invoices, clients, onFilterChange }: ReportFilte
             </Select>
           </div>
 
-          {/* City Filter */}
           <div className="space-y-2">
             <Label htmlFor="city">Município</Label>
             <Select value={selectedCity} onValueChange={setSelectedCity}>
@@ -152,7 +163,6 @@ export function ReportFilters({ invoices, clients, onFilterChange }: ReportFilte
             </Select>
           </div>
 
-          {/* Client Filter */}
           <div className="space-y-2">
             <Label htmlFor="client">Cliente</Label>
             <Select value={selectedClient} onValueChange={setSelectedClient}>
@@ -166,6 +176,19 @@ export function ReportFilters({ invoices, clients, onFilterChange }: ReportFilte
                     {client.name}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="group-by">Agrupar Por</Label>
+            <Select value={groupBy} onValueChange={(value) => setGroupBy(value as "client" | "city")}>
+              <SelectTrigger id="group-by">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="client">Cliente</SelectItem>
+                <SelectItem value="city">Cidade</SelectItem>
               </SelectContent>
             </Select>
           </div>
