@@ -2,38 +2,28 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
 export async function deleteInvoice(invoiceId: string) {
   try {
-    const supabase = await createClient()
+    const user = await getAuthenticatedUser()
 
-    // Get the current user's session
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
-
-    if (userError || !user) {
+    if (!user) {
       return { success: false, error: "Não autenticado" }
     }
 
-    // Get user's company_id
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("company_id")
-      .eq("id", user.id)
-      .single()
-
-    if (profileError || !profile) {
-      return { success: false, error: "Perfil não encontrado" }
+    if (!user.company_id) {
+      return { success: false, error: "Empresa não encontrada" }
     }
+
+    const supabase = await createClient()
 
     // Verify the invoice belongs to the user's company
     const { data: invoice, error: invoiceError } = await supabase
       .from("invoices")
       .select("id, company_id")
       .eq("id", invoiceId)
-      .eq("company_id", profile.company_id)
+      .eq("company_id", user.company_id)
       .single()
 
     if (invoiceError || !invoice) {
