@@ -28,7 +28,7 @@ export function DashboardHeader({ companyName, userName }: DashboardHeaderProps)
     : "U"
 
   return (
-    <header className="fixed top-0 right-0 left-0 md:left-64 z-50 flex h-14 items-center gap-4 border-b md:border-l bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:h-[60px] lg:px-6">
+    <header className="fixed top-0 right-0 left-0 md:left-64 z-50 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:h-[60px] lg:px-6">
       <div className="flex-1">{companyName && <p className="text-sm text-muted-foreground">{companyName}</p>}</div>
 
       <DropdownMenu>
