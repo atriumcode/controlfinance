@@ -17,17 +17,17 @@ export default async function DashboardLayout({
   const { data: company } = await supabase.from("companies").select("name, cnpj").eq("id", user.company_id).single()
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-muted/20 to-background">
       <DashboardSidebar userRole={user.role} />
 
-      <div className="flex flex-1 flex-col md:ml-64 min-w-0 overflow-hidden">
+      <div className="flex flex-1 flex-col md:ml-64 min-w-0">
         <DashboardHeader
           companyName={company?.name || "Empresa"}
           userName={user.full_name || user.email}
           userRole={user.role}
         />
 
-        <main className="flex-1 p-4 md:p-6 overflow-auto">{children}</main>
+        <main className="flex-1 p-4 md:p-6 pt-20 overflow-auto">{children}</main>
       </div>
     </div>
   )
