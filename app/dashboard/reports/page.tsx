@@ -2,10 +2,7 @@ import { redirect } from "next/navigation"
 import { createAdminClient } from "@/lib/supabase/server"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 import Link from "next/link"
-import { ReportsOverview } from "@/components/reports/reports-overview"
-import { MonthlyReport } from "@/components/reports/monthly-report"
-import { ClientsReport } from "@/components/reports/clients-report"
-import { PaymentMethodsReport } from "@/components/reports/payment-methods-report"
+import { ReportsContent } from "@/components/reports/reports-content"
 
 export default async function ReportsPage() {
   const user = await getAuthenticatedUser()
@@ -26,7 +23,9 @@ export default async function ReportsPage() {
       clients (
         name,
         document,
-        document_type
+        document_type,
+        city,
+        state
       )
     `)
     .eq("company_id", profile.company_id)
@@ -54,14 +53,7 @@ export default async function ReportsPage() {
           </div>
         </div>
 
-        <ReportsOverview invoices={invoices || []} clients={clients || []} />
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          <MonthlyReport invoices={invoices || []} />
-          <PaymentMethodsReport invoices={invoices || []} />
-        </div>
-
-        <ClientsReport invoices={invoices || []} clients={clients || []} />
+        <ReportsContent initialInvoices={invoices || []} clients={clients || []} />
       </main>
     </div>
   )
