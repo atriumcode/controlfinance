@@ -77,37 +77,35 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
     setUploadingLogo(true)
 
     try {
-      const supabase = createBrowserClient()
-      const fileExt = file.name.split(".").pop()
-      const fileName = `${company?.id || userId}-${Date.now()}.${fileExt}`
+      // Convert image to base64
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setLogoPreview(base64String)
+        setFormData({ ...formData, logo_url: base64String })
 
-      const { error: uploadError } = await supabase.storage.from("company-logos").upload(fileName, file, {
-        cacheControl: "3600",
-        upsert: true,
-      })
-
-      if (uploadError) throw uploadError
-
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("company-logos").getPublicUrl(fileName)
-
-      setLogoPreview(publicUrl)
-      setFormData({ ...formData, logo_url: publicUrl })
-
-      toast({
-        title: "Sucesso",
-        description: "Logo enviada com sucesso!",
-      })
+        toast({
+          title: "Sucesso",
+          description: "Logo carregada com sucesso!",
+        })
+        setUploadingLogo(false)
+      }
+      reader.onerror = () => {
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar logo",
+          variant: "destructive",
+        })
+        setUploadingLogo(false)
+      }
+      reader.readAsDataURL(file)
     } catch (error) {
-      console.error("Error uploading logo:", error)
+      console.error("Error loading logo:", error)
       toast({
         title: "Erro",
-        description: "Erro ao enviar logo",
+        description: "Erro ao carregar logo",
         variant: "destructive",
       })
-    } finally {
       setUploadingLogo(false)
     }
   }
