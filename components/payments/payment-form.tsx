@@ -67,10 +67,6 @@ export function PaymentForm({ invoice }: PaymentFormProps) {
     setIsLoading(true)
     setError(null)
 
-    console.log("[v0] Payment form submission started")
-    console.log("[v0] Form data:", formData)
-    console.log("[v0] Invoice ID:", invoice.id)
-
     if (!formData.payment_method) {
       setError("Selecione um método de pagamento")
       setIsLoading(false)
@@ -86,19 +82,13 @@ export function PaymentForm({ invoice }: PaymentFormProps) {
     const supabase = createClient()
 
     try {
-      console.log("[v0] Fetching current invoice data...")
       const { data: currentInvoice, error: fetchError } = await supabase
         .from("invoices")
         .select("amount_paid")
         .eq("id", invoice.id)
         .single()
 
-      if (fetchError) {
-        console.log("[v0] Error fetching invoice:", fetchError)
-        throw fetchError
-      }
-
-      console.log("[v0] Current invoice data:", currentInvoice)
+      if (fetchError) throw fetchError
 
       const currentAmountPaid = currentInvoice?.amount_paid || 0
       const newAmountPaid = currentAmountPaid + formData.amount_paid
@@ -110,13 +100,6 @@ export function PaymentForm({ invoice }: PaymentFormProps) {
         newStatus = "partial"
       }
 
-      console.log("[v0] Calculated values:", {
-        currentAmountPaid,
-        newAmountPaid,
-        newStatus,
-      })
-
-      console.log("[v0] Inserting payment record...")
       const paymentData = {
         invoice_id: invoice.id,
         amount: formData.amount_paid,
@@ -124,12 +107,10 @@ export function PaymentForm({ invoice }: PaymentFormProps) {
         payment_method: formData.payment_method,
         notes: formData.notes || null,
       }
-      console.log("[v0] Payment data to insert:", paymentData)
 
       const { error: paymentError } = await supabase.from("payments").insert(paymentData)
 
       if (paymentError) {
-        console.log("[v0] Error inserting payment:", paymentError)
         if (paymentError.code === "42501") {
           throw new Error(
             "Erro de permissão: Usuário não tem permissão para registrar pagamentos. Verifique se possui role 'admin' ou 'escrita'.",
@@ -138,7 +119,6 @@ export function PaymentForm({ invoice }: PaymentFormProps) {
         throw paymentError
       }
 
-      console.log("[v0] Payment inserted successfully, updating invoice...")
       const updateData = {
         status: newStatus,
         amount_paid: newAmountPaid,
@@ -146,24 +126,17 @@ export function PaymentForm({ invoice }: PaymentFormProps) {
         payment_method: formData.payment_method,
         notes: formData.notes || null,
       }
-      console.log("[v0] Invoice update data:", updateData)
 
       const { error: updateError } = await supabase.from("invoices").update(updateData).eq("id", invoice.id)
 
-      if (updateError) {
-        console.log("[v0] Error updating invoice:", updateError)
-        throw updateError
-      }
+      if (updateError) throw updateError
 
-      console.log("[v0] Payment registration completed successfully")
       setSuccess(true)
 
-      // Redirect after a short delay
       setTimeout(() => {
         router.push(`/dashboard/invoices/${invoice.id}`)
       }, 2000)
     } catch (error: unknown) {
-      console.log("[v0] Payment registration error:", error)
       setError(error instanceof Error ? error.message : "Erro ao registrar pagamento")
     } finally {
       setIsLoading(false)

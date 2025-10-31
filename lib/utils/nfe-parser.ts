@@ -33,8 +33,6 @@ export interface NFEData {
 
 export async function parseNFeXML(xmlContent: string): Promise<NFEData> {
   try {
-    console.log("[v0] Starting NFe XML parsing...")
-
     const parser = new XMLParser({
       ignoreAttributes: false,
       attributeNamePrefix: "@_",
@@ -44,49 +42,25 @@ export async function parseNFeXML(xmlContent: string): Promise<NFEData> {
     })
 
     const result = parser.parse(xmlContent)
-    console.log("[v0] XML parsed successfully, extracting data...")
 
-    console.log("[v0] Full XML structure keys:", Object.keys(result))
-    console.log("[v0] Full XML structure:", JSON.stringify(result, null, 2).substring(0, 1000))
-
-    // Navigate through the XML structure
     const nfeProc = result.nfeProc || result
     const nfe = nfeProc.NFe || nfeProc.nfe || nfeProc
     const infNFe = nfe.infNFe || nfe.infNfe || {}
 
-    console.log("[v0] infNFe keys:", Object.keys(infNFe))
-
-    // Extract NFe key from Id attribute
     const nfeKey = (infNFe["@_Id"] || infNFe["@_id"] || "").replace("NFe", "")
-    console.log("[v0] NFe Key:", nfeKey)
 
-    // Extract invoice data
     const ide = infNFe.ide || {}
     const invoiceNumber = String(ide.nNF || "")
     const issueDate = ide.dhEmi || ide.dEmi || ""
-    console.log("[v0] Invoice Number:", invoiceNumber, "Issue Date:", issueDate)
 
-    // Extract totals
     const total = infNFe.total || {}
     const icmsTot = total.ICMSTot || {}
     const totalAmount = Number.parseFloat(String(icmsTot.vNF || 0))
     const taxAmount = Number.parseFloat(String(icmsTot.vTotTrib || 0))
     const discountAmount = Number.parseFloat(String(icmsTot.vDesc || 0))
-    console.log("[v0] Total Amount:", totalAmount, "Tax:", taxAmount, "Discount:", discountAmount)
 
-    // Extract client data
     const dest = infNFe.dest || {}
     let client = null
-
-    console.log("[v0] dest object:", JSON.stringify(dest, null, 2))
-    console.log("[v0] Extracting client data from dest:", {
-      hasDest: !!dest,
-      hasXNome: !!dest.xNome,
-      hasCNPJ: !!dest.CNPJ,
-      hasCPF: !!dest.CPF,
-      destKeys: Object.keys(dest),
-      destStringified: JSON.stringify(dest).substring(0, 500),
-    })
 
     if (dest && (dest.xNome || dest.CNPJ || dest.CPF)) {
       const clientName = dest.xNome || ""
@@ -95,20 +69,11 @@ export async function parseNFeXML(xmlContent: string): Promise<NFEData> {
       const clientDocument = clientCNPJ !== "00000000000000" ? clientCNPJ : clientCPF !== "00000000000" ? clientCPF : ""
       const documentType = clientCNPJ !== "00000000000000" ? "cnpj" : "cpf"
 
-      // Extract address
       const enderDest = dest.enderDest || {}
       const address = enderDest.xLgr || ""
       const city = enderDest.xMun || ""
       const state = enderDest.UF || ""
       const zipCode = enderDest.CEP || ""
-
-      console.log("[v0] Client data extracted:", {
-        name: clientName,
-        document: clientDocument,
-        documentType,
-        city,
-        state,
-      })
 
       if (clientName && clientDocument) {
         client = {
@@ -120,42 +85,24 @@ export async function parseNFeXML(xmlContent: string): Promise<NFEData> {
           state,
           zip_code: String(zipCode).padStart(8, "0"),
         }
-        console.log("[v0] Client object created successfully")
-      } else {
-        console.warn("[v0] Client data incomplete - missing name or document", {
-          hasName: !!clientName,
-          hasDocument: !!clientDocument,
-          clientName,
-          clientDocument,
-        })
       }
-    } else {
-      console.warn("[v0] No client data found in XML (dest section missing or empty)")
-      console.warn("[v0] Available infNFe sections:", Object.keys(infNFe))
     }
 
-    // Extract items
     const items: NFEData["items"] = []
     const det = infNFe.det || []
     const detArray = Array.isArray(det) ? det : [det]
 
-    console.log("[v0] Found", detArray.length, "items")
-
-    detArray.forEach((detItem: any, index: number) => {
+    detArray.forEach((detItem: any) => {
       const prod = detItem.prod || {}
       const description = prod.xProd || ""
       const quantity = Number.parseFloat(String(prod.qCom || 1))
       const unitPrice = Number.parseFloat(String(prod.vUnCom || 0))
       const totalPrice = Number.parseFloat(String(prod.vProd || 0))
 
-      console.log(`[v0] Item ${index + 1}:`, description, "Qty:", quantity, "Price:", totalPrice)
-
-      // Extract tax information if available
       const imposto = detItem.imposto || {}
       const icms = imposto.ICMS || {}
       let taxRate = 0
 
-      // Try different ICMS types
       const icmsTypes = [
         "ICMS00",
         "ICMS10",
@@ -188,18 +135,15 @@ export async function parseNFeXML(xmlContent: string): Promise<NFEData> {
       }
     })
 
-    // Format date
     const formatDate = (dateStr: string) => {
       if (!dateStr) return new Date().toISOString().split("T")[0]
 
-      // Handle different date formats
       if (dateStr.includes("T")) {
         return dateStr.split("T")[0]
       }
       if (dateStr.includes("-")) {
         return dateStr.split(" ")[0]
       }
-      // Handle YYYY-MM-DD format
       if (dateStr.length >= 10) {
         return dateStr.substring(0, 10)
       }
@@ -220,31 +164,24 @@ export async function parseNFeXML(xmlContent: string): Promise<NFEData> {
       items,
     }
 
-    // Validate required fields
     if (!nfeData.invoice.number) {
-      console.error("[v0] Invoice number not found")
       throw new Error("Número da nota fiscal não encontrado no XML")
     }
 
     if (!nfeData.invoice.nfe_key) {
-      console.error("[v0] NFe key not found")
       throw new Error("Chave da NF-e não encontrada no XML")
     }
 
     if (nfeData.invoice.total_amount <= 0) {
-      console.error("[v0] Invalid total amount:", nfeData.invoice.total_amount)
       throw new Error("Valor total da nota fiscal inválido")
     }
 
     if (items.length === 0) {
-      console.error("[v0] No items found in XML")
       throw new Error("Nenhum item encontrado no XML da NF-e")
     }
 
-    console.log("[v0] NFe parsing completed successfully!")
     return nfeData
   } catch (error) {
-    console.error("[v0] Error parsing NFe XML:", error)
     if (error instanceof Error) {
       throw error
     }

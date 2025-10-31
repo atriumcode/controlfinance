@@ -138,11 +138,8 @@ export class OFXParser {
   private static extractTransactions(content: string): OFXTransaction[] {
     const transactions: OFXTransaction[] = []
 
-    // Find all STMTTRN blocks
     const transactionRegex = /<STMTTRN>(.*?)<\/STMTTRN>/gs
     const matches = content.match(transactionRegex)
-
-    console.log("[v0] OFX Parser - Found transaction blocks:", matches?.length || 0)
 
     if (!matches) {
       return transactions
@@ -158,49 +155,19 @@ export class OFXParser {
         const memo = this.extractValue(transactionBlock, "MEMO") || ""
         const name = this.extractValue(transactionBlock, "NAME") || ""
         const payee = this.extractValue(transactionBlock, "PAYEE") || ""
-        const checknum = this.extractValue(transactionBlock, "CHECKNUM") || ""
         const refnum = this.extractValue(transactionBlock, "REFNUM") || ""
-        const origcurrency = this.extractValue(transactionBlock, "ORIGCURRENCY") || ""
-        const inv401ksource = this.extractValue(transactionBlock, "INV401KSOURCE") || ""
-        const dtuser = this.extractValue(transactionBlock, "DTUSER") || ""
-        const dtavail = this.extractValue(transactionBlock, "DTAVAIL") || ""
-        const correctfitid = this.extractValue(transactionBlock, "CORRECTFITID") || ""
-        const correctaction = this.extractValue(transactionBlock, "CORRECTACTION") || ""
         const srvrtid = this.extractValue(transactionBlock, "SRVRTID") || ""
 
-        // Try to extract any other text content that might be description
         const allTextContent = transactionBlock
-          .replace(/<[^>]+>/g, " ") // Remove all XML tags
-          .replace(/\s+/g, " ") // Normalize whitespace
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
           .trim()
-
-        console.log(`[v0] Transaction ${index + 1} ALL extracted fields:`, {
-          trntype,
-          dtposted,
-          trnamt,
-          fitid,
-          memo,
-          name,
-          payee,
-          checknum,
-          refnum,
-          origcurrency,
-          inv401ksource,
-          dtuser,
-          dtavail,
-          correctfitid,
-          correctaction,
-          srvrtid,
-          allTextContent: allTextContent.substring(0, 200),
-          rawBlock: transactionBlock.substring(0, 300),
-        })
 
         const amount = Number.parseFloat(trnamt)
 
         let description = ""
         const descriptionParts: string[] = []
 
-        // Primary description sources (in order of preference)
         if (memo && memo.trim()) descriptionParts.push(memo.trim())
         if (name && name.trim() && !descriptionParts.includes(name.trim())) {
           descriptionParts.push(name.trim())
@@ -209,7 +176,6 @@ export class OFXParser {
           descriptionParts.push(payee.trim())
         }
 
-        // Additional information
         if (refnum && refnum.trim()) {
           descriptionParts.push(`Ref: ${refnum.trim()}`)
         }
@@ -217,12 +183,9 @@ export class OFXParser {
           descriptionParts.push(`ID: ${srvrtid.trim()}`)
         }
 
-        // Join all parts
         description = descriptionParts.join(" - ")
 
-        // If still no description, try to extract from raw text content
         if (!description.trim() && allTextContent) {
-          // Look for meaningful text that's not just numbers or common OFX terms
           const meaningfulText = allTextContent
             .split(" ")
             .filter(
@@ -231,19 +194,13 @@ export class OFXParser {
                 !word.match(/^\d+$/) &&
                 !["DEBIT", "CREDIT", "PAYMENT", "DEPOSIT", "TRANSFER", "STMTTRN"].includes(word.toUpperCase()),
             )
-            .slice(0, 5) // Take first 5 meaningful words
+            .slice(0, 5)
             .join(" ")
 
           if (meaningfulText.trim()) {
             description = meaningfulText.trim()
           }
         }
-
-        console.log(`[v0] Transaction ${index + 1} description building result:`, {
-          descriptionParts,
-          finalDescription: description || "NO DESCRIPTION FOUND",
-          allTextContent: allTextContent.substring(0, 100),
-        })
 
         if (!description.trim()) {
           const typeMap: Record<string, string> = {
@@ -264,7 +221,6 @@ export class OFXParser {
 
           description = typeMap[trntype.toUpperCase()] || `Transação ${trntype || "Desconhecida"}`
 
-          // Add amount info to make it more descriptive
           if (amount !== 0) {
             description += ` - R$ ${Math.abs(amount).toFixed(2)}`
           }
@@ -280,15 +236,12 @@ export class OFXParser {
           memo: memo || description,
         }
 
-        console.log(`[v0] FINAL transaction ${index + 1}:`, transaction)
-
         transactions.push(transaction)
       } catch (error) {
         console.warn(`Erro ao processar transação ${index + 1}:`, error)
       }
     })
 
-    // Sort transactions by date (newest first)
     return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   }
 

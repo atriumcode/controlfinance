@@ -119,22 +119,11 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
 
   const isOverdue = invoice.due_date && new Date(invoice.due_date) < new Date() && invoice.status === "pending"
 
-  console.log("[v0] Invoice status:", invoice?.status)
-  console.log("[v0] Invoice amount_paid:", invoice?.amount_paid)
-  console.log(
-    "[v0] Should show payment button:",
-    invoice?.status === "pending" || invoice?.status === "Parcial" || invoice?.status === "overdue",
-  )
-
   const shouldShowPaymentButton =
     invoice?.status === "pending" ||
     invoice?.status === "Parcial" ||
     invoice?.status === "overdue" ||
     (invoice?.amount_paid > 0 && invoice?.amount_paid < invoice?.total_amount)
-
-  console.log("[v0] Invoice ID:", id)
-  console.log("[v0] Invoice items count:", invoice?.invoice_items?.length || 0)
-  console.log("[v0] Invoice items:", invoice?.invoice_items)
 
   return (
     <div className="flex min-h-screen w-full flex-col">

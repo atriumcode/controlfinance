@@ -23,7 +23,6 @@ export default async function PaymentsPage() {
     redirect("/auth/login")
   }
 
-  // Get all payments for the company
   const { data: payments } = await supabase
     .from("payments")
     .select(`
@@ -38,22 +37,8 @@ export default async function PaymentsPage() {
     .eq("invoices.company_id", profile.company_id)
     .order("payment_date", { ascending: false })
 
-  // Get all invoices to calculate totals
   const { data: invoices } = await supabase.from("invoices").select("*").eq("company_id", profile.company_id)
 
-  console.log("[v0] Total de notas fiscais:", invoices?.length)
-  console.log(
-    "[v0] Notas por status:",
-    invoices?.reduce(
-      (acc, inv) => {
-        acc[inv.status] = (acc[inv.status] || 0) + 1
-        return acc
-      },
-      {} as Record<string, number>,
-    ),
-  )
-
-  // Calculate totals
   const now = new Date()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
@@ -66,25 +51,16 @@ export default async function PaymentsPage() {
       inv.status === "pending" ||
       inv.status === "Pendente" ||
       inv.status === "pendente" ||
-      inv.status === "partial" || // Added this - payment form uses "partial" in English
+      inv.status === "partial" ||
       inv.status === "Parcial" ||
       inv.status === "parcial",
   )
-
-  console.log("[v0] Notas pendentes encontradas:", pendingInvoices?.length)
-  pendingInvoices?.forEach((inv) => {
-    console.log(
-      `[v0] NF ${inv.invoice_number}: Status=${inv.status}, Total=${inv.total_amount}, Pago=${inv.amount_paid || 0}, Restante=${Number(inv.total_amount) - Number(inv.amount_paid || 0)}`,
-    )
-  })
 
   const totalPending =
     pendingInvoices?.reduce((sum, inv) => {
       const remaining = Number(inv.total_amount) - Number(inv.amount_paid || 0)
       return sum + remaining
     }, 0) || 0
-
-  console.log("[v0] Total A Receber calculado:", totalPending)
 
   const totalOverdue =
     invoices
@@ -93,7 +69,7 @@ export default async function PaymentsPage() {
           (inv.status === "pending" ||
             inv.status === "Pendente" ||
             inv.status === "pendente" ||
-            inv.status === "partial" || // Added this
+            inv.status === "partial" ||
             inv.status === "Parcial" ||
             inv.status === "parcial") &&
           inv.due_date &&
