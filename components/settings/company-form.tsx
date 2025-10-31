@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
+import { Upload, X } from "lucide-react"
+import Image from "next/image"
 
 interface Company {
   id?: string
@@ -21,6 +23,7 @@ interface Company {
   city: string
   state: string
   zip_code: string
+  logo_url?: string
 }
 
 interface CompanyFormProps {
@@ -33,6 +36,8 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [logoPreview, setLogoPreview] = useState<string | null>(company?.logo_url || null)
   const [formData, setFormData] = useState({
     name: company?.name || "",
     cnpj: company?.cnpj || "",
@@ -42,25 +47,92 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
     city: company?.city || "",
     state: company?.state || "",
     zip_code: company?.zip_code || "",
+    logo_url: company?.logo_url || "",
   })
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Erro",
+        description: "Por favor, selecione uma imagem válida",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Erro",
+        description: "A imagem deve ter no máximo 2MB",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setUploadingLogo(true)
+
+    try {
+      const supabase = createBrowserClient()
+      const fileExt = file.name.split(".").pop()
+      const fileName = `${company?.id || userId}-${Date.now()}.${fileExt}`
+      const filePath = `company-logos/${fileName}`
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage.from("public").upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: true,
+      })
+
+      if (uploadError) throw uploadError
+
+      // Get public URL
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("public").getPublicUrl(filePath)
+
+      setLogoPreview(publicUrl)
+      setFormData({ ...formData, logo_url: publicUrl })
+
+      toast({
+        title: "Sucesso",
+        description: "Logo enviada com sucesso!",
+      })
+    } catch (error) {
+      console.error("Error uploading logo:", error)
+      toast({
+        title: "Erro",
+        description: "Erro ao enviar logo",
+        variant: "destructive",
+      })
+    } finally {
+      setUploadingLogo(false)
+    }
+  }
+
+  const handleRemoveLogo = () => {
+    setLogoPreview(null)
+    setFormData({ ...formData, logo_url: "" })
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      console.log("[v0] CompanyForm - starting save process")
       const supabase = createBrowserClient()
 
       if (company?.id) {
         // Update existing company
-        console.log("[v0] CompanyForm - updating existing company:", company.id)
         const { error } = await supabase.from("companies").update(formData).eq("id", company.id)
 
         if (error) throw error
       } else {
         // Create new company
-        console.log("[v0] CompanyForm - creating new company")
         const { data: newCompany, error: companyError } = await supabase
           .from("companies")
           .insert([formData])
@@ -68,11 +140,9 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
           .single()
 
         if (companyError) throw companyError
-        console.log("[v0] CompanyForm - company created:", newCompany.id)
 
         // Update or create profile with company_id
         if (profileId) {
-          console.log("[v0] CompanyForm - updating existing profile:", profileId)
           const { error: profileError } = await supabase
             .from("profiles")
             .update({ company_id: newCompany.id })
@@ -80,7 +150,6 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
 
           if (profileError) throw profileError
         } else {
-          console.log("[v0] CompanyForm - creating new profile for user:", userId)
           const { error: profileError } = await supabase.from("profiles").insert([
             {
               id: userId,
@@ -95,13 +164,11 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
         }
       }
 
-      console.log("[v0] CompanyForm - save successful, showing toast")
       toast({
         title: "Sucesso",
         description: "Dados da empresa salvos com sucesso!",
       })
 
-      console.log("[v0] CompanyForm - redirecting to dashboard")
       window.location.href = "/dashboard"
     } catch (error) {
       console.error("Error saving company:", error)
@@ -116,7 +183,46 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-2">
+        <Label>Logo da Empresa</Label>
+        <div className="flex items-start gap-4">
+          {logoPreview ? (
+            <div className="relative w-32 h-32 border rounded-lg overflow-hidden bg-muted">
+              <Image
+                src={logoPreview || "/placeholder.svg"}
+                alt="Logo da empresa"
+                fill
+                className="object-contain p-2"
+              />
+              <button
+                type="button"
+                onClick={handleRemoveLogo}
+                className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
+              <Upload className="h-8 w-8 text-muted-foreground" />
+            </div>
+          )}
+          <div className="flex-1 space-y-2">
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              disabled={uploadingLogo}
+              className="cursor-pointer"
+            />
+            <p className="text-sm text-muted-foreground">
+              Recomendado: PNG ou JPG, máximo 2MB. A logo será exibida nos relatórios em PDF.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="name">Nome da Empresa *</Label>

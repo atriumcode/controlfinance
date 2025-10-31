@@ -40,6 +40,10 @@ interface GenerateReportPDFOptions {
   userName: string
   companyName: string
   companyCnpj: string
+  companyAddress: string
+  companyCity: string
+  companyState: string
+  companyLogo: string
 }
 
 export function generateReportPDF({
@@ -50,38 +54,60 @@ export function generateReportPDF({
   userName,
   companyName,
   companyCnpj,
+  companyAddress,
+  companyCity,
+  companyState,
+  companyLogo,
 }: GenerateReportPDFOptions) {
   const doc = new jsPDF()
 
   const pageWidth = doc.internal.pageSize.getWidth()
 
-  // Add logo placeholder (you can replace this with actual logo later)
-  doc.setFillColor(240, 240, 240)
-  doc.rect(14, 10, 30, 30, "F")
-  doc.setFontSize(8)
-  doc.setTextColor(150, 150, 150)
-  doc.text("LOGO", 29, 27, { align: "center" })
+  if (companyLogo) {
+    try {
+      doc.addImage(companyLogo, "PNG", 14, 10, 30, 30)
+    } catch (error) {
+      console.error("Error adding logo to PDF:", error)
+      // Fallback to placeholder if logo fails to load
+      doc.setFillColor(240, 240, 240)
+      doc.rect(14, 10, 30, 30, "F")
+      doc.setFontSize(8)
+      doc.setTextColor(150, 150, 150)
+      doc.text("LOGO", 29, 27, { align: "center" })
+    }
+  } else {
+    // Logo placeholder
+    doc.setFillColor(240, 240, 240)
+    doc.rect(14, 10, 30, 30, "F")
+    doc.setFontSize(8)
+    doc.setTextColor(150, 150, 150)
+    doc.text("LOGO", 29, 27, { align: "center" })
+  }
 
-  // Add company information
-  doc.setFontSize(14)
+  doc.setFontSize(12)
   doc.setTextColor(0, 0, 0)
   doc.setFont("helvetica", "bold")
-  doc.text(companyName, 50, 20)
+  doc.text(companyName, 50, 15)
 
   doc.setFontSize(9)
   doc.setFont("helvetica", "normal")
-  doc.text(`CNPJ: ${companyCnpj}`, 50, 27)
+  doc.text(`CNPJ: ${companyCnpj}`, 50, 21)
 
-  // Add report title
-  doc.setFontSize(10)
-  doc.setFont("helvetica", "bold")
-  doc.text("Relatório de Notas Fiscais", 50, 35)
+  if (companyAddress) {
+    doc.text(companyAddress, 50, 27)
+    if (companyCity && companyState) {
+      doc.text(`${companyCity}, ${companyState}`, 50, 33)
+    }
+  }
 
-  // Add horizontal line
   doc.setDrawColor(200, 200, 200)
   doc.line(14, 42, pageWidth - 14, 42)
 
-  const yPosition = 50
+  doc.setFontSize(10)
+  doc.setFont("helvetica", "bold")
+  doc.text("Relatório de Notas Fiscais", pageWidth / 2, 48, { align: "center" })
+
+  const yPosition = 56
 
   // Generate report based on grouping
   if (groupBy === "client") {
@@ -150,7 +176,7 @@ function generateByClientReport(doc: jsPDF, invoices: Invoice[], clients: Client
     doc.setFontSize(10)
     doc.setFont("helvetica", "normal")
     doc.text(`Cidade: ${client.city}, ${client.state}`, 14, currentY)
-    currentY += 8
+    currentY += 3
 
     // Create table for client's invoices
     const tableData = clientInvoices.map((invoice) => {
@@ -216,7 +242,7 @@ function generateByCityReport(doc: jsPDF, invoices: Invoice[], clients: Client[]
     doc.setFontSize(10)
     doc.setFont("helvetica", "bold")
     doc.text(`Cidade: ${city}`, 14, currentY)
-    currentY += 10
+    currentY += 6
 
     // Group by client within the city
     const invoicesByClient = cityInvoices.reduce(
@@ -245,7 +271,7 @@ function generateByCityReport(doc: jsPDF, invoices: Invoice[], clients: Client[]
       doc.setFontSize(10)
       doc.setFont("helvetica", "bold")
       doc.text(`  Cliente: ${client.name}`, 14, currentY)
-      currentY += 6
+      currentY += 3
 
       // Create table for client's invoices
       const tableData = clientInvoices.map((invoice) => {

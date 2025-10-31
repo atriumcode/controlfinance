@@ -15,7 +15,11 @@ export default async function ReportsPage() {
     redirect("/dashboard/settings")
   }
 
-  const { data: company } = await supabase.from("companies").select("name, cnpj").eq("id", profile.company_id).single()
+  const { data: company } = await supabase
+    .from("companies")
+    .select("name, cnpj, address, city, state, logo_url")
+    .eq("id", profile.company_id)
+    .single()
 
   // Get comprehensive data for reports
   const { data: invoices } = await supabase
@@ -42,6 +46,10 @@ export default async function ReportsPage() {
         data-user-name={user.full_name || user.email}
         data-company-name={company?.name || "COPYCENTER LTDA"}
         data-company-cnpj={company?.cnpj || "N/A"}
+        data-company-address={company?.address || ""}
+        data-company-city={company?.city || ""}
+        data-company-state={company?.state || ""}
+        data-company-logo={company?.logo_url || ""}
         style={{ display: "none" }}
       />
 

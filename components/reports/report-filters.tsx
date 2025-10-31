@@ -101,12 +101,15 @@ export function ReportFilters({ invoices, clients, onFilterChange }: ReportFilte
   }
 
   const handleGeneratePDF = async () => {
-    // Get user info from the page
     const userEmail = document.querySelector("[data-user-email]")?.getAttribute("data-user-email") || "N/A"
     const userName = document.querySelector("[data-user-name]")?.getAttribute("data-user-name") || "N/A"
     const companyName =
       document.querySelector("[data-company-name]")?.getAttribute("data-company-name") || "COPYCENTER LTDA"
     const companyCnpj = document.querySelector("[data-company-cnpj]")?.getAttribute("data-company-cnpj") || "N/A"
+    const companyAddress = document.querySelector("[data-company-address]")?.getAttribute("data-company-address") || ""
+    const companyCity = document.querySelector("[data-company-city]")?.getAttribute("data-company-city") || ""
+    const companyState = document.querySelector("[data-company-state]")?.getAttribute("data-company-state") || ""
+    const companyLogo = document.querySelector("[data-company-logo]")?.getAttribute("data-company-logo") || ""
 
     generateReportPDF({
       invoices: filteredInvoices,
@@ -119,6 +122,10 @@ export function ReportFilters({ invoices, clients, onFilterChange }: ReportFilte
       userName,
       companyName,
       companyCnpj,
+      companyAddress,
+      companyCity,
+      companyState,
+      companyLogo,
     })
   }
 
