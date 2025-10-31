@@ -97,7 +97,7 @@ export function DashboardSidebar({ className }: SidebarProps) {
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
-      <div className="flex h-14 items-center border-b px-4">
+      <div className="flex h-14 lg:h-[60px] items-center border-b px-4">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
           <FileText className="h-6 w-6" />
           <span className="text-lg">NF-e System</span>
