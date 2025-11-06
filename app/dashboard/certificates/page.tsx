@@ -4,6 +4,9 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { CertificatesContent } from "@/components/certificates/certificates-content"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 interface Certificate {
   id: string
@@ -27,10 +30,12 @@ export default function CertificatesPage() {
   const [expiredCertificates, setExpiredCertificates] = useState<EnrichedCertificate[]>([])
   const [companyId, setCompanyId] = useState<string>("")
   const [userId, setUserId] = useState<string>("")
+  const [missingCompany, setMissingCompany] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     async function loadCertificates() {
+      console.log("[v0] Loading certificates page")
       const supabase = createBrowserClient()
 
       // Get current user
@@ -38,7 +43,10 @@ export default function CertificatesPage() {
         data: { user },
       } = await supabase.auth.getUser()
 
+      console.log("[v0] User:", user?.id)
+
       if (!user) {
+        console.log("[v0] No user found, redirecting to login")
         router.push("/auth/login")
         return
       }
@@ -48,8 +56,12 @@ export default function CertificatesPage() {
       // Get user's company
       const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
 
+      console.log("[v0] Profile company_id:", profile?.company_id)
+
       if (!profile?.company_id) {
-        router.push("/dashboard/settings")
+        console.log("[v0] No company_id found")
+        setMissingCompany(true)
+        setLoading(false)
         return
       }
 
@@ -66,6 +78,8 @@ export default function CertificatesPage() {
         )
         .eq("company_id", profile.company_id)
         .order("expiration_date", { ascending: true })
+
+      console.log("[v0] Loaded certificates:", certificates?.length || 0)
 
       if (certificates) {
         const today = new Date()
@@ -103,6 +117,24 @@ export default function CertificatesPage() {
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
           <p className="text-muted-foreground">Carregando certidões...</p>
         </div>
+      </div>
+    )
+  }
+
+  if (missingCompany) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Configuração Necessária</CardTitle>
+            <CardDescription>Você precisa configurar sua empresa antes de acessar as certidões.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full">
+              <Link href="/dashboard/settings">Configurar Empresa</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }
