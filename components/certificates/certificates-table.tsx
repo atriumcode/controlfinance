@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -41,6 +41,12 @@ export function CertificatesTable({ certificates, type }: CertificatesTableProps
   const [certificateToDelete, setCertificateToDelete] = useState<string | null>(null)
   const [emailDialogOpen, setEmailDialogOpen] = useState(false)
 
+  const today = useMemo(() => {
+    const date = new Date()
+    date.setHours(0, 0, 0, 0)
+    return date
+  }, [])
+
   const toggleSelection = (id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]))
   }
@@ -54,8 +60,6 @@ export function CertificatesTable({ certificates, type }: CertificatesTableProps
   }
 
   const getDaysUntilExpiration = (expirationDate: string) => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
     const expiration = new Date(expirationDate)
     expiration.setHours(0, 0, 0, 0)
     const diffTime = expiration.getTime() - today.getTime()

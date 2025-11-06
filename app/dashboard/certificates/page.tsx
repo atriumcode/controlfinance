@@ -24,5 +24,27 @@ export default async function CertificatesPage() {
     .eq("company_id", profile.company_id)
     .order("expiration_date", { ascending: true })
 
-  return <CertificatesContent certificates={certificates || []} companyId={profile.company_id} userId={user.id} />
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const validCertificates = (certificates || []).filter((cert) => {
+    const expirationDate = new Date(cert.expiration_date)
+    expirationDate.setHours(0, 0, 0, 0)
+    return expirationDate >= today
+  })
+
+  const expiredCertificates = (certificates || []).filter((cert) => {
+    const expirationDate = new Date(cert.expiration_date)
+    expirationDate.setHours(0, 0, 0, 0)
+    return expirationDate < today
+  })
+
+  return (
+    <CertificatesContent
+      validCertificates={validCertificates}
+      expiredCertificates={expiredCertificates}
+      companyId={profile.company_id}
+      userId={user.id}
+    />
+  )
 }

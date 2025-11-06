@@ -21,29 +21,19 @@ interface Certificate {
 }
 
 interface CertificatesContentProps {
-  certificates: Certificate[]
+  validCertificates: Certificate[]
+  expiredCertificates: Certificate[]
   companyId: string
   userId: string
 }
 
-export function CertificatesContent({ certificates, companyId, userId }: CertificatesContentProps) {
+export function CertificatesContent({
+  validCertificates,
+  expiredCertificates,
+  companyId,
+  userId,
+}: CertificatesContentProps) {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
-
-  // Separar certidões vigentes e vencidas
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const validCertificates = certificates.filter((cert) => {
-    const expirationDate = new Date(cert.expiration_date)
-    expirationDate.setHours(0, 0, 0, 0)
-    return expirationDate >= today
-  })
-
-  const expiredCertificates = certificates.filter((cert) => {
-    const expirationDate = new Date(cert.expiration_date)
-    expirationDate.setHours(0, 0, 0, 0)
-    return expirationDate < today
-  })
 
   return (
     <div className="flex min-h-screen w-full flex-col">
