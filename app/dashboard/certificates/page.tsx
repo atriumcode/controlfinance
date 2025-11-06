@@ -35,7 +35,6 @@ export default function CertificatesPage() {
 
   useEffect(() => {
     async function loadCertificates() {
-      console.log("[v0] Loading certificates page")
       const supabase = createBrowserClient()
 
       // Get current user
@@ -43,11 +42,8 @@ export default function CertificatesPage() {
         data: { user },
       } = await supabase.auth.getUser()
 
-      console.log("[v0] User:", user?.id)
-
       if (!user) {
-        console.log("[v0] No user found, redirecting to login")
-        router.push("/auth/login")
+        setTimeout(loadCertificates, 100)
         return
       }
 
@@ -56,10 +52,7 @@ export default function CertificatesPage() {
       // Get user's company
       const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
 
-      console.log("[v0] Profile company_id:", profile?.company_id)
-
       if (!profile?.company_id) {
-        console.log("[v0] No company_id found")
         setMissingCompany(true)
         setLoading(false)
         return
@@ -78,8 +71,6 @@ export default function CertificatesPage() {
         )
         .eq("company_id", profile.company_id)
         .order("expiration_date", { ascending: true })
-
-      console.log("[v0] Loaded certificates:", certificates?.length || 0)
 
       if (certificates) {
         const today = new Date()
@@ -108,7 +99,7 @@ export default function CertificatesPage() {
     }
 
     loadCertificates()
-  }, [router])
+  }, [])
 
   if (loading) {
     return (
