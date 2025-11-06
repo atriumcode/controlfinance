@@ -18,6 +18,8 @@ interface Certificate {
   uploaded_at: string
   expiration_date: string
   created_by_profile: { full_name: string } | null
+  daysUntilExpiration: number
+  isExpiringSoon: boolean
 }
 
 interface CertificatesContentProps {
