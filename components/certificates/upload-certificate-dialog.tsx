@@ -29,8 +29,9 @@ export function UploadCertificateDialog({ open, onOpenChange, companyId, userId 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
-      if (selectedFile.type !== "application/pdf") {
-        toast.error("Apenas arquivos PDF são permitidos")
+      const validTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"]
+      if (!validTypes.includes(selectedFile.type)) {
+        toast.error("Apenas arquivos PDF ou imagens (JPG, PNG) são permitidos")
         return
       }
       if (selectedFile.size > 3 * 1024 * 1024) {
@@ -39,7 +40,7 @@ export function UploadCertificateDialog({ open, onOpenChange, companyId, userId 
       }
       setFile(selectedFile)
       if (!name) {
-        setName(selectedFile.name.replace(".pdf", ""))
+        setName(selectedFile.name.replace(/\.(pdf|jpg|jpeg|png)$/i, ""))
       }
     }
   }
@@ -55,6 +56,8 @@ export function UploadCertificateDialog({ open, onOpenChange, companyId, userId 
     setUploading(true)
 
     try {
+      console.log("[v0] Iniciando upload do arquivo:", file.name)
+
       // Upload do arquivo para Vercel Blob
       const formData = new FormData()
       formData.append("file", file)
@@ -64,32 +67,53 @@ export function UploadCertificateDialog({ open, onOpenChange, companyId, userId 
         body: formData,
       })
 
-      if (!uploadResponse.ok) throw new Error("Erro ao fazer upload do arquivo")
+      console.log("[v0] Resposta do upload:", uploadResponse.status)
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json()
+        console.error("[v0] Erro no upload:", errorData)
+        throw new Error(errorData.details || "Erro ao fazer upload do arquivo")
+      }
 
       const { url } = await uploadResponse.json()
+      console.log("[v0] URL do arquivo:", url)
 
       // Salvar no banco de dados
+      const certificateData = {
+        company_id: companyId,
+        name,
+        description,
+        file_url: url,
+        file_size: file.size,
+        expiration_date: expirationDate,
+        created_by: userId,
+      }
+
+      console.log("[v0] Salvando certidão no banco:", certificateData)
+
       const response = await fetch("/api/certificates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          company_id: companyId,
-          name,
-          description,
-          file_url: url,
-          file_size: file.size,
-          expiration_date: expirationDate,
-          created_by: userId,
-        }),
+        body: JSON.stringify(certificateData),
       })
 
-      if (!response.ok) throw new Error()
+      console.log("[v0] Resposta do banco:", response.status)
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error("[v0] Erro ao salvar:", errorData)
+        throw new Error(errorData.details || "Erro ao salvar certidão")
+      }
+
+      const savedCertificate = await response.json()
+      console.log("[v0] Certidão salva com sucesso:", savedCertificate)
 
       toast.success("Certidão adicionada com sucesso")
       onOpenChange(false)
       window.location.reload()
     } catch (error) {
-      toast.error("Erro ao adicionar certidão")
+      console.error("[v0] Erro geral:", error)
+      toast.error(error instanceof Error ? error.message : "Erro ao adicionar certidão")
     } finally {
       setUploading(false)
     }
