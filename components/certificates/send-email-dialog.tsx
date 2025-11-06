@@ -40,6 +40,11 @@ export function SendEmailDialog({ open, onOpenChange, certificates }: SendEmailD
     setSending(true)
 
     try {
+      console.log("[v0] Enviando email com certidões:", {
+        to: email,
+        certificates: certificates.length,
+      })
+
       const response = await fetch("/api/certificates/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -54,14 +59,20 @@ export function SendEmailDialog({ open, onOpenChange, certificates }: SendEmailD
         }),
       })
 
-      if (!response.ok) throw new Error()
+      const data = await response.json()
 
-      toast.success("Email enviado com sucesso")
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao enviar email")
+      }
+
+      console.log("[v0] Email enviado com sucesso:", data)
+      toast.success("Email enviado com sucesso!")
       onOpenChange(false)
       setEmail("")
       setMessage("")
     } catch (error) {
-      toast.error("Erro ao enviar email")
+      console.error("[v0] Erro ao enviar email:", error)
+      toast.error(error instanceof Error ? error.message : "Erro ao enviar email")
     } finally {
       setSending(false)
     }
@@ -122,6 +133,13 @@ export function SendEmailDialog({ open, onOpenChange, certificates }: SendEmailD
                 <li key={cert.id}>• {cert.name}</li>
               ))}
             </ul>
+          </div>
+
+          <div className="rounded-lg bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 p-3">
+            <p className="text-xs text-yellow-800 dark:text-yellow-200">
+              <strong>Nota:</strong> Para enviar emails reais, configure um serviço de email (Resend, SendGrid, etc.) no
+              arquivo <code>app/api/certificates/send-email/route.ts</code>
+            </p>
           </div>
 
           <div className="flex justify-end gap-2">
