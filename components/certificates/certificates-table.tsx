@@ -168,7 +168,7 @@ export function CertificatesTable({ certificates, type }: CertificatesTableProps
             <TableBody>
               {certificates.map((certificate) => {
                 const daysUntilExpiration = getDaysUntilExpiration(certificate.expiration_date)
-                const isExpiringSoon = daysUntilExpiration <= 30 && daysUntilExpiration > 0
+                const isExpiringSoon = daysUntilExpiration <= 5 && daysUntilExpiration > 0
 
                 return (
                   <TableRow key={certificate.id}>
