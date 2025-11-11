@@ -30,6 +30,3 @@ export function createClient() {
 }
 
 export { createClient as createBrowserClient }
-
-// Kept for backward compatibility
-export { createBrowserClient } from "@/lib/db/client"
