@@ -1,6 +1,6 @@
 "use server"
 
-import { createAdminClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/db/client"
 import { redirect } from "next/navigation"
 import { hashPassword, verifyPassword, validatePassword } from "./password"
 import { createSession, deleteSession, requireAuth as requireAuthSession } from "./session"
@@ -51,33 +51,28 @@ export async function registerUserAction(formData: FormData) {
   }
 
   try {
-    const supabase = createAdminClient()
+    const db = createAdminClient()
 
-    const { data: existingUsers, error: countError } = await supabase
-      .from("profiles")
-      .select("id", { count: "exact", head: true })
+    const { data: existingUsers, error: countError } = await db.from("profiles").select("id").execute()
 
     if (countError) {
       console.error("Error checking users:", countError)
-
-      // Check if table doesn't exist
-      if (countError.code === "42P01" || countError.message.includes("does not exist")) {
-        return {
-          success: false,
-          error: "Sistema não configurado. Execute o script SQL primeiro.",
-          details: "Tabela 'profiles' não existe no banco de dados",
-        }
+      return {
+        success: false,
+        error: "Sistema não configurado. Execute o script SQL primeiro.",
+        details: "Erro ao acessar tabela 'profiles'",
       }
     }
 
-    const isFirstUser = !countError && (!existingUsers || existingUsers.length === 0)
+    const isFirstUser = !existingUsers || existingUsers.length === 0
 
     // Verificar se o email já existe
-    const { data: existingUser, error: checkError } = await supabase
+    const { data: existingUser, error: checkError } = await db
       .from("profiles")
       .select("id")
       .eq("email", email)
       .single()
+      .execute()
 
     if (existingUser) {
       return {
@@ -92,7 +87,7 @@ export async function registerUserAction(formData: FormData) {
     const finalRole = isFirstUser ? "admin" : role || "user"
 
     // Criar usuário
-    const { data: newUser, error: insertError } = await supabase
+    const { data: newUser, error: insertError } = await db
       .from("profiles")
       .insert({
         email,
@@ -103,20 +98,19 @@ export async function registerUserAction(formData: FormData) {
         password_hash: passwordHash,
         is_active: true,
       })
-      .select()
-      .single()
+      .execute()
 
-    if (insertError) {
+    if (insertError || !newUser || newUser.length === 0) {
       console.error("Insert error:", insertError)
       return {
         success: false,
         error: "Erro ao criar usuário. Tente novamente.",
-        details: insertError.message,
+        details: insertError?.message,
       }
     }
 
     // Criar sessão automaticamente
-    await createSession(newUser.id)
+    await createSession(newUser[0].id)
 
     return {
       success: true,
@@ -144,27 +138,25 @@ export async function loginUserAction(formData: FormData) {
   }
 
   try {
-    const supabase = createAdminClient()
+    const db = createAdminClient()
 
     // Buscar usuário
-    const { data: user, error: userError } = await supabase
+    const { data: users, error: userError } = await db
       .from("profiles")
       .select("id, email, password_hash, is_active")
       .eq("email", email)
-      .single()
+      .execute()
 
     if (userError) {
       console.error("Database error:", userError)
-
-      // Check if table doesn't exist
-      if (userError.code === "42P01" || userError.message.includes("does not exist")) {
-        return {
-          success: false,
-          error: "Sistema não configurado. Execute o script SQL primeiro.",
-          details: "Tabela 'profiles' não existe no banco de dados",
-        }
+      return {
+        success: false,
+        error: "Sistema não configurado. Execute o script SQL primeiro.",
+        details: "Erro ao acessar tabela 'profiles'",
       }
     }
+
+    const user = users && users.length > 0 ? users[0] : null
 
     if (!user) {
       return {
@@ -193,7 +185,7 @@ export async function loginUserAction(formData: FormData) {
     }
 
     // Atualizar último login
-    await supabase.from("profiles").update({ last_login: new Date().toISOString() }).eq("id", user.id)
+    await db.from("profiles").update({ last_login: new Date().toISOString() }).eq("id", user.id).execute()
 
     // Criar sessão
     await createSession(user.id)

@@ -57,6 +57,8 @@
     "lucide-react": "^0.454.0",
     "next": "14.2.16",
     "next-themes": "latest",
+    "pg": "latest",
+    "pg-native": "latest",
     "react": "^18",
     "react-day-picker": "9.8.0",
     "react-dom": "^18",
@@ -72,7 +74,9 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.9",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22",
+    "@types/pg": "^8.11.10",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "postcss": "^8.5",

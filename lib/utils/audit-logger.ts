@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/db/client"
 
 export interface AuditLogData {
   action: string
@@ -14,7 +14,7 @@ export interface AuditLogData {
 
 export async function createAuditLog(data: AuditLogData) {
   try {
-    const supabase = createAdminClient()
+    const db = createAdminClient()
 
     const auditLog = {
       ...data,
@@ -24,7 +24,7 @@ export async function createAuditLog(data: AuditLogData) {
       created_at: new Date().toISOString(),
     }
 
-    const { error } = await supabase.from("audit_logs").insert([auditLog])
+    const { error } = await db.from("audit_logs").insert([auditLog]).execute()
 
     if (error) {
       console.error("Error creating audit log:", error)

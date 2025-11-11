@@ -44,3 +44,6 @@ export function createAdminClient() {
 }
 
 export { createClient as createServerClient }
+
+// Kept for backward compatibility
+export { createServerClient } from "@/lib/db/client"

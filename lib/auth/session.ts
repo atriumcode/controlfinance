@@ -1,6 +1,6 @@
 // Gerenciamento de sessões de usuário
 import { cookies } from "next/headers"
-import { createAdminClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/db/client"
 import crypto from "crypto"
 
 const SESSION_COOKIE_NAME = "auth_session"
@@ -27,15 +27,18 @@ function generateToken(): string {
 }
 
 export async function createSession(userId: string): Promise<string> {
-  const supabase = createAdminClient()
+  const db = createAdminClient()
   const token = generateToken()
   const expiresAt = new Date(Date.now() + SESSION_DURATION)
 
-  const { error } = await supabase.from("sessions").insert({
-    user_id: userId,
-    token,
-    expires_at: expiresAt.toISOString(),
-  })
+  const { error } = await db
+    .from("sessions")
+    .insert({
+      user_id: userId,
+      token,
+      expires_at: expiresAt.toISOString(),
+    })
+    .execute()
 
   if (error) {
     console.error("[v0] Error creating session:", error)
@@ -66,10 +69,15 @@ export async function getSession(): Promise<{
     return { session: null, user: null }
   }
 
-  const supabase = createAdminClient()
+  const db = createAdminClient()
 
   // Buscar sessão
-  const { data: session, error: sessionError } = await supabase.from("sessions").select("*").eq("token", token).single()
+  const { data: session, error: sessionError } = await db
+    .from("sessions")
+    .select("*")
+    .eq("token", token)
+    .single()
+    .execute()
 
   if (sessionError || !session) {
     return { session: null, user: null }
@@ -82,11 +90,12 @@ export async function getSession(): Promise<{
   }
 
   // Buscar usuário
-  const { data: user, error: userError } = await supabase
+  const { data: user, error: userError } = await db
     .from("profiles")
     .select("id, email, full_name, role, company_id, is_active")
     .eq("id", session.user_id)
     .single()
+    .execute()
 
   if (userError || !user || !user.is_active) {
     return { session: null, user: null }
@@ -100,8 +109,8 @@ export async function deleteSession(token?: string): Promise<void> {
   const sessionToken = token || cookieStore.get(SESSION_COOKIE_NAME)?.value
 
   if (sessionToken) {
-    const supabase = createAdminClient()
-    await supabase.from("sessions").delete().eq("token", sessionToken)
+    const db = createAdminClient()
+    await db.from("sessions").delete().eq("token", sessionToken).execute()
   }
 
   cookieStore.delete(SESSION_COOKIE_NAME)
