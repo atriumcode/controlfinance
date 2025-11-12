@@ -94,7 +94,6 @@ export async function registerUserAction(formData: FormData) {
         full_name: fullName,
         role: finalRole,
         cnpj: cnpj || null,
-        company_name: companyName || null,
         password_hash: passwordHash,
         is_active: true,
       })

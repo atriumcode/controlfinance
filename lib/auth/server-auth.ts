@@ -19,7 +19,6 @@ export const getAuthenticatedUser = cache(async () => {
       p.email,
       p.full_name,
       p.role,
-      p.company_name,
       p.cnpj,
       p.company_id,
       p.is_active
@@ -48,7 +47,6 @@ export const getAuthenticatedUser = cache(async () => {
     email: data.email,
     full_name: data.full_name,
     role: data.role,
-    company_name: data.company_name,
     cnpj: data.cnpj,
     company_id: data.company_id,
     is_active: data.is_active,

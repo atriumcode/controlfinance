@@ -17,9 +17,7 @@ export async function getCurrentUser(): Promise<User | null> {
       role: profile.role,
       company_id: profile.company_id,
       cnpj: profile.cnpj,
-      company_name: profile.company_name,
-      created_at: profile.created_at,
-      updated_at: profile.updated_at,
+      is_active: profile.is_active,
     }
   } catch (error) {
     return null

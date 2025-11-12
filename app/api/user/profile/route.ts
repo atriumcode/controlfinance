@@ -15,7 +15,6 @@ export async function GET() {
       full_name: user.full_name,
       role: user.role,
       company_id: user.company_id,
-      company_name: user.company_name,
       cnpj: user.cnpj,
       is_active: user.is_active,
     })
