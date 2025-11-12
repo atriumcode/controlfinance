@@ -140,7 +140,12 @@ export async function loginUserAction(formData: FormData) {
       }
     }
 
-    await execute("UPDATE profiles SET last_login = $1 WHERE id = $2", [new Date().toISOString(), user.id])
+    try {
+      await execute("UPDATE profiles SET last_login = $1 WHERE id = $2", [new Date().toISOString(), user.id])
+    } catch (lastLoginError) {
+      // Silently ignore if last_login column doesn't exist
+      console.log("[v0] Could not update last_login (column may not exist):", lastLoginError)
+    }
 
     await createSession(user.id)
 
