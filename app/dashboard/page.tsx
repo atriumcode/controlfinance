@@ -18,49 +18,17 @@ export default async function DashboardPage() {
     redirect("/auth/login")
   }
 
-  const [profileResult, invoicesResult, clientsCountResult] = await Promise.all([
-    // Get user profile and company info
-    query(
-      `
-      SELECT p.*, c.name as company_name, c.cnpj as company_cnpj
-      FROM profiles p
-      LEFT JOIN companies c ON p.company_id = c.id
-      WHERE p.id = $1
-    `,
-      [user.id],
-    ),
+  const profileResult = await query(
+    `
+    SELECT p.*, c.name as company_name, c.cnpj as company_cnpj
+    FROM profiles p
+    LEFT JOIN companies c ON p.company_id = c.id
+    WHERE p.id = $1
+  `,
+    [user.id],
+  )
 
-    // Get only last 90 days of invoices for performance
-    query(
-      `
-      SELECT i.*, cl.name as client_name, cl.document, cl.document_type,
-             COALESCE(SUM(py.amount), 0) as amount_paid
-      FROM invoices i
-      LEFT JOIN clients cl ON i.client_id = cl.id
-      LEFT JOIN payments py ON i.id = py.invoice_id
-      WHERE i.company_id = $1
-        AND i.created_at >= NOW() - INTERVAL '90 days'
-      GROUP BY i.id, cl.name, cl.document, cl.document_type
-      ORDER BY i.created_at DESC
-      LIMIT 100
-    `,
-      [user.company_id || ""],
-    ),
-
-    // Get clients count
-    query(
-      `
-      SELECT COUNT(*) as count
-      FROM clients
-      WHERE company_id = $1
-    `,
-      [user.company_id || ""],
-    ),
-  ])
-
-  const profile = profileResult.rows[0]
-  const invoices = invoicesResult.rows
-  const clientsCount = Number.parseInt(clientsCountResult.rows[0]?.count || "0")
+  const profile = profileResult?.rows?.[0]
 
   if (!profile?.company_id) {
     return (
@@ -80,6 +48,38 @@ export default async function DashboardPage() {
     )
   }
 
+  const [invoicesResult, clientsCountResult] = await Promise.all([
+    // Get only last 90 days of invoices for performance
+    query(
+      `
+      SELECT i.*, cl.name as client_name, cl.cpf_cnpj as document,
+             COALESCE(SUM(py.amount), 0) as amount_paid
+      FROM invoices i
+      LEFT JOIN clients cl ON i.client_id = cl.id
+      LEFT JOIN payments py ON i.id = py.invoice_id
+      WHERE i.company_id = $1
+        AND i.created_at >= NOW() - INTERVAL '90 days'
+      GROUP BY i.id, cl.name, cl.cpf_cnpj
+      ORDER BY i.created_at DESC
+      LIMIT 100
+    `,
+      [profile.company_id],
+    ),
+
+    // Get clients count
+    query(
+      `
+      SELECT COUNT(*) as count
+      FROM clients
+      WHERE company_id = $1
+    `,
+      [profile.company_id],
+    ),
+  ])
+
+  const invoices = invoicesResult?.rows || []
+  const clientsCount = Number.parseInt(clientsCountResult?.rows?.[0]?.count || "0")
+
   return (
     <div className="flex min-h-screen w-full flex-col">
       <main className="flex-1 space-y-6 p-4 md:p-8">
@@ -93,15 +93,15 @@ export default async function DashboardPage() {
           </Button>
         </div>
 
-        <DashboardStats invoices={invoices || []} clientsCount={clientsCount || 0} />
+        <DashboardStats invoices={invoices} clientsCount={clientsCount} />
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <RevenueChart invoices={invoices || []} />
-          <PaymentStatusChart invoices={invoices || []} />
+          <RevenueChart invoices={invoices} />
+          <PaymentStatusChart invoices={invoices} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <RecentInvoices invoices={invoices?.slice(0, 5) || []} />
+          <RecentInvoices invoices={invoices.slice(0, 5)} />
 
           <Card>
             <CardHeader>
