@@ -15,7 +15,10 @@ export default async function SettingsPage() {
     redirect("/auth/login")
   }
 
-  const company = await queryOne("SELECT * FROM companies WHERE id = $1", [user.company_id || ""])
+  let company = null
+  if (user.company_id && user.company_id.length > 0) {
+    company = await queryOne("SELECT * FROM companies WHERE id = $1", [user.company_id])
+  }
 
   return (
     <div className="container mx-auto py-6 px-4">

@@ -18,7 +18,7 @@ export default async function PaymentsPage() {
   const profile = await queryOne<{ company_id: string }>("SELECT company_id FROM profiles WHERE id = $1", [user.id])
 
   if (!profile?.company_id) {
-    redirect("/auth/login")
+    redirect("/dashboard/settings?setup=true")
   }
 
   // Get payments with invoice and client data
