@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { createAdminClient } from "@/lib/supabase/server"
+import { query } from "@/lib/db/postgres"
 import { getSession } from "@/lib/auth/session"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,49 +18,49 @@ export default async function DashboardPage() {
     redirect("/auth/login")
   }
 
-  const supabase = createAdminClient()
-
   const [profileResult, invoicesResult, clientsCountResult] = await Promise.all([
     // Get user profile and company info
-    supabase
-      .from("profiles")
-      .select(`
-        *,
-        companies (
-          name,
-          cnpj
-        )
-      `)
-      .eq("id", user.id)
-      .single(),
+    query(
+      `
+      SELECT p.*, c.name as company_name, c.cnpj as company_cnpj
+      FROM profiles p
+      LEFT JOIN companies c ON p.company_id = c.id
+      WHERE p.id = $1
+    `,
+      [user.id],
+    ),
 
-    // Get only last 90 days of invoices for performance (not ALL invoices)
-    supabase
-      .from("invoices")
-      .select(`
-        *,
-        amount_paid,
-        clients (
-          name,
-          document,
-          document_type
-        )
-      `)
-      .eq("company_id", user.company_id || "")
-      .gte("created_at", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
-      .order("created_at", { ascending: false })
-      .limit(100), // Limit to 100 most recent
+    // Get only last 90 days of invoices for performance
+    query(
+      `
+      SELECT i.*, cl.name as client_name, cl.document, cl.document_type,
+             COALESCE(SUM(py.amount), 0) as amount_paid
+      FROM invoices i
+      LEFT JOIN clients cl ON i.client_id = cl.id
+      LEFT JOIN payments py ON i.id = py.invoice_id
+      WHERE i.company_id = $1
+        AND i.created_at >= NOW() - INTERVAL '90 days'
+      GROUP BY i.id, cl.name, cl.document, cl.document_type
+      ORDER BY i.created_at DESC
+      LIMIT 100
+    `,
+      [user.company_id || ""],
+    ),
 
     // Get clients count
-    supabase
-      .from("clients")
-      .select("*", { count: "exact", head: true })
-      .eq("company_id", user.company_id || ""),
+    query(
+      `
+      SELECT COUNT(*) as count
+      FROM clients
+      WHERE company_id = $1
+    `,
+      [user.company_id || ""],
+    ),
   ])
 
-  const profile = profileResult.data
-  const invoices = invoicesResult.data
-  const clientsCount = clientsCountResult.count
+  const profile = profileResult.rows[0]
+  const invoices = invoicesResult.rows
+  const clientsCount = Number.parseInt(clientsCountResult.rows[0]?.count || "0")
 
   if (!profile?.company_id) {
     return (
