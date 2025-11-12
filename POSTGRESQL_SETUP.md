@@ -36,19 +36,31 @@ Baixe o instalador em: https://www.postgresql.org/download/windows/
 sudo -u postgres psql
 
 # Dentro do PostgreSQL, execute:
+CREATE DATABASE invoice_system;
 CREATE USER invoice_user WITH PASSWORD 'SuaSenhaSegura123!';
-CREATE DATABASE invoice_system OWNER invoice_user;
 GRANT ALL PRIVILEGES ON DATABASE invoice_system TO invoice_user;
+
+# Conectar ao banco e dar permissões ao schema
+\c invoice_system
+GRANT ALL ON SCHEMA public TO invoice_user;
+ALTER DATABASE invoice_system OWNER TO invoice_user;
 
 # Sair
 \q
 \`\`\`
 
-### 1.3 Executar Script SQL Completo
+### 1.3 Executar Scripts SQL (EM ORDEM!)
 
+**IMPORTANTE:** Execute os scripts na ordem correta:
+
+**Primeiro - Habilitar extensões (como superusuário):**
 \`\`\`bash
-# Baixar o arquivo complete-postgresql-setup.sql e executar:
-psql -h localhost -U invoice_user -d invoice_system -f scripts/complete-postgresql-setup.sql
+sudo -u postgres psql -d invoice_system -f scripts/00-enable-extensions-as-superuser.sql
+\`\`\`
+
+**Segundo - Criar estrutura do banco (como invoice_user):**
+\`\`\`bash
+psql -h localhost -U invoice_user -d invoice_system -f scripts/01-complete-postgresql-setup.sql
 \`\`\`
 
 Quando solicitar a senha, digite: `SuaSenhaSegura123!` (ou a senha que você definiu)
@@ -202,7 +214,7 @@ Apenas configure `DATABASE_URL` no provedor escolhido.
 ### Erro: "relation does not exist"
 Execute o script SQL novamente:
 \`\`\`bash
-psql -h localhost -U invoice_user -d invoice_system -f scripts/complete-postgresql-setup.sql
+psql -h localhost -U invoice_user -d invoice_system -f scripts/01-complete-postgresql-setup.sql
 \`\`\`
 
 ### Erro: "password authentication failed"

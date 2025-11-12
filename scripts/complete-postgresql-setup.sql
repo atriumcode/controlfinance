@@ -3,6 +3,9 @@
 -- PostgreSQL Local - Versão Consolidada
 -- ============================================================================
 
+-- Habilitar extensão para gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- Limpar schema existente (CUIDADO: Remove todos os dados)
 -- Descomente as linhas abaixo apenas se quiser começar do zero
 -- DROP SCHEMA IF EXISTS public CASCADE;
