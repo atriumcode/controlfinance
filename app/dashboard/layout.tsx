@@ -13,8 +13,11 @@ export default async function DashboardLayout({
 }) {
   const user = await requireAuth()
 
-  const companyResult = await query("SELECT name, cnpj FROM companies WHERE id = $1", [user.company_id])
-  const company = companyResult.rows[0]
+  let company = null
+  if (user.company_id) {
+    const companyResult = await query("SELECT name, cnpj FROM companies WHERE id = $1", [user.company_id])
+    company = companyResult?.rows?.[0] || null
+  }
 
   return (
     <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-muted/20 to-background">
