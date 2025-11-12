@@ -99,7 +99,7 @@ importers:
         specifier: latest
         version: 5.3.1
       fs:
-        specifier: latest
+        specifier: 0.0.1-security
         version: 0.0.1-security
       geist:
         specifier: latest

@@ -1,49 +1,17 @@
 import { Pool } from "pg"
-import { readFileSync, existsSync } from "fs"
-import path from "path"
 
-const envPath = path.join(process.cwd(), ".env.local")
-console.log("[v0] Looking for .env.local at:", envPath)
-
-if (existsSync(envPath)) {
-  const envContent = readFileSync(envPath, "utf-8")
-  console.log("[v0] .env.local file found, parsing...")
-
-  envContent.split("\n").forEach((line) => {
-    const trimmed = line.trim()
-    if (trimmed && !trimmed.startsWith("#")) {
-      const [key, ...valueParts] = trimmed.split("=")
-      if (key && valueParts.length > 0) {
-        let value = valueParts.join("=").trim()
-        // Remove quotes if present
-        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-          value = value.slice(1, -1)
-        }
-        process.env[key] = value
-        console.log("[v0] Loaded env var:", key)
-      }
-    }
-  })
-} else {
-  console.error("[v0] .env.local file NOT FOUND at:", envPath)
-}
-
-console.log("[v0] DATABASE_URL exists:", !!process.env.DATABASE_URL)
-console.log("[v0] DATABASE_URL value:", process.env.DATABASE_URL?.substring(0, 30) + "...")
-
-// Singleton pattern para a conexão com PostgreSQL
 let poolInstance: Pool | null = null
 
 export function getPool(): Pool {
   if (!poolInstance) {
-    if (!process.env.DATABASE_URL) {
-      throw new Error("DATABASE_URL não está configurada. Verifique o arquivo .env.local")
+    if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
+      throw new Error("DATABASE_URL ou POSTGRES_URL não está configurada")
     }
 
-    console.log("[v0] Creating PostgreSQL pool with URL:", process.env.DATABASE_URL.replace(/:[^:@]+@/, ":****@"))
+    const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL
 
     poolInstance = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString,
       max: 20,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 2000,
@@ -86,4 +54,10 @@ export async function execute(text: string, params?: any[]): Promise<number> {
   }
 }
 
-export const pool = getPool()
+// Usar Object.defineProperty permite que pool seja acessado como uma propriedade,
+// mas só é inicializado quando realmente usado (lazy loading)
+export const pool = new Proxy({} as Pool, {
+  get(target, prop) {
+    return getPool()[prop as keyof Pool]
+  },
+})

@@ -39,7 +39,7 @@
     "date-fns": "latest",
     "dotenv": "latest",
     "fast-xml-parser": "latest",
-    "fs": "latest",
+    "fs": "0.0.1-security",
     "geist": "latest",
     "jspdf": "latest",
     "jspdf-autotable": "latest",
