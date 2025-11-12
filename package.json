@@ -51,6 +51,7 @@
     "dotenv": "latest",
     "embla-carousel-react": "8.5.1",
     "fast-xml-parser": "latest",
+    "fs": "latest",
     "geist": "latest",
     "input-otp": "1.4.1",
     "jspdf": "latest",

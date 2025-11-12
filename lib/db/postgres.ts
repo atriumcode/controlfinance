@@ -1,33 +1,35 @@
 import { Pool } from "pg"
-import dotenv from "dotenv"
+import { readFileSync, existsSync } from "fs"
 import path from "path"
 
 const envPath = path.join(process.cwd(), ".env.local")
-dotenv.config({ path: envPath })
+console.log("[v0] Looking for .env.local at:", envPath)
 
-console.log("[v0] Loading environment from:", envPath)
-console.log("[v0] DATABASE_URL exists:", !!process.env.DATABASE_URL)
+if (existsSync(envPath)) {
+  const envContent = readFileSync(envPath, "utf-8")
+  console.log("[v0] .env.local file found, parsing...")
 
-if (process.env.DATABASE_URL) {
-  // Validate URL format
-  try {
-    const url = new URL(process.env.DATABASE_URL)
-    console.log(
-      "[v0] Database config - protocol:",
-      url.protocol,
-      "host:",
-      url.hostname,
-      "port:",
-      url.port,
-      "database:",
-      url.pathname.slice(1),
-    )
-  } catch (e) {
-    console.error("[v0] Invalid DATABASE_URL format:", e)
-  }
+  envContent.split("\n").forEach((line) => {
+    const trimmed = line.trim()
+    if (trimmed && !trimmed.startsWith("#")) {
+      const [key, ...valueParts] = trimmed.split("=")
+      if (key && valueParts.length > 0) {
+        let value = valueParts.join("=").trim()
+        // Remove quotes if present
+        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+          value = value.slice(1, -1)
+        }
+        process.env[key] = value
+        console.log("[v0] Loaded env var:", key)
+      }
+    }
+  })
 } else {
-  console.error("[v0] DATABASE_URL is not set!")
+  console.error("[v0] .env.local file NOT FOUND at:", envPath)
 }
+
+console.log("[v0] DATABASE_URL exists:", !!process.env.DATABASE_URL)
+console.log("[v0] DATABASE_URL value:", process.env.DATABASE_URL?.substring(0, 30) + "...")
 
 // Singleton pattern para a conexão com PostgreSQL
 let pool: Pool | null = null
