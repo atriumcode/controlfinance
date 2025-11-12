@@ -4,7 +4,7 @@ import { query } from "@/lib/db/postgres"
 
 const SESSION_COOKIE_NAME = "auth_session"
 
-export const getAuthenticatedUser = cache(async () => {
+export const getCurrentUser = cache(async () => {
   const cookieStore = await cookies()
   const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value
 
@@ -52,3 +52,5 @@ export const getAuthenticatedUser = cache(async () => {
     is_active: data.is_active,
   }
 })
+
+export const getAuthenticatedUser = getCurrentUser

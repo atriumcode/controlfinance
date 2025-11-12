@@ -32,29 +32,29 @@ console.log("[v0] DATABASE_URL exists:", !!process.env.DATABASE_URL)
 console.log("[v0] DATABASE_URL value:", process.env.DATABASE_URL?.substring(0, 30) + "...")
 
 // Singleton pattern para a conexão com PostgreSQL
-let pool: Pool | null = null
+let poolInstance: Pool | null = null
 
 export function getPool(): Pool {
-  if (!pool) {
+  if (!poolInstance) {
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URL não está configurada. Verifique o arquivo .env.local")
     }
 
     console.log("[v0] Creating PostgreSQL pool with URL:", process.env.DATABASE_URL.replace(/:[^:@]+@/, ":****@"))
 
-    pool = new Pool({
+    poolInstance = new Pool({
       connectionString: process.env.DATABASE_URL,
       max: 20,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 2000,
     })
 
-    pool.on("error", (err) => {
+    poolInstance.on("error", (err) => {
       console.error("[PostgreSQL] Unexpected error on idle client", err)
     })
   }
 
-  return pool
+  return poolInstance
 }
 
 export async function query<T = any>(text: string, params?: any[]): Promise<T[]> {
@@ -85,3 +85,5 @@ export async function execute(text: string, params?: any[]): Promise<number> {
     client.release()
   }
 }
+
+export const pool = getPool()
