@@ -31,6 +31,8 @@ export async function createSession(userId: string): Promise<string> {
   const token = generateToken()
   const expiresAt = new Date(Date.now() + SESSION_DURATION)
 
+  console.log("[v0] Creating session for user:", userId)
+
   const { error } = await db
     .from("sessions")
     .insert({
@@ -45,15 +47,27 @@ export async function createSession(userId: string): Promise<string> {
     throw new Error("Erro ao criar sessão")
   }
 
+  console.log("[v0] Session created in database, setting cookie...")
+
   // Salvar token no cookie
   const cookieStore = await cookies()
+  const isProduction = process.env.NODE_ENV === "production"
+  const isHttps = process.env.NEXT_PUBLIC_SITE_URL?.startsWith("https://") || false
+
+  console.log("[v0] Cookie settings - NODE_ENV:", process.env.NODE_ENV)
+  console.log("[v0] Cookie settings - isProduction:", isProduction)
+  console.log("[v0] Cookie settings - isHttps:", isHttps)
+  console.log("[v0] Cookie settings - secure will be:", isProduction && isHttps)
+
   cookieStore.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isProduction && isHttps, // Only secure if HTTPS
     sameSite: "lax",
     maxAge: SESSION_DURATION / 1000,
     path: "/",
   })
+
+  console.log("[v0] Cookie set successfully")
 
   return token
 }

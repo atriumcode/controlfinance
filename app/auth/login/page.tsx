@@ -61,10 +61,18 @@ export default function LoginPage() {
     setError(null)
     setErrorDetails(null)
 
+    console.log("[v0] Login form submitted")
+
     const formData = new FormData(e.currentTarget)
 
+    console.log("[v0] Form data - email:", formData.get("email"))
+    console.log("[v0] Form data - password length:", (formData.get("password") as string)?.length)
+
     try {
+      console.log("[v0] Calling loginUserAction...")
       const result = await loginUserAction(formData)
+
+      console.log("[v0] Login result:", result)
 
       if (!result.success) {
         setError(result.error || "Erro ao fazer login")
@@ -72,10 +80,11 @@ export default function LoginPage() {
           setErrorDetails(result.details as string)
         }
       } else {
+        console.log("[v0] Login successful, redirecting to dashboard...")
         router.push("/dashboard")
       }
     } catch (error) {
-      console.error("Login error:", error)
+      console.error("[v0] Login error:", error)
       setError("Erro ao fazer login. Tente novamente.")
     } finally {
       setIsLoading(false)
