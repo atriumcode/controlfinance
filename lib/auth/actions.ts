@@ -129,6 +129,8 @@ export async function loginUserAction(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
 
+  console.log("[v0] Login attempt for email:", email)
+
   if (!email || !password) {
     return {
       success: false,
@@ -139,12 +141,17 @@ export async function loginUserAction(formData: FormData) {
   try {
     const db = createAdminClient()
 
+    console.log("[v0] Querying database for user...")
+
     // Buscar usuário
     const { data: users, error: userError } = await db
       .from("profiles")
       .select("id, email, password_hash, is_active")
       .eq("email", email)
       .execute()
+
+    console.log("[v0] Database query result - users found:", users?.length || 0)
+    console.log("[v0] Database query error:", userError)
 
     if (userError) {
       console.error("Database error:", userError)
@@ -158,12 +165,15 @@ export async function loginUserAction(formData: FormData) {
     const user = users && users.length > 0 ? users[0] : null
 
     if (!user) {
+      console.log("[v0] User not found for email:", email)
       return {
         success: false,
         error: "Email ou senha incorretos",
         details: "Usuário não encontrado no banco de dados",
       }
     }
+
+    console.log("[v0] User found, checking if active...")
 
     if (!user.is_active) {
       return {
@@ -172,8 +182,12 @@ export async function loginUserAction(formData: FormData) {
       }
     }
 
+    console.log("[v0] Verifying password...")
+
     // Verificar senha
     const isPasswordValid = await verifyPassword(password, user.password_hash)
+
+    console.log("[v0] Password valid:", isPasswordValid)
 
     if (!isPasswordValid) {
       return {
@@ -183,17 +197,21 @@ export async function loginUserAction(formData: FormData) {
       }
     }
 
+    console.log("[v0] Updating last login and creating session...")
+
     // Atualizar último login
     await db.from("profiles").update({ last_login: new Date().toISOString() }).eq("id", user.id).execute()
 
     // Criar sessão
     await createSession(user.id)
 
+    console.log("[v0] Login successful!")
+
     return {
       success: true,
     }
   } catch (error) {
-    console.error("Login error:", error)
+    console.error("[v0] Login exception:", error)
     return {
       success: false,
       error: "Erro ao fazer login. Tente novamente.",
