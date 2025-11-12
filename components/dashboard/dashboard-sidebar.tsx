@@ -21,7 +21,6 @@ import {
   ChevronDown,
   ChevronRight,
   Landmark,
-  FileCheck,
 } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
@@ -45,11 +44,6 @@ const navigation = [
     name: "Extratos Bancários",
     href: "/dashboard/bank-statements",
     icon: Landmark,
-  },
-  {
-    name: "Certidões",
-    href: "/dashboard/certificates",
-    icon: FileCheck,
   },
   {
     name: "Relatórios",
