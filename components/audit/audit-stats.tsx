@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createBrowserClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Activity, AlertTriangle, CheckCircle } from "lucide-react"
 
@@ -27,43 +26,10 @@ export function AuditStats({ companyId }: AuditStatsProps) {
 
   useEffect(() => {
     async function fetchStats() {
-      const supabase = createBrowserClient()
-
       try {
-        // Total logs
-        const { count: totalLogs } = await supabase
-          .from("audit_logs")
-          .select("*", { count: "exact", head: true })
-          .eq("company_id", companyId)
-
-        // Today's logs
-        const today = new Date().toISOString().split("T")[0]
-        const { count: todayLogs } = await supabase
-          .from("audit_logs")
-          .select("*", { count: "exact", head: true })
-          .eq("company_id", companyId)
-          .gte("created_at", today)
-
-        // Critical events (last 30 days)
-        const thirtyDaysAgo = new Date()
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-
-        const { count: criticalEvents } = await supabase
-          .from("audit_logs")
-          .select("*", { count: "exact", head: true })
-          .eq("company_id", companyId)
-          .eq("severity", "critical")
-          .gte("created_at", thirtyDaysAgo.toISOString())
-
-        // Calculate compliance score (simplified)
-        const complianceScore = Math.max(0, 100 - (criticalEvents || 0) * 5)
-
-        setStats({
-          totalLogs: totalLogs || 0,
-          todayLogs: todayLogs || 0,
-          criticalEvents: criticalEvents || 0,
-          complianceScore,
-        })
+        const response = await fetch(`/api/audit-stats?company_id=${companyId}`)
+        const data = await response.json()
+        setStats(data)
       } catch (error) {
         console.error("Error fetching audit stats:", error)
       } finally {

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { createAdminClient } from "@/lib/supabase/server"
+import { query } from "@/lib/db/postgres"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,7 +14,6 @@ interface ClientDetailPageProps {
 
 export default async function ClientDetailPage({ params }: ClientDetailPageProps) {
   const { id } = await params
-  const supabase = createAdminClient()
 
   const user = await getAuthenticatedUser()
 
@@ -22,29 +21,31 @@ export default async function ClientDetailPage({ params }: ClientDetailPageProps
     redirect("/auth/login")
   }
 
-  // Get user's company
-  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
+  const profileResult = await query("SELECT company_id FROM profiles WHERE id = $1", [user.id])
+  const profile = profileResult.rows[0]
 
   if (!profile?.company_id) {
     redirect("/auth/login")
   }
 
-  // Get client data with invoices
-  const { data: client } = await supabase
-    .from("clients")
-    .select(`
-      *,
-      invoices (
-        id,
-        invoice_number,
-        issue_date,
-        total_amount,
-        status
-      )
-    `)
-    .eq("id", id)
-    .eq("company_id", profile.company_id)
-    .single()
+  const clientResult = await query(
+    `SELECT c.*, 
+      json_agg(
+        json_build_object(
+          'id', i.id,
+          'invoice_number', i.invoice_number,
+          'issue_date', i.issue_date,
+          'total_amount', i.total_amount,
+          'status', i.status
+        )
+      ) FILTER (WHERE i.id IS NOT NULL) as invoices
+    FROM clients c
+    LEFT JOIN invoices i ON i.client_id = c.id
+    WHERE c.id = $1 AND c.company_id = $2
+    GROUP BY c.id`,
+    [id, profile.company_id],
+  )
+  const client = clientResult.rows[0]
 
   if (!client) {
     redirect("/dashboard/clients")

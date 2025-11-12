@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createBrowserClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -36,64 +35,10 @@ export function ComplianceOverview({ companyId }: ComplianceOverviewProps) {
 
   useEffect(() => {
     async function fetchComplianceData() {
-      const supabase = createBrowserClient()
-
       try {
-        // Fetch invoices for compliance analysis
-        const { data: invoices } = await supabase.from("invoices").select("*").eq("company_id", companyId)
-
-        // Fetch clients for documentation compliance
-        const { data: clients } = await supabase.from("clients").select("*").eq("company_id", companyId)
-
-        // Calculate compliance scores
-        const totalInvoices = invoices?.length || 0
-        const nfeInvoices = invoices?.filter((inv) => inv.nfe_key).length || 0
-        const paidInvoices = invoices?.filter((inv) => inv.status === "paid").length || 0
-        const clientsWithDocuments =
-          clients?.filter((client) => client.document && client.document.length >= 11).length || 0
-
-        const nfeCompliance = totalInvoices > 0 ? (nfeInvoices / totalInvoices) * 100 : 100
-        const taxCompliance = totalInvoices > 0 ? (paidInvoices / totalInvoices) * 100 : 100
-        const documentationCompliance = clients?.length ? (clientsWithDocuments / clients.length) * 100 : 100
-        const overallScore = (nfeCompliance + taxCompliance + documentationCompliance) / 3
-
-        // Identify compliance issues
-        const issues = []
-
-        if (nfeCompliance < 90) {
-          issues.push({
-            type: "NF-e",
-            severity: "high" as const,
-            description: "Faturas sem chave NF-e",
-            count: totalInvoices - nfeInvoices,
-          })
-        }
-
-        if (taxCompliance < 80) {
-          issues.push({
-            type: "Impostos",
-            severity: "medium" as const,
-            description: "Faturas em atraso",
-            count: totalInvoices - paidInvoices,
-          })
-        }
-
-        if (documentationCompliance < 95) {
-          issues.push({
-            type: "Documentação",
-            severity: "low" as const,
-            description: "Clientes sem CPF/CNPJ válido",
-            count: (clients?.length || 0) - clientsWithDocuments,
-          })
-        }
-
-        setCompliance({
-          nfeCompliance,
-          taxCompliance,
-          documentationCompliance,
-          overallScore,
-          issues,
-        })
+        const response = await fetch(`/api/compliance?company_id=${companyId}`)
+        const data = await response.json()
+        setCompliance(data)
       } catch (error) {
         console.error("Error fetching compliance data:", error)
       } finally {

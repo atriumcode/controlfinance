@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { query } from "@/lib/db/postgres"
 import { notFound } from "next/navigation"
 import { UserDetailsForm } from "@/components/users/user-details-form"
 
@@ -11,12 +11,10 @@ interface UserDetailsPageProps {
 }
 
 export default async function UserDetailsPage({ params }: UserDetailsPageProps) {
-  const supabase = await createServerClient()
+  const result = await query("SELECT * FROM profiles WHERE id = $1", [params.id])
+  const user = result.rows[0]
 
-  // Fetch user details
-  const { data: user, error } = await supabase.from("profiles").select("*").eq("id", params.id).single()
-
-  if (error || !user) {
+  if (!user) {
     notFound()
   }
 

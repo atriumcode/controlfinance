@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { createAdminClient } from "@/lib/supabase/server"
+import { query } from "@/lib/db/postgres"
 import Link from "next/link"
 import { ClientForm } from "@/components/clients/client-form"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
@@ -10,7 +10,6 @@ interface EditClientPageProps {
 
 export default async function EditClientPage({ params }: EditClientPageProps) {
   const { id } = await params
-  const supabase = createAdminClient()
 
   const user = await getAuthenticatedUser()
 
@@ -18,20 +17,15 @@ export default async function EditClientPage({ params }: EditClientPageProps) {
     redirect("/auth/login")
   }
 
-  // Get user's company
-  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
+  const profileResult = await query("SELECT company_id FROM profiles WHERE id = $1", [user.id])
+  const profile = profileResult.rows[0]
 
   if (!profile?.company_id) {
     redirect("/auth/login")
   }
 
-  // Get client data
-  const { data: client } = await supabase
-    .from("clients")
-    .select("*")
-    .eq("id", id)
-    .eq("company_id", profile.company_id)
-    .single()
+  const clientResult = await query("SELECT * FROM clients WHERE id = $1 AND company_id = $2", [id, profile.company_id])
+  const client = clientResult.rows[0]
 
   if (!client) {
     redirect("/dashboard/clients")

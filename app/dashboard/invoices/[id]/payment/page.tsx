@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import { PaymentForm } from "@/components/payments/payment-form"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
+import { query } from "@/lib/db/postgres"
 
 interface PaymentPageProps {
   params: Promise<{ id: string }>
@@ -10,7 +10,6 @@ interface PaymentPageProps {
 
 export default async function PaymentPage({ params }: PaymentPageProps) {
   const { id } = await params
-  const supabase = await createClient()
 
   const user = await getAuthenticatedUser()
 
@@ -18,27 +17,26 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     redirect("/auth/login")
   }
 
-  // Get user's company
-  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
+  const profileResult = await query("SELECT company_id FROM profiles WHERE id = $1", [user.id])
+  const profile = profileResult.rows[0]
 
   if (!profile?.company_id) {
     redirect("/auth/login")
   }
 
-  // Get invoice data
-  const { data: invoice } = await supabase
-    .from("invoices")
-    .select(`
-      *,
-      clients (
-        name,
-        document,
-        document_type
-      )
-    `)
-    .eq("id", id)
-    .eq("company_id", profile.company_id)
-    .single()
+  const invoiceResult = await query(
+    `SELECT i.*,
+      json_build_object(
+        'name', c.name,
+        'document', c.cpf_cnpj,
+        'document_type', 'cpf'
+      ) as clients
+    FROM invoices i
+    LEFT JOIN clients c ON c.id = i.client_id
+    WHERE i.id = $1 AND i.company_id = $2`,
+    [id, profile.company_id],
+  )
+  const invoice = invoiceResult.rows[0]
 
   if (!invoice) {
     redirect("/dashboard/invoices")
