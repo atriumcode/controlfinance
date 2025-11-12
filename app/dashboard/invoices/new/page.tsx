@@ -1,31 +1,27 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { query } from "@/lib/db/postgres"
 import Link from "next/link"
 import { InvoiceForm } from "@/components/invoices/invoice-form"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
 export default async function NewInvoicePage() {
-  const supabase = await createClient()
-
   const user = await getAuthenticatedUser()
 
   if (!user) {
     redirect("/auth/login")
   }
 
-  // Get user's company
-  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
+  const profileResult = await query("SELECT company_id FROM profiles WHERE id = $1", [user.id])
+  const profile = profileResult.rows[0]
 
   if (!profile?.company_id) {
-    redirect("/auth/login")
+    redirect("/dashboard/settings")
   }
 
-  // Get clients for the company
-  const { data: clients } = await supabase
-    .from("clients")
-    .select("id, name, document, document_type")
-    .eq("company_id", profile.company_id)
-    .order("name")
+  const clientsResult = await query(
+    "SELECT id, name, cpf_cnpj as document, 'cpf' as document_type FROM clients WHERE company_id = $1 ORDER BY name",
+    [profile.company_id],
+  )
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -52,7 +48,7 @@ export default async function NewInvoicePage() {
         </div>
 
         <div className="max-w-4xl">
-          <InvoiceForm clients={clients || []} />
+          <InvoiceForm clients={clientsResult.rows || []} />
         </div>
       </main>
     </div>

@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -39,24 +38,13 @@ export function ProfileForm({ profile, userId }: ProfileFormProps) {
     setLoading(true)
 
     try {
-      const supabase = createBrowserClient()
+      const response = await fetch("/api/user/profile", {
+        method: profile?.id ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData, userId }),
+      })
 
-      if (profile?.id) {
-        // Update existing profile
-        const { error } = await supabase.from("profiles").update(formData).eq("id", profile.id)
-
-        if (error) throw error
-      } else {
-        // Create new profile
-        const { error } = await supabase.from("profiles").insert([
-          {
-            id: userId,
-            ...formData,
-          },
-        ])
-
-        if (error) throw error
-      }
+      if (!response.ok) throw new Error("Failed to save profile")
 
       toast({
         title: "Sucesso",
