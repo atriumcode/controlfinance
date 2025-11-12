@@ -48,6 +48,7 @@
     "cmdk": "1.0.4",
     "crypto": "latest",
     "date-fns": "latest",
+    "dotenv": "latest",
     "embla-carousel-react": "8.5.1",
     "fast-xml-parser": "latest",
     "geist": "latest",
@@ -57,6 +58,7 @@
     "lucide-react": "^0.454.0",
     "next": "14.2.16",
     "next-themes": "latest",
+    "path": "latest",
     "pg": "latest",
     "pg-native": "latest",
     "react": "^18",
@@ -69,6 +71,7 @@
     "sonner": "latest",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "url": "latest",
     "vaul": "^0.9.9",
     "zod": "3.25.67"
   },
