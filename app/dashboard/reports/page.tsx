@@ -1,43 +1,47 @@
 import { redirect } from "next/navigation"
-import { createAdminClient } from "@/lib/supabase/server"
+import { queryOne, queryMany } from "@/lib/db/helpers"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 import Link from "next/link"
 import { ReportsContent } from "@/components/reports/reports-content"
 
 export default async function ReportsPage() {
   const user = await getAuthenticatedUser()
-  const supabase = createAdminClient()
 
-  // Get user's company
-  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
+  const profile = await queryOne<{ company_id: string }>("SELECT company_id FROM profiles WHERE id = $1", [user.id])
 
   if (!profile?.company_id) {
     redirect("/dashboard/settings")
   }
 
-  const { data: company } = await supabase
-    .from("companies")
-    .select("name, cnpj, address, city, state, zip_code, phone, logo_url")
-    .eq("id", profile.company_id)
-    .single()
+  const company = await queryOne(
+    "SELECT name, cnpj, address, city, state, zip_code, phone, logo_url FROM companies WHERE id = $1",
+    [profile.company_id],
+  )
 
-  // Get comprehensive data for reports
-  const { data: invoices } = await supabase
-    .from("invoices")
-    .select(`
-      *,
-      clients (
-        name,
-        document,
-        document_type,
-        city,
-        state
-      )
-    `)
-    .eq("company_id", profile.company_id)
-    .order("created_at", { ascending: false })
+  // Get comprehensive data for reports with client info
+  const invoices = await queryMany(
+    `
+    SELECT 
+      i.*,
+      json_build_object(
+        'name', c.name,
+        'document', c.cpf_cnpj,
+        'document_type', CASE 
+          WHEN LENGTH(REPLACE(REPLACE(c.cpf_cnpj, '.', ''), '-', '')) = 11 THEN 'CPF'
+          ELSE 'CNPJ'
+        END,
+        'city', c.city,
+        'state', c.state
+      ) as clients
+    FROM invoices i
+    LEFT JOIN clients c ON i.client_id = c.id
+    WHERE i.company_id = $1
+    ORDER BY i.created_at DESC
+  `,
+    [profile.company_id],
+  )
 
-  const { data: clients } = await supabase.from("clients").select("*").eq("company_id", profile.company_id)
+  const clients = await queryMany("SELECT * FROM clients WHERE company_id = $1", [profile.company_id])
 
   return (
     <div className="flex min-h-screen w-full flex-col">

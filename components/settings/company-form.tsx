@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -120,44 +119,18 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
     setLoading(true)
 
     try {
-      const supabase = createBrowserClient()
+      const url = company?.id ? `/api/companies/${company.id}` : "/api/companies"
+      const method = company?.id ? "PUT" : "POST"
 
-      if (company?.id) {
-        // Update existing company
-        const { error } = await supabase.from("companies").update(formData).eq("id", company.id)
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
 
-        if (error) throw error
-      } else {
-        // Create new company
-        const { data: newCompany, error: companyError } = await supabase
-          .from("companies")
-          .insert([formData])
-          .select()
-          .single()
-
-        if (companyError) throw companyError
-
-        // Update or create profile with company_id
-        if (profileId) {
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .update({ company_id: newCompany.id })
-            .eq("id", profileId)
-
-          if (profileError) throw profileError
-        } else {
-          const { error: profileError } = await supabase.from("profiles").insert([
-            {
-              id: userId,
-              company_id: newCompany.id,
-              full_name: "",
-              email: "",
-              role: "admin",
-            },
-          ])
-
-          if (profileError) throw profileError
-        }
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || "Erro ao salvar dados da empresa")
       }
 
       toast({
@@ -170,7 +143,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
       console.error("Error saving company:", error)
       toast({
         title: "Erro",
-        description: "Erro ao salvar dados da empresa",
+        description: error instanceof Error ? error.message : "Erro ao salvar dados da empresa",
         variant: "destructive",
       })
     } finally {

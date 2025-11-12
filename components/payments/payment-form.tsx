@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -79,27 +78,7 @@ export function PaymentForm({ invoice }: PaymentFormProps) {
       return
     }
 
-    const supabase = createClient()
-
     try {
-      const { data: currentInvoice, error: fetchError } = await supabase
-        .from("invoices")
-        .select("amount_paid")
-        .eq("id", invoice.id)
-        .single()
-
-      if (fetchError) throw fetchError
-
-      const currentAmountPaid = currentInvoice?.amount_paid || 0
-      const newAmountPaid = currentAmountPaid + formData.amount_paid
-      let newStatus = "pending"
-
-      if (newAmountPaid >= invoice.total_amount) {
-        newStatus = "paid"
-      } else if (newAmountPaid > 0) {
-        newStatus = "partial"
-      }
-
       const paymentData = {
         invoice_id: invoice.id,
         amount: formData.amount_paid,
@@ -108,28 +87,16 @@ export function PaymentForm({ invoice }: PaymentFormProps) {
         notes: formData.notes || null,
       }
 
-      const { error: paymentError } = await supabase.from("payments").insert(paymentData)
+      const response = await fetch("/api/payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(paymentData),
+      })
 
-      if (paymentError) {
-        if (paymentError.code === "42501") {
-          throw new Error(
-            "Erro de permissão: Usuário não tem permissão para registrar pagamentos. Verifique se possui role 'admin' ou 'escrita'.",
-          )
-        }
-        throw paymentError
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || "Erro ao registrar pagamento")
       }
-
-      const updateData = {
-        status: newStatus,
-        amount_paid: newAmountPaid,
-        payment_date: formData.payment_date,
-        payment_method: formData.payment_method,
-        notes: formData.notes || null,
-      }
-
-      const { error: updateError } = await supabase.from("invoices").update(updateData).eq("id", invoice.id)
-
-      if (updateError) throw updateError
 
       setSuccess(true)
 

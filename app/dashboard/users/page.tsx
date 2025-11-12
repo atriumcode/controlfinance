@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/server"
+import { queryMany } from "@/lib/db/helpers"
 import { requireAdmin } from "@/lib/auth/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,17 +10,10 @@ export const dynamic = "force-dynamic"
 export default async function UsersPage() {
   const user = await requireAdmin()
 
-  const supabase = createAdminClient()
-
-  const { data: users, error: usersError } = await supabase
-    .from("profiles")
-    .select("id, email, full_name, role, created_at")
-    .eq("company_id", user.company_id)
-    .order("created_at", { ascending: false })
-
-  if (usersError) {
-    console.error("Error fetching users:", usersError)
-  }
+  const users = await queryMany(
+    "SELECT id, email, full_name, role, created_at FROM profiles WHERE company_id = $1 ORDER BY created_at DESC",
+    [user.company_id],
+  )
 
   return (
     <div className="space-y-6">

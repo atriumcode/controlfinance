@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -121,62 +120,37 @@ export function InvoiceForm({ clients, invoice }: InvoiceFormProps) {
       return
     }
 
-    const supabase = createClient()
-
     try {
-      const response = await fetch("/api/user/profile")
-      if (!response.ok) throw new Error("Usuário não autenticado")
-
-      const { company_id } = await response.json()
-      if (!company_id) throw new Error("Empresa não encontrada")
-
       const invoiceData = {
         ...formData,
-        company_id,
         client_id: formData.client_id || null,
         total_amount: totalAmount,
         net_amount: totalAmount,
         status: "pending",
+        items: items.map((item) => ({
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+        })),
       }
 
-      let invoiceId: string
+      const url = invoice ? `/api/invoices/${invoice.id}` : "/api/invoices"
+      const method = invoice ? "PUT" : "POST"
 
-      if (invoice) {
-        // Update existing invoice
-        const { error: invoiceError } = await supabase.from("invoices").update(invoiceData).eq("id", invoice.id)
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(invoiceData),
+      })
 
-        if (invoiceError) throw invoiceError
-
-        // Delete existing items
-        await supabase.from("invoice_items").delete().eq("invoice_id", invoice.id)
-
-        invoiceId = invoice.id
-      } else {
-        // Create new invoice
-        const { data: newInvoice, error: invoiceError } = await supabase
-          .from("invoices")
-          .insert([invoiceData])
-          .select("id")
-          .single()
-
-        if (invoiceError) throw invoiceError
-        invoiceId = newInvoice.id
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || "Erro ao salvar nota fiscal")
       }
-
-      // Create invoice items
-      const itemsData = items.map((item) => ({
-        invoice_id: invoiceId,
-        description: item.description,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        total_price: item.total_price,
-      }))
-
-      const { error: itemsError } = await supabase.from("invoice_items").insert(itemsData)
-
-      if (itemsError) throw itemsError
 
       router.push("/dashboard/invoices")
+      router.refresh()
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Erro ao salvar nota fiscal")
     } finally {

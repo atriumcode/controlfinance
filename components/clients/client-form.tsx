@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -81,15 +80,7 @@ export function ClientForm({ client }: ClientFormProps) {
       return
     }
 
-    const supabase = createClient()
-
     try {
-      const response = await fetch("/api/user/profile")
-      if (!response.ok) throw new Error("Usuário não autenticado")
-
-      const { company_id } = await response.json()
-      if (!company_id) throw new Error("Empresa não encontrada")
-
       const cleanDocument = formData.document.replace(/\D/g, "")
       const paddedDocument =
         formData.document_type === "cpf" ? cleanDocument.padStart(11, "0") : cleanDocument.padStart(14, "0")
@@ -97,22 +88,24 @@ export function ClientForm({ client }: ClientFormProps) {
       const clientData = {
         ...formData,
         document: paddedDocument,
-        company_id,
       }
 
-      if (client) {
-        // Update existing client
-        const { error } = await supabase.from("clients").update(clientData).eq("id", client.id)
+      const url = client ? `/api/clients/${client.id}` : "/api/clients"
+      const method = client ? "PUT" : "POST"
 
-        if (error) throw error
-      } else {
-        // Create new client
-        const { error } = await supabase.from("clients").insert([clientData])
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(clientData),
+      })
 
-        if (error) throw error
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || "Erro ao salvar cliente")
       }
 
       router.push("/dashboard/clients")
+      router.refresh()
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "Erro ao salvar cliente")
     } finally {

@@ -1,8 +1,7 @@
-import { createAdminClient } from "@/lib/supabase/server"
+import { queryOne } from "@/lib/db/helpers"
 import { redirect } from "next/navigation"
 import { CompanyForm } from "@/components/settings/company-form"
 import { ThemeSelector } from "@/components/settings/theme-selector"
-import { BackupForm } from "@/components/settings/backup-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
@@ -16,13 +15,7 @@ export default async function SettingsPage() {
     redirect("/auth/login")
   }
 
-  const supabase = createAdminClient()
-
-  const { data: company } = await supabase
-    .from("companies")
-    .select("*")
-    .eq("id", user.company_id || "")
-    .single()
+  const company = await queryOne("SELECT * FROM companies WHERE id = $1", [user.company_id || ""])
 
   return (
     <div className="container mx-auto py-6 px-4">
@@ -32,10 +25,9 @@ export default async function SettingsPage() {
       </div>
 
       <Tabs defaultValue="company" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="company">Empresa</TabsTrigger>
           <TabsTrigger value="appearance">Aparência</TabsTrigger>
-          <TabsTrigger value="backup">Backup</TabsTrigger>
         </TabsList>
 
         <TabsContent value="company">
@@ -58,18 +50,6 @@ export default async function SettingsPage() {
             </CardHeader>
             <CardContent>
               <ThemeSelector />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="backup">
-          <Card>
-            <CardHeader>
-              <CardTitle>Backup dos Dados</CardTitle>
-              <CardDescription>Faça backup e restaure os dados da sua empresa</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <BackupForm companyId={user.company_id} />
             </CardContent>
           </Card>
         </TabsContent>

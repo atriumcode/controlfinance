@@ -1,28 +1,25 @@
 import { redirect } from "next/navigation"
-import { createAdminClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { ClientsTable } from "@/components/clients/clients-table"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
+import { queryMany, queryOne } from "@/lib/db/helpers"
 
 export default async function ClientsPage() {
   const user = await getAuthenticatedUser()
-  const supabase = createAdminClient()
 
   // Get user's company
-  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
+  const profile = await queryOne<{ company_id: string }>("SELECT company_id FROM profiles WHERE id = $1", [user.id])
 
   if (!profile?.company_id) {
     redirect("/dashboard/settings")
   }
 
   // Get clients for the company
-  const { data: clients } = await supabase
-    .from("clients")
-    .select("*")
-    .eq("company_id", profile.company_id)
-    .order("created_at", { ascending: false })
+  const clients = await queryMany("SELECT * FROM clients WHERE company_id = $1 ORDER BY created_at DESC", [
+    profile.company_id,
+  ])
 
   return (
     <div className="flex min-h-screen w-full flex-col">

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -75,8 +74,6 @@ export default function InvoicesPage() {
   const router = useRouter()
   const { toast } = useToast()
 
-  const supabase = createClient()
-
   const fetchInvoices = useCallback(async () => {
     try {
       const response = await fetch("/api/user/profile")
@@ -93,43 +90,18 @@ export default function InvoicesPage() {
         return
       }
 
-      const { data: invoicesData, error: invoicesError } = await supabase
-        .from("invoices")
-        .select("*")
-        .eq("company_id", profileData.company_id)
-        .order("created_at", { ascending: false })
-        .limit(200)
+      const invoicesResponse = await fetch(`/api/invoices?company_id=${profileData.company_id}`)
 
-      if (invoicesError) {
-        console.error("[v0] Error fetching invoices:", invoicesError)
+      if (!invoicesResponse.ok) {
+        console.error("[v0] Error fetching invoices")
         setInvoices([])
         setLoading(false)
         return
       }
 
-      const clientIds = [...new Set(invoicesData?.map((inv) => inv.client_id).filter(Boolean))]
-
-      const { data: clientsData, error: clientsError } = await supabase
-        .from("clients")
-        .select("id, name, document, document_type, city, state")
-        .in("id", clientIds)
-
-      if (clientsError) {
-        console.error("[v0] Error fetching clients:", clientsError)
-      }
-
-      const clientsMap = new Map(clientsData?.map((client) => [client.id, client]) || [])
-
-      const invoicesWithClients = invoicesData?.map((invoice) => ({
-        ...invoice,
-        clients: invoice.client_id ? clientsMap.get(invoice.client_id) || null : null,
-      }))
+      const invoicesWithClients = await invoicesResponse.json()
 
       console.log("[v0] Total invoices fetched:", invoicesWithClients?.length)
-      console.log("[v0] Total clients fetched:", clientsData?.length)
-      console.log("[v0] Invoices with client data:", invoicesWithClients?.filter((inv) => inv.clients).length)
-      console.log("[v0] Invoices without client data:", invoicesWithClients?.filter((inv) => !inv.clients).length)
-
       setInvoices(invoicesWithClients || [])
     } catch (error) {
       console.error("Error fetching invoices:", error)
@@ -137,7 +109,7 @@ export default function InvoicesPage() {
     } finally {
       setLoading(false)
     }
-  }, [router, supabase])
+  }, [router])
 
   useEffect(() => {
     fetchInvoices()
