@@ -67,11 +67,11 @@ export async function POST(request: Request) {
     // Buscar ou criar cliente
     let clientId = null
     if (nfeData.recipient_cnpj) {
-      console.log("[v0] Buscando cliente por CNPJ:", nfeData.recipient_cnpj)
+      console.log("[v0] Buscando cliente por documento:", nfeData.recipient_cnpj)
 
-      const existingClient = await query("SELECT id FROM clients WHERE cnpj = $1 AND user_id = $2", [
+      const existingClient = await query("SELECT id FROM clients WHERE document = $1 AND company_id = $2", [
         nfeData.recipient_cnpj,
-        user.id,
+        user.company_id,
       ])
 
       if (existingClient && existingClient.length > 0) {
@@ -80,10 +80,10 @@ export async function POST(request: Request) {
       } else {
         console.log("[v0] Criando novo cliente")
         const newClient = await query(
-          `INSERT INTO clients (user_id, name, cnpj, created_at, updated_at) 
-           VALUES ($1, $2, $3, NOW(), NOW()) 
+          `INSERT INTO clients (company_id, name, document, document_type, created_at, updated_at) 
+           VALUES ($1, $2, $3, $4, NOW(), NOW()) 
            RETURNING id`,
-          [user.id, nfeData.recipient_name, nfeData.recipient_cnpj],
+          [user.company_id, nfeData.recipient_name, nfeData.recipient_cnpj, "CNPJ"],
         )
         clientId = newClient[0].id
         console.log("[v0] Novo cliente criado:", clientId)
@@ -92,9 +92,9 @@ export async function POST(request: Request) {
 
     // Verificar se já existe NF-e com essa chave
     console.log("[v0] Verificando duplicidade de NF-e")
-    const existingInvoice = await query("SELECT id FROM invoices WHERE nfe_key = $1 AND user_id = $2", [
+    const existingInvoice = await query("SELECT id FROM invoices WHERE nfe_key = $1 AND company_id = $2", [
       nfeData.nfe_key,
-      user.id,
+      user.company_id,
     ])
 
     if (existingInvoice && existingInvoice.length > 0) {
@@ -109,15 +109,14 @@ export async function POST(request: Request) {
     console.log("[v0] Inserindo NF-e no banco de dados")
     const result = await query(
       `INSERT INTO invoices (
-        user_id, client_id, invoice_number, series, nfe_key, 
+        company_id, client_id, invoice_number, nfe_key, 
         issue_date, total_amount, tax_amount, status, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()) 
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()) 
       RETURNING id`,
       [
-        user.id,
+        user.company_id,
         clientId,
         nfeData.invoice_number,
-        nfeData.series,
         nfeData.nfe_key,
         nfeData.issue_date,
         nfeData.total_amount,

@@ -12,7 +12,6 @@ export async function GET() {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    // Buscar últimas 20 NF-e importadas
     const invoices = await query(
       `SELECT 
         i.id,
@@ -22,13 +21,13 @@ export async function GET() {
         i.total_amount,
         i.status,
         i.created_at,
-        json_build_object('name', c.name) as clients
+        json_build_object('name', c.name) as client
        FROM invoices i
        LEFT JOIN clients c ON i.client_id = c.id
-       WHERE i.user_id = $1
+       WHERE i.company_id = $1
        ORDER BY i.created_at DESC
        LIMIT 20`,
-      [user.id],
+      [user.company_id],
     )
 
     console.log("[v0] Encontradas", invoices.length, "NF-e importadas")
