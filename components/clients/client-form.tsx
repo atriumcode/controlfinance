@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { validateCPF, validateCNPJ, formatCPF, formatCNPJ } from "@/lib/utils/document-validation"
 
@@ -16,8 +15,7 @@ interface ClientFormProps {
   client?: {
     id: string
     name: string
-    document: string
-    document_type: "cpf" | "cnpj"
+    cpf_cnpj: string
     email?: string
     phone?: string
     address?: string
@@ -30,8 +28,7 @@ interface ClientFormProps {
 export function ClientForm({ client }: ClientFormProps) {
   const [formData, setFormData] = useState({
     name: client?.name || "",
-    document: client?.document || "",
-    document_type: client?.document_type || ("cpf" as "cpf" | "cnpj"),
+    cpf_cnpj: client?.cpf_cnpj || "",
     email: client?.email || "",
     phone: client?.phone || "",
     address: client?.address || "",
@@ -44,29 +41,27 @@ export function ClientForm({ client }: ClientFormProps) {
   const router = useRouter()
 
   const handleDocumentChange = (value: string) => {
-    let formatted = value.replace(/\D/g, "")
+    const cleanValue = value.replace(/\D/g, "")
 
-    if (formData.document_type === "cpf") {
-      formatted = formatCPF(formatted)
+    let formatted = value
+    if (cleanValue.length <= 11) {
+      formatted = formatCPF(cleanValue)
     } else {
-      formatted = formatCNPJ(formatted)
+      formatted = formatCNPJ(cleanValue)
     }
 
-    setFormData({ ...formData, document: formatted })
-  }
-
-  const handleDocumentTypeChange = (type: "cpf" | "cnpj") => {
-    setFormData({ ...formData, document_type: type, document: "" })
+    setFormData({ ...formData, cpf_cnpj: formatted })
   }
 
   const validateDocument = () => {
-    const cleanDocument = formData.document.replace(/\D/g, "")
+    const cleanDocument = formData.cpf_cnpj.replace(/\D/g, "")
 
-    if (formData.document_type === "cpf") {
+    if (cleanDocument.length === 11) {
       return validateCPF(cleanDocument)
-    } else {
+    } else if (cleanDocument.length === 14) {
       return validateCNPJ(cleanDocument)
     }
+    return false
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,20 +70,24 @@ export function ClientForm({ client }: ClientFormProps) {
     setError(null)
 
     if (!validateDocument()) {
-      setError(`${formData.document_type.toUpperCase()} inválido`)
+      const cleanDocument = formData.cpf_cnpj.replace(/\D/g, "")
+      const docType = cleanDocument.length === 11 ? "CPF" : "CNPJ"
+      setError(`${docType} inválido`)
       setIsLoading(false)
       return
     }
 
     try {
-      const cleanDocument = formData.document.replace(/\D/g, "")
+      const cleanDocument = formData.cpf_cnpj.replace(/\D/g, "")
       const paddedDocument =
-        formData.document_type === "cpf" ? cleanDocument.padStart(11, "0") : cleanDocument.padStart(14, "0")
+        cleanDocument.length === 11 ? cleanDocument.padStart(11, "0") : cleanDocument.padStart(14, "0")
 
       const clientData = {
         ...formData,
-        document: paddedDocument,
+        cpf_cnpj: paddedDocument,
       }
+
+      console.log("[v0] Submitting client data:", clientData)
 
       const url = client ? `/api/clients/${client.id}` : "/api/clients"
       const method = client ? "PUT" : "POST"
@@ -101,12 +100,14 @@ export function ClientForm({ client }: ClientFormProps) {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.message || "Erro ao salvar cliente")
+        throw new Error(error.error || "Erro ao salvar cliente")
       }
 
+      console.log("[v0] Client saved successfully")
       router.push("/dashboard/clients")
       router.refresh()
     } catch (error: unknown) {
+      console.error("[v0] Error saving client:", error)
       setError(error instanceof Error ? error.message : "Erro ao salvar cliente")
     } finally {
       setIsLoading(false)
@@ -114,14 +115,16 @@ export function ClientForm({ client }: ClientFormProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{client ? "Editar Cliente" : "Novo Cliente"}</CardTitle>
-        <CardDescription>
+    <Card className="border-gray-200 shadow-sm">
+      <CardHeader className="bg-gray-50 border-b border-gray-200">
+        <CardTitle className="text-lg font-semibold text-gray-900">
+          {client ? "Editar Cliente" : "Novo Cliente"}
+        </CardTitle>
+        <CardDescription className="text-gray-600">
           {client ? "Atualize as informações do cliente" : "Preencha os dados do novo cliente"}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
@@ -131,30 +134,19 @@ export function ClientForm({ client }: ClientFormProps) {
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="border-gray-300"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="document_type">Tipo de Documento *</Label>
-              <Select value={formData.document_type} onValueChange={handleDocumentTypeChange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cpf">CPF</SelectItem>
-                  <SelectItem value="cnpj">CNPJ</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="document">{formData.document_type === "cpf" ? "CPF" : "CNPJ"} *</Label>
+              <Label htmlFor="cpf_cnpj">CPF/CNPJ *</Label>
               <Input
-                id="document"
+                id="cpf_cnpj"
                 required
-                value={formData.document}
+                value={formData.cpf_cnpj}
                 onChange={(e) => handleDocumentChange(e.target.value)}
-                placeholder={formData.document_type === "cpf" ? "000.000.000-00" : "00.000.000/0000-00"}
+                placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                className="border-gray-300"
               />
             </div>
 
@@ -165,6 +157,7 @@ export function ClientForm({ client }: ClientFormProps) {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="border-gray-300"
               />
             </div>
 
@@ -174,6 +167,7 @@ export function ClientForm({ client }: ClientFormProps) {
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="border-gray-300"
               />
             </div>
 
@@ -183,6 +177,17 @@ export function ClientForm({ client }: ClientFormProps) {
                 id="zip_code"
                 value={formData.zip_code}
                 onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
+                className="border-gray-300"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="city">Cidade</Label>
+              <Input
+                id="city"
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                className="border-gray-300"
               />
             </div>
           </div>
@@ -193,36 +198,38 @@ export function ClientForm({ client }: ClientFormProps) {
               id="address"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              className="border-gray-300"
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="city">Cidade</Label>
-              <Input
-                id="city"
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="state">Estado</Label>
-              <Input
-                id="state"
-                value={formData.state}
-                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="state">Estado</Label>
+            <Input
+              id="state"
+              value={formData.state}
+              onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+              placeholder="Ex: SP, RJ, MG"
+              maxLength={2}
+              className="border-gray-300"
+            />
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
 
-          <div className="flex gap-4">
-            <Button type="submit" disabled={isLoading}>
+          <div className="flex gap-4 pt-4">
+            <Button type="submit" disabled={isLoading} className="bg-purple-600 hover:bg-purple-700">
               {isLoading ? "Salvando..." : client ? "Atualizar" : "Salvar"}
             </Button>
-            <Button type="button" variant="outline" onClick={() => router.push("/dashboard/clients")}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.push("/dashboard/clients")}
+              className="border-gray-300 hover:bg-gray-50"
+            >
               Cancelar
             </Button>
           </div>

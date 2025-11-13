@@ -1,19 +1,51 @@
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 import { ClientForm } from "@/components/clients/client-form"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
+import { redirect } from "next/navigation"
+import { queryOne } from "@/lib/db/helpers"
 
 export default async function NewClientPage() {
-  await getAuthenticatedUser()
+  const user = await getAuthenticatedUser()
+
+  const profile = await queryOne<{ company_id: string }>("SELECT company_id FROM profiles WHERE id = $1", [user.id])
+
+  if (!profile?.company_id) {
+    redirect("/dashboard/settings")
+  }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Novo Cliente</h1>
-        <p className="text-muted-foreground">Cadastre um novo cliente no sistema</p>
+    <div className="flex-1 space-y-6 p-6 md:p-8">
+      <div className="flex flex-col space-y-4">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/dashboard/clients">Clientes</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Novo Cliente</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Novo Cliente</h1>
+          <p className="text-gray-600 mt-1">Cadastre um novo cliente no sistema</p>
+        </div>
       </div>
 
-      <div className="max-w-2xl">
-        <ClientForm />
-      </div>
+      <ClientForm />
     </div>
   )
 }
