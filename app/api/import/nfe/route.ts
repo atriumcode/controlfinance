@@ -103,10 +103,18 @@ export async function POST(request: Request) {
     const result = await query(
       `INSERT INTO invoices (
         company_id, client_id, invoice_number, 
-        issue_date, total_amount, status, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) 
+        issue_date, due_date, amount, status, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW()) 
       RETURNING id`,
-      [user.company_id, clientId, nfeData.invoice_number, nfeData.issue_date, nfeData.total_amount, "pending"],
+      [
+        user.company_id,
+        clientId,
+        nfeData.invoice_number,
+        nfeData.issue_date,
+        nfeData.issue_date, // due_date = issue_date por padrão
+        nfeData.total_amount,
+        "pending",
+      ],
     )
 
     console.log("[v0] NF-e importada com sucesso, ID:", result[0].id)
