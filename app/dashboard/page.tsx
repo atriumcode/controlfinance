@@ -96,10 +96,15 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      <main className="flex-1 space-y-6 p-6">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Visão Geral</h2>
-          <p className="text-slate-600 mt-1">Acompanhe o desempenho do seu negócio</p>
+      <main className="flex-1 space-y-6 p-6 md:p-8">
+        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+            <p className="text-gray-600 mt-1">Acompanhe o desempenho do seu negócio</p>
+          </div>
+          <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
+            <Link href="/dashboard/reports">Ver Relatórios</Link>
+          </Button>
         </div>
 
         <DashboardStats invoices={invoices} clientsCount={clientsCount} />
@@ -112,19 +117,19 @@ export default async function DashboardPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           <RecentInvoices invoices={invoices.slice(0, 5)} />
 
-          <Card className="border-slate-200 shadow-sm bg-white">
-            <CardHeader>
-              <CardTitle className="text-slate-900">Ações Rápidas</CardTitle>
-              <CardDescription className="text-slate-600">Acesse as principais funcionalidades</CardDescription>
+          <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="bg-gray-50 border-b border-gray-200">
+              <CardTitle className="text-lg font-semibold text-gray-900">Ações Rápidas</CardTitle>
+              <CardDescription className="text-gray-600">Acesse as principais funcionalidades</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Button asChild className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm" size="sm">
+            <CardContent className="space-y-3 p-6">
+              <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white shadow-sm" size="sm">
                 <Link href="/dashboard/clients/new">Cadastrar Novo Cliente</Link>
               </Button>
               <Button
                 asChild
                 variant="outline"
-                className="w-full border-slate-300 hover:bg-slate-50 bg-transparent"
+                className="w-full border-gray-300 hover:bg-gray-50 bg-transparent"
                 size="sm"
               >
                 <Link href="/dashboard/invoices/new">Criar Nova Nota Fiscal</Link>
@@ -132,7 +137,7 @@ export default async function DashboardPage() {
               <Button
                 asChild
                 variant="outline"
-                className="w-full border-slate-300 hover:bg-slate-50 bg-transparent"
+                className="w-full border-gray-300 hover:bg-gray-50 bg-transparent"
                 size="sm"
               >
                 <Link href="/dashboard/import">Importar XML de NF-e</Link>
@@ -140,7 +145,7 @@ export default async function DashboardPage() {
               <Button
                 asChild
                 variant="outline"
-                className="w-full border-slate-300 hover:bg-slate-50 bg-transparent"
+                className="w-full border-gray-300 hover:bg-gray-50 bg-transparent"
                 size="sm"
               >
                 <Link href="/dashboard/reports">Ver Relatórios</Link>

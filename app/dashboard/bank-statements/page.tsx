@@ -108,17 +108,19 @@ export default function BankStatementsPage() {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Extratos Bancários</h2>
+    <div className="flex-1 space-y-6 p-6 md:p-8">
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Extratos Bancários</h1>
+          <p className="text-gray-600 mt-1">Gerencie e importe seus extratos bancários em formato OFX</p>
+        </div>
       </div>
 
-      {/* Resumo Financeiro */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">Total Entradas</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+        <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Total Entradas</CardTitle>
+            <TrendingUp className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
@@ -126,10 +128,10 @@ export default function BankStatementsPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">Total Saídas</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-600" />
+        <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Total Saídas</CardTitle>
+            <TrendingDown className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
@@ -137,10 +139,10 @@ export default function BankStatementsPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">Saldo</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Saldo</CardTitle>
+            <FileText className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div
@@ -150,18 +152,17 @@ export default function BankStatementsPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-sm font-medium">Transações</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Transações</CardTitle>
+            <FileText className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{transactions.length}</div>
+            <div className="text-2xl font-bold text-gray-900">{transactions.length}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabs para organizar conteúdo */}
       <Tabs defaultValue="transactions" className="space-y-4">
         <TabsList>
           <TabsTrigger value="transactions">Transações</TabsTrigger>
