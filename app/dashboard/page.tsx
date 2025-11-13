@@ -18,7 +18,7 @@ export default async function DashboardPage() {
     redirect("/auth/login")
   }
 
-  const profileResult = await query(
+  const profileRows = await query(
     `
     SELECT p.*, c.name as company_name, c.cnpj as company_cnpj
     FROM profiles p
@@ -28,9 +28,12 @@ export default async function DashboardPage() {
     [user.id],
   )
 
-  const profile = profileResult?.rows?.[0]
+  const profile = profileRows[0]
+
+  console.log("[v0] Dashboard - Profile:", profile?.id, "Company ID:", profile?.company_id)
 
   if (!profile?.company_id) {
+    console.log("[v0] No company_id found, showing configuration prompt")
     return (
       <div className="flex min-h-screen w-full items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -48,7 +51,9 @@ export default async function DashboardPage() {
     )
   }
 
-  const [invoicesResult, clientsCountResult] = await Promise.all([
+  console.log("[v0] Company configured, loading dashboard data")
+
+  const [invoicesRows, clientsCountRows] = await Promise.all([
     // Get only last 90 days of invoices for performance
     query(
       `
@@ -77,8 +82,8 @@ export default async function DashboardPage() {
     ),
   ])
 
-  const invoices = invoicesResult?.rows || []
-  const clientsCount = Number.parseInt(clientsCountResult?.rows?.[0]?.count || "0")
+  const invoices = invoicesRows || []
+  const clientsCount = Number.parseInt(clientsCountRows[0]?.count || "0")
 
   return (
     <div className="flex min-h-screen w-full flex-col">
