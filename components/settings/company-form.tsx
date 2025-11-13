@@ -50,17 +50,16 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"]
+    if (!allowedTypes.includes(file.type)) {
       toast({
         title: "Erro",
-        description: "Por favor, selecione uma imagem válida",
+        description: "Por favor, selecione uma imagem válida (PNG, JPG, WebP ou GIF)",
         variant: "destructive",
       })
       return
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast({
         title: "Erro",
@@ -72,21 +71,24 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
 
     setUploadingLogo(true)
     try {
-      // Upload via secure server API
-      const formData = new FormData()
-      formData.append("file", file)
+      console.log("[v0] Iniciando upload do arquivo:", file.name)
+
+      const uploadFormData = new FormData()
+      uploadFormData.append("file", file)
 
       const response = await fetch("/api/upload", {
         method: "POST",
-        body: formData,
+        body: uploadFormData,
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Erro ao fazer upload")
+        throw new Error(data.error || data.details || "Erro ao fazer upload")
       }
 
-      const data = await response.json()
+      console.log("[v0] Upload concluído:", data.url)
+
       setFormData((prev) => ({ ...prev, logo_url: data.url }))
 
       toast({
@@ -94,10 +96,10 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
         description: "Logo carregado com sucesso!",
       })
     } catch (error) {
-      console.error("Error uploading logo:", error)
+      console.error("[v0] Error uploading logo:", error)
       toast({
-        title: "Erro",
-        description: error instanceof Error ? error.message : "Erro ao fazer upload do logo",
+        title: "Erro ao fazer upload",
+        description: error instanceof Error ? error.message : "Erro desconhecido ao fazer upload do logo",
         variant: "destructive",
       })
     } finally {

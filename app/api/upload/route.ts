@@ -4,12 +4,14 @@ import { NextResponse } from "next/server"
 export async function POST(request: Request) {
   try {
     console.log("[v0] Upload API - Iniciando")
-    console.log("[v0] BLOB_READ_WRITE_TOKEN existe:", !!process.env.BLOB_READ_WRITE_TOKEN)
 
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    const blobToken = process.env.BLOB_READ_WRITE_TOKEN
+    console.log("[v0] BLOB_READ_WRITE_TOKEN existe:", !!blobToken)
+
+    if (!blobToken) {
       console.error("[v0] BLOB_READ_WRITE_TOKEN não está configurado")
       return NextResponse.json(
-        { error: "Serviço de upload não configurado. Entre em contato com o administrador." },
+        { error: "Serviço de upload não configurado. Verifique as variáveis de ambiente." },
         { status: 503 },
       )
     }
@@ -24,20 +26,23 @@ export async function POST(request: Request) {
 
     console.log("[v0] Arquivo recebido:", file.name, "Tipo:", file.type, "Tamanho:", file.size)
 
-    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"]
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"]
     if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: "Tipo de arquivo não permitido. Use PNG, JPG ou WebP." }, { status: 400 })
+      return NextResponse.json(
+        { error: `Tipo de arquivo não permitido (${file.type}). Use PNG, JPG, WebP ou GIF.` },
+        { status: 400 },
+      )
     }
 
     if (file.size > 2 * 1024 * 1024) {
       return NextResponse.json({ error: "Arquivo muito grande. Tamanho máximo: 2MB" }, { status: 400 })
     }
 
-    // Upload para Vercel Blob
     console.log("[v0] Iniciando upload para Vercel Blob...")
     const blob = await put(file.name, file, {
       access: "public",
       addRandomSuffix: true,
+      token: blobToken, // Garantir que o token seja passado explicitamente
     })
 
     console.log("[v0] Upload concluído com sucesso. URL:", blob.url)
@@ -46,6 +51,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[v0] Erro no upload:", error)
     console.error("[v0] Stack trace:", error instanceof Error ? error.stack : "N/A")
+    console.error("[v0] Error name:", error instanceof Error ? error.name : "N/A")
 
     return NextResponse.json(
       {

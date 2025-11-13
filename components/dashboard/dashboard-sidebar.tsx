@@ -97,10 +97,10 @@ export function DashboardSidebar({ className }: SidebarProps) {
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
-      <div className="flex h-14 lg:h-[60px] items-center border-b px-4 bg-primary/10">
+      <div className="flex h-14 lg:h-[60px] items-center border-b border-purple-600/20 px-4 bg-gradient-to-r from-purple-600 to-purple-700">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-          <FileText className="h-6 w-6 text-primary" />
-          <span className="text-lg">NF-e System</span>
+          <FileText className="h-6 w-6 text-white" />
+          <span className="text-lg text-white">NF-e System</span>
         </Link>
       </div>
 
@@ -114,7 +114,7 @@ export function DashboardSidebar({ className }: SidebarProps) {
                   <CollapsibleTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="w-full justify-start gap-2 px-3 hover:bg-primary/10 hover:text-primary"
+                      className="w-full justify-start gap-2 px-3 hover:bg-purple-600/10 hover:text-purple-400"
                     >
                       <item.icon className="h-4 w-4" />
                       <span className="flex-1 text-left">{item.name}</span>
@@ -129,8 +129,9 @@ export function DashboardSidebar({ className }: SidebarProps) {
                         size="sm"
                         asChild
                         className={cn(
-                          "w-full justify-start gap-2 hover:bg-primary/10 hover:text-primary",
-                          pathname === child.href && "bg-primary/20 text-primary font-medium",
+                          "w-full justify-start gap-2 hover:bg-purple-600/10 hover:text-purple-400",
+                          pathname === child.href &&
+                            "bg-purple-600 text-white font-medium hover:bg-purple-600 hover:text-white",
                         )}
                       >
                         <Link href={child.href}>
@@ -150,8 +151,8 @@ export function DashboardSidebar({ className }: SidebarProps) {
                 variant="ghost"
                 asChild
                 className={cn(
-                  "w-full justify-start gap-2 hover:bg-primary/10 hover:text-primary",
-                  pathname === item.href && "bg-primary/20 text-primary font-medium",
+                  "w-full justify-start gap-2 hover:bg-purple-600/10 hover:text-purple-400",
+                  pathname === item.href && "bg-purple-600 text-white font-medium hover:bg-purple-600 hover:text-white",
                 )}
               >
                 <Link href={item.href}>
@@ -181,7 +182,7 @@ export function DashboardSidebar({ className }: SidebarProps) {
           <Button
             variant="outline"
             size="icon"
-            className="shrink-0 md:hidden fixed top-4 left-4 z-40 bg-primary text-primary-foreground hover:bg-primary/90"
+            className="shrink-0 md:hidden fixed top-4 left-4 z-40 bg-purple-600 text-white hover:bg-purple-700 border-purple-600"
           >
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>
