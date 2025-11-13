@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, cnpj, email, phone, address, city, state, zip_code } = body
+    const { name, cnpj, email, phone, address, city, state, zip_code, logo_url } = body
 
     if (!name || !cnpj || !email) {
       console.log("[v0] Missing required fields:", { name: !!name, cnpj: !!cnpj, email: !!email })
@@ -22,10 +22,10 @@ export async function POST(request: Request) {
     }
 
     const rows = await query(
-      `INSERT INTO companies (name, cnpj, email, phone, address, city, state, zip_code, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+      `INSERT INTO companies (name, cnpj, email, phone, address, city, state, zip_code, logo_url, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
        RETURNING *`,
-      [name, cnpj, email, phone || "", address || "", city || "", state || "", zip_code || ""],
+      [name, cnpj, email, phone || "", address || "", city || "", state || "", zip_code || "", logo_url || null],
     )
 
     const company = rows[0]

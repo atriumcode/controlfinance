@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
+import { Upload } from "lucide-react"
 
 interface Company {
   id?: string
@@ -19,6 +20,7 @@ interface Company {
   city: string
   state: string
   zip_code: string
+  logo_url?: string | null
 }
 
 interface CompanyFormProps {
@@ -31,6 +33,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
   const [formData, setFormData] = useState({
     name: company?.name || "",
     cnpj: company?.cnpj || "",
@@ -40,7 +43,67 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
     city: company?.city || "",
     state: company?.state || "",
     zip_code: company?.zip_code || "",
+    logo_url: company?.logo_url || "",
   })
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Erro",
+        description: "Por favor, selecione uma imagem válida",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Erro",
+        description: "A imagem deve ter no máximo 2MB",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setUploadingLogo(true)
+    try {
+      // Upload via secure server API
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Erro ao fazer upload")
+      }
+
+      const data = await response.json()
+      setFormData((prev) => ({ ...prev, logo_url: data.url }))
+
+      toast({
+        title: "Sucesso",
+        description: "Logo carregado com sucesso!",
+      })
+    } catch (error) {
+      console.error("Error uploading logo:", error)
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao fazer upload do logo",
+        variant: "destructive",
+      })
+    } finally {
+      setUploadingLogo(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -84,6 +147,36 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
       <div>
         <h3 className="text-lg font-medium">Informações da Empresa</h3>
         <p className="text-sm text-muted-foreground">Configure os dados da sua empresa para emissão de faturas</p>
+      </div>
+
+      <div>
+        <Label htmlFor="logo">Logo da Empresa</Label>
+        <div className="mt-2 flex items-center gap-4">
+          <div className="flex h-24 w-24 items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/10">
+            {formData.logo_url ? (
+              <img
+                src={formData.logo_url || "/placeholder.svg"}
+                alt="Logo"
+                className="h-full w-full rounded-lg object-contain"
+              />
+            ) : (
+              <Upload className="h-8 w-8 text-muted-foreground" />
+            )}
+          </div>
+          <div className="flex-1">
+            <Input
+              id="logo"
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              disabled={uploadingLogo}
+              className="cursor-pointer"
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Recomendado: PNG ou JPG, máximo 2MB. A logo será exibida nos relatórios em PDF.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -164,7 +257,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
       </div>
 
       <div className="flex gap-2">
-        <Button type="submit" disabled={loading}>
+        <Button type="submit" disabled={loading || uploadingLogo}>
           {loading ? "Salvando..." : "Salvar Empresa"}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.push("/dashboard")}>
