@@ -183,6 +183,9 @@ importers:
       '@types/react-dom':
         specifier: ^18
         version: 18.0.0
+      '@types/xml2js':
+        specifier: ^0.4.14
+        version: 0.4.14
       postcss:
         specifier: ^8.5
         version: 8.5.0
@@ -1308,6 +1311,9 @@ packages:
 
   '@types/ws@8.18.1':
     resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
+
+  '@types/xml2js@0.4.14':
+    resolution: {integrity: sha512-4YnrRemBShWRO2QjvUin8ESA41rH+9nQGLUGZV/1IDhi3SL9OhdpNC/MrulTWuptXKwhx/aDxE7toV0f/ypIXQ==}
 
   '@vercel/analytics@1.5.0':
     resolution: {integrity: sha512-MYsBzfPki4gthY5HnYN7jgInhAZ7Ac1cYDoRWFomwGHWEX7odTEzbtg9kf/QSo7XEsEAqlQugA6gJ2WS2DEa3g==}
@@ -3176,6 +3182,10 @@ snapshots:
   '@types/use-sync-external-store@0.0.6': {}
 
   '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 22.0.0
+
+  '@types/xml2js@0.4.14':
     dependencies:
       '@types/node': 22.0.0
 
