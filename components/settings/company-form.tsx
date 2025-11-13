@@ -145,124 +145,167 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">Informações da Empresa</h3>
-        <p className="text-sm text-muted-foreground">Configure os dados da sua empresa para emissão de faturas</p>
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="pb-4 border-b border-gray-200">
+        <h3 className="text-xl font-semibold text-gray-900">Informações da Empresa</h3>
+        <p className="text-sm text-gray-600 mt-1">Configure os dados da sua empresa para emissão de faturas</p>
       </div>
 
-      <div>
-        <Label htmlFor="logo">Logo da Empresa</Label>
-        <div className="mt-2 flex items-center gap-4">
-          <div className="flex h-24 w-24 items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/10">
+      <div className="space-y-3">
+        <Label htmlFor="logo" className="text-sm font-medium text-gray-900">
+          Logo da Empresa
+        </Label>
+        <div className="flex items-start gap-6">
+          <div className="flex h-32 w-32 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 transition-colors overflow-hidden">
             {formData.logo_url ? (
               <img
                 src={formData.logo_url || "/placeholder.svg"}
                 alt="Logo"
-                className="h-full w-full rounded-lg object-contain"
+                className="h-full w-full object-contain p-2"
               />
             ) : (
-              <Upload className="h-8 w-8 text-muted-foreground" />
+              <div className="flex flex-col items-center">
+                <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                <span className="text-xs text-gray-500">Upload</span>
+              </div>
             )}
           </div>
-          <div className="flex-1">
+          <div className="flex-1 space-y-2">
             <Input
               id="logo"
               type="file"
               accept="image/*"
               onChange={handleLogoUpload}
               disabled={uploadingLogo}
-              className="cursor-pointer"
+              className="cursor-pointer border-gray-300"
             />
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="text-xs text-gray-500">
               Recomendado: PNG ou JPG, máximo 2MB. A logo será exibida nos relatórios em PDF.
             </p>
+            {uploadingLogo && <p className="text-xs text-purple-600">Fazendo upload...</p>}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="name">Nome da Empresa *</Label>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="name" className="text-sm font-medium text-gray-900">
+            Nome da Empresa *
+          </Label>
           <Input
             id="name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
+            className="border-gray-300"
           />
         </div>
-        <div>
-          <Label htmlFor="cnpj">CNPJ *</Label>
+        <div className="space-y-2">
+          <Label htmlFor="cnpj" className="text-sm font-medium text-gray-900">
+            CNPJ *
+          </Label>
           <Input
             id="cnpj"
             value={formData.cnpj}
             onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
             placeholder="00.000.000/0000-00"
             required
+            className="border-gray-300"
           />
         </div>
-        <div>
-          <Label htmlFor="email">Email *</Label>
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-sm font-medium text-gray-900">
+            Email *
+          </Label>
           <Input
             id="email"
             type="email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
+            className="border-gray-300"
           />
         </div>
-        <div>
-          <Label htmlFor="phone">Telefone</Label>
+        <div className="space-y-2">
+          <Label htmlFor="phone" className="text-sm font-medium text-gray-900">
+            Telefone
+          </Label>
           <Input
             id="phone"
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             placeholder="(00) 00000-0000"
+            className="border-gray-300"
           />
         </div>
       </div>
 
-      <div>
-        <Label htmlFor="address">Endereço</Label>
+      <div className="space-y-2">
+        <Label htmlFor="address" className="text-sm font-medium text-gray-900">
+          Endereço
+        </Label>
         <Textarea
           id="address"
           value={formData.address}
           onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-          rows={2}
+          rows={3}
+          className="border-gray-300"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <Label htmlFor="city">Cidade</Label>
-          <Input id="city" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="city" className="text-sm font-medium text-gray-900">
+            Cidade
+          </Label>
+          <Input
+            id="city"
+            value={formData.city}
+            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+            className="border-gray-300"
+          />
         </div>
-        <div>
-          <Label htmlFor="state">Estado</Label>
+        <div className="space-y-2">
+          <Label htmlFor="state" className="text-sm font-medium text-gray-900">
+            Estado
+          </Label>
           <Input
             id="state"
             value={formData.state}
             onChange={(e) => setFormData({ ...formData, state: e.target.value })}
             placeholder="SP"
             maxLength={2}
+            className="border-gray-300"
           />
         </div>
-        <div>
-          <Label htmlFor="zip_code">CEP</Label>
+        <div className="space-y-2">
+          <Label htmlFor="zip_code" className="text-sm font-medium text-gray-900">
+            CEP
+          </Label>
           <Input
             id="zip_code"
             value={formData.zip_code}
             onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
             placeholder="00000-000"
+            className="border-gray-300"
           />
         </div>
       </div>
 
-      <div className="flex gap-2">
-        <Button type="submit" disabled={loading || uploadingLogo}>
+      <div className="flex gap-3 pt-4 border-t border-gray-200">
+        <Button
+          type="submit"
+          disabled={loading || uploadingLogo}
+          className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm"
+        >
           {loading ? "Salvando..." : "Salvar Empresa"}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.push("/dashboard")}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push("/dashboard")}
+          className="border-gray-300 bg-transparent"
+        >
           Cancelar
         </Button>
       </div>

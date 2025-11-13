@@ -334,10 +334,20 @@ export default function InvoicesPage() {
         </div>
       </header>
 
-      <main className="flex-1 space-y-6 p-6">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h2 className="text-xl font-bold text-gray-900">Notas Fiscais</h2>
-          <p className="text-gray-600 mt-1">Gerencie suas notas fiscais eletrônicas agrupadas por cidade e cliente</p>
+      <main className="flex-1 space-y-6 p-6 md:p-8">
+        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Notas Fiscais</h1>
+            <p className="text-gray-600 mt-1">Gerencie suas notas fiscais eletrônicas agrupadas por cidade e cliente</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild className="border-gray-300 bg-transparent">
+              <Link href="/dashboard/import">Importar XML</Link>
+            </Button>
+            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
+              <Link href="/dashboard/invoices/new">Nova Nota Fiscal</Link>
+            </Button>
+          </div>
         </div>
 
         <InvoiceStats invoices={invoices} />
@@ -347,7 +357,7 @@ export default function InvoicesPage() {
             const cityKey = `${cityGroup.city}, ${cityGroup.state}`
             return (
               <div key={cityKey} className="space-y-2">
-                <Card className="border-gray-200 shadow-sm">
+                <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                   <CardHeader
                     className="cursor-pointer hover:bg-gray-50 transition-colors py-3"
                     onClick={() => toggleCity(cityKey)}
@@ -371,7 +381,10 @@ export default function InvoicesPage() {
                 {expandedCities.has(cityKey) && (
                   <div className="ml-6 space-y-2">
                     {cityGroup.clientGroups.map((group) => (
-                      <Card key={group.client.document} className="border-gray-200 shadow-sm">
+                      <Card
+                        key={group.client.document}
+                        className="border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                      >
                         <CardHeader
                           className="cursor-pointer hover:bg-gray-50 transition-colors py-3"
                           onClick={() => toggleClient(group.client.document)}

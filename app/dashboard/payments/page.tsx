@@ -96,75 +96,81 @@ export default async function PaymentsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 space-y-6 p-6 md:p-8">
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Pagamentos</h2>
-          <p className="text-muted-foreground">Gerencie pagamentos e histórico financeiro</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Pagamentos</h1>
+          <p className="text-gray-600 mt-1">Gerencie pagamentos e histórico financeiro</p>
         </div>
-        <Button asChild>
+        <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
           <Link href="/dashboard/invoices">Ver Notas Fiscais</Link>
         </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Recebido</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Total Recebido</CardTitle>
+            <DollarSign className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{formatCurrency(totalReceived)}</div>
-            <p className="text-xs text-muted-foreground">Este mês</p>
+            <p className="text-xs text-gray-500 mt-1">Este mês</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">A Receber</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">A Receber</CardTitle>
+            <TrendingUp className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">{formatCurrency(totalPending)}</div>
-            <p className="text-xs text-muted-foreground">Pendente</p>
+            <p className="text-xs text-gray-500 mt-1">Pendente</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vencidos</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Vencidos</CardTitle>
+            <AlertCircle className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{formatCurrency(totalOverdue)}</div>
-            <p className="text-xs text-muted-foreground">Em atraso</p>
+            <p className="text-xs text-gray-500 mt-1">Em atraso</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Últimos 7 dias</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+        <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Últimos 7 dias</CardTitle>
+            <Calendar className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(last7Days)}</div>
-            <p className="text-xs text-muted-foreground">Recebimentos</p>
+            <div className="text-2xl font-bold text-purple-600">{formatCurrency(last7Days)}</div>
+            <p className="text-xs text-gray-500 mt-1">Recebimentos</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Histórico de Pagamentos</CardTitle>
-          <CardDescription>Últimos pagamentos registrados no sistema</CardDescription>
+      <Card className="border-gray-200 shadow-sm">
+        <CardHeader className="bg-gray-50 border-b border-gray-200">
+          <CardTitle className="text-lg font-semibold text-gray-900">Histórico de Pagamentos</CardTitle>
+          <CardDescription className="text-gray-600">Últimos pagamentos registrados no sistema</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           {!payments || payments.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Nenhum pagamento registrado ainda.</div>
+            <div className="text-center py-12 text-gray-500">
+              <DollarSign className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+              <p>Nenhum pagamento registrado ainda.</p>
+            </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {payments.map((payment: any) => (
-                <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div
+                  key={payment.id}
+                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                >
                   <div className="space-y-1">
                     <p className="font-medium">{payment.client_name || "Cliente não identificado"}</p>
                     <p className="text-sm text-muted-foreground">

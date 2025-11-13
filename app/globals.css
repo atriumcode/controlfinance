@@ -1,12 +1,12 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-/* Removed problematic @import "tw-animate-css" and @custom-variant */
-/* Complete clean redesign using LICITANET style - flat, minimal, professional */
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Atendezap Brand Colors - Navy Blue + Purple */
+  /* Atendezap Brand Colors */
   --background: 0 0% 100%;
-  --foreground: 222 47% 11%; /* Navy Blue #0F172A */
+  --foreground: 222 47% 11%;
 
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
@@ -14,51 +14,48 @@
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
 
-  /* Primary uses vibrant purple from atendezap logo */
   --primary: 262 83% 58%; /* Purple #7C3AED */
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 240 5% 96%; /* Light gray */
+  --secondary: 215 20% 65%;
   --secondary-foreground: 222 47% 11%;
 
-  --muted: 240 5% 96%;
+  --muted: 220 13% 96%;
   --muted-foreground: 215 16% 47%;
 
-  --accent: 217 91% 95%; /* Light blue accent like LICITANET */
+  --accent: 217 91% 95%;
   --accent-foreground: 222 47% 11%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 214 32% 91%; /* Subtle borders */
-  --input: 214 32% 91%;
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
   --ring: 262 83% 58%;
 
-  --radius: 0.5rem; /* More subtle rounded corners */
+  --radius: 0.5rem;
 
-  /* Chart colors */
+  /* Chart colors - vibrant and distinct */
   --chart-1: 262 83% 58%; /* Purple */
   --chart-2: 142 76% 36%; /* Green */
   --chart-3: 217 91% 60%; /* Blue */
   --chart-4: 38 92% 50%; /* Orange */
   --chart-5: 346 77% 50%; /* Red */
-
-  /* Sidebar uses navy blue from atendezap */
-  --sidebar: 222 47% 11%; /* Navy Blue #0F172A */
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-primary: 262 83% 58%; /* Purple accent */
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 222 47% 16%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-border: 222 47% 16%;
-  --sidebar-ring: 262 83% 58%;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
 .dark {
   --background: 222 47% 11%;
   --foreground: 210 40% 98%;
 
-  --card: 222 47% 13%;
+  --card: 222 47% 11%;
   --card-foreground: 210 40% 98%;
 
   --popover: 222 47% 11%;
@@ -88,15 +85,14 @@
   --chart-3: 217 91% 60%;
   --chart-4: 38 92% 50%;
   --chart-5: 346 77% 50%;
-
-  --sidebar: 222 47% 11%;
-  --sidebar-foreground: 210 40% 98%;
-  --sidebar-primary: 262 83% 58%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 217 33% 17%;
-  --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-border: 217 33% 17%;
-  --sidebar-ring: 262 83% 58%;
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.439 0 0);
 }
 
 @theme inline {
@@ -141,52 +137,55 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border outline-ring/50;
   }
-
   body {
-    /* Clean white background, no gradients */
-    @apply bg-white text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-background text-foreground;
   }
 
-  /* Clean typography */
-  h1 {
-    @apply text-3xl font-bold tracking-tight;
-  }
-
-  h2 {
-    @apply text-2xl font-semibold tracking-tight;
-  }
-
-  h3 {
-    @apply text-xl font-semibold;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold tracking-tight;
   }
 }
 
 @layer components {
-  /* Modern card styles with shadows and hover effects */
+  /* Modern card with subtle shadow and hover effect */
   .card-modern {
-    @apply bg-white/80 backdrop-blur-sm border-purple-100 shadow-sm hover:shadow-md transition-all duration-200;
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200;
   }
 
-  /* Stat card with gradient border */
+  /* Stat card with accent border */
   .stat-card {
-    @apply relative bg-white/90 backdrop-blur-sm rounded-xl p-6 border border-purple-100/50 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden;
+    @apply relative bg-white rounded-lg p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden;
   }
 
   .stat-card::before {
     content: "";
-    @apply absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 via-purple-500 to-purple-400;
+    @apply absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 to-purple-400;
   }
 
-  /* Modern button with gradient */
-  .btn-primary-gradient {
-    @apply bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 shadow-md hover:shadow-lg transition-all duration-200;
+  /* Primary button with modern style */
+  .btn-primary-modern {
+    @apply bg-purple-600 text-white hover:bg-purple-700 shadow-sm hover:shadow transition-all duration-200 rounded-lg px-4 py-2 font-medium;
   }
 
-  /* Glassmorphism effect for sidebar */
-  .glass-effect {
-    @apply bg-white/10 backdrop-blur-md border-white/20;
+  /* Info banner like LICITANET */
+  .info-banner {
+    @apply bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-900;
+  }
+
+  /* Page header */
+  .page-header {
+    @apply bg-white border-b border-gray-200 px-6 py-4 shadow-sm;
+  }
+
+  /* Table modern style */
+  .table-modern {
+    @apply bg-white border border-gray-200 rounded-lg overflow-hidden;
   }
 }
