@@ -316,29 +316,43 @@ export default function InvoicesPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-purple-100/50 bg-white/80 backdrop-blur-md px-4 md:px-6 shadow-sm">
         <nav className="flex-1 flex items-center gap-4">
-          <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link
+            href="/dashboard"
+            className="text-sm text-slate-600 hover:text-purple-600 transition-colors font-medium"
+          >
             Dashboard
           </Link>
-          <span className="text-sm text-muted-foreground">/</span>
-          <h1 className="text-lg font-semibold">Notas Fiscais</h1>
+          <span className="text-sm text-slate-400">/</span>
+          <h1 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+            Notas Fiscais
+          </h1>
         </nav>
-        <div className="flex gap-2">
-          <Button variant="outline" asChild>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            asChild
+            className="border-purple-200 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 bg-transparent"
+          >
             <Link href="/dashboard/import">Importar XML de NF-e</Link>
           </Button>
-          <Button asChild>
+          <Button
+            asChild
+            className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-md hover:shadow-lg transition-all duration-200"
+          >
             <Link href="/dashboard/invoices/new">Nova Nota Fiscal</Link>
           </Button>
         </div>
       </header>
 
-      <main className="flex-1 space-y-6 p-4 md:p-8">
+      <main className="flex-1 space-y-8 p-4 md:p-8">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Notas Fiscais</h2>
-            <p className="text-muted-foreground">
+          <div className="space-y-2">
+            <h2 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-purple-900 to-purple-700 bg-clip-text text-transparent">
+              Notas Fiscais
+            </h2>
+            <p className="text-slate-600 text-lg">
               Gerencie suas notas fiscais eletrônicas agrupadas por cidade e cliente
             </p>
           </div>
@@ -350,22 +364,24 @@ export default function InvoicesPage() {
           {cityGroups.map((cityGroup) => {
             const cityKey = `${cityGroup.city}, ${cityGroup.state}`
             return (
-              <div key={cityKey} className="space-y-2">
-                <Card className="bg-muted/30 w-full">
+              <div key={cityKey} className="space-y-3">
+                <Card className="bg-gradient-to-r from-purple-50 to-white border-purple-200 shadow-sm hover:shadow-md transition-all duration-200">
                   <CardHeader
-                    className="cursor-pointer hover:bg-muted/50 transition-colors py-1"
+                    className="cursor-pointer hover:bg-purple-50/50 transition-colors py-4 rounded-t-lg"
                     onClick={() => toggleCity(cityKey)}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         {expandedCities.has(cityKey) ? (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          <ChevronDown className="h-5 w-5 text-purple-600" />
                         ) : (
-                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          <ChevronRight className="h-5 w-5 text-purple-600" />
                         )}
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-primary" />
-                          <CardTitle className="text-sm">{cityKey}</CardTitle>
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-purple-100 rounded-lg">
+                            <MapPin className="h-5 w-5 text-purple-600" />
+                          </div>
+                          <CardTitle className="text-lg font-bold text-slate-900">{cityKey}</CardTitle>
                         </div>
                       </div>
                     </div>
@@ -377,7 +393,7 @@ export default function InvoicesPage() {
                     {cityGroup.clientGroups.map((group) => (
                       <Card key={group.client.document} className="overflow-hidden">
                         <CardHeader
-                          className="cursor-pointer hover:bg-muted/50 transition-colors py-3"
+                          className="cursor-pointer hover:bg-purple-50/50 transition-colors py-3"
                           onClick={() => toggleClient(group.client.document)}
                         >
                           <div className="flex items-center justify-between">

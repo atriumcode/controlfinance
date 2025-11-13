@@ -4,9 +4,9 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Cores baseadas no atendezap - Navy Blue + Purple */
+  /* Atendezap Brand Colors - Navy Blue + Purple */
   --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
+  --foreground: 222 47% 11%; /* Navy Blue */
 
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
@@ -14,37 +14,37 @@
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
 
-  /* Primary agora usa o roxo vibrante do atendezap */
+  /* Primary uses vibrant purple from atendezap logo */
   --primary: 262 83% 58%; /* Purple #7C3AED */
   --primary-foreground: 0 0% 100%;
 
   --secondary: 220 14% 96%;
   --secondary-foreground: 222 47% 11%;
 
-  --muted: 220 14% 96%;
-  --muted-foreground: 215 16% 47%;
+  --muted: 240 5% 96%;
+  --muted-foreground: 240 4% 46%;
 
-  --accent: 262 83% 95%; /* Purple light accent */
-  --accent-foreground: 262 83% 20%;
+  --accent: 262 90% 95%; /* Light purple accent */
+  --accent-foreground: 262 83% 30%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 220 13% 91%;
-  --input: 220 13% 91%;
+  --border: 240 6% 90%;
+  --input: 240 6% 90%;
   --ring: 262 83% 58%;
 
-  /* Cores de gráficos com o roxo como primário */
+  --radius: 0.75rem;
+
+  /* Chart colors with purple as primary */
   --chart-1: 262 83% 58%; /* Purple */
-  --chart-2: 142 71% 45%; /* Green */
-  --chart-3: 217 91% 60%; /* Blue */
+  --chart-2: 142 76% 36%; /* Green */
+  --chart-3: 221 83% 53%; /* Blue */
   --chart-4: 25 95% 53%; /* Orange */
   --chart-5: 346 77% 50%; /* Red */
 
-  --radius: 0.5rem;
-
-  /* Sidebar com navy blue escuro do atendezap */
-  --sidebar-background: 222 47% 11%; /* Navy Blue #0F172A */
+  /* Sidebar uses navy blue from atendezap */
+  --sidebar: 222 47% 11%; /* Navy Blue #0F172A */
   --sidebar-foreground: 210 40% 98%;
   --sidebar-primary: 262 83% 58%; /* Purple accent */
   --sidebar-primary-foreground: 0 0% 100%;
@@ -58,7 +58,7 @@
   --background: 222 47% 11%;
   --foreground: 210 40% 98%;
 
-  --card: 222 47% 11%;
+  --card: 222 47% 13%;
   --card-foreground: 210 40% 98%;
 
   --popover: 222 47% 11%;
@@ -84,18 +84,18 @@
   --ring: 262 83% 58%;
 
   --chart-1: 262 83% 58%;
-  --chart-2: 142 71% 45%;
-  --chart-3: 217 91% 60%;
+  --chart-2: 142 76% 36%;
+  --chart-3: 221 83% 53%;
   --chart-4: 25 95% 53%;
   --chart-5: 346 77% 50%;
 
-  --sidebar-background: 222 47% 11%;
+  --sidebar: 222 47% 11%;
   --sidebar-foreground: 210 40% 98%;
   --sidebar-primary: 262 83% 58%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 222 47% 16%;
+  --sidebar-accent: 217 33% 17%;
   --sidebar-accent-foreground: 210 40% 98%;
-  --sidebar-border: 222 47% 16%;
+  --sidebar-border: 217 33% 17%;
   --sidebar-ring: 262 83% 58%;
 }
 
@@ -129,7 +129,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --color-sidebar: var(--sidebar-background);
+  --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
@@ -143,8 +143,67 @@
   * {
     @apply border-border outline-ring/50;
   }
-
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-gradient-to-br from-slate-50 via-white to-purple-50/30 text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Modern heading styles with better typography */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl;
+  }
+
+  h2 {
+    @apply text-3xl;
+  }
+
+  h3 {
+    @apply text-2xl;
+  }
+}
+
+@layer components {
+  /* Modern card styles with shadows and hover effects */
+  .card-modern {
+    @apply bg-white/80 backdrop-blur-sm border-purple-100 shadow-sm hover:shadow-md transition-all duration-200;
+  }
+
+  /* Stat card with gradient border */
+  .stat-card {
+    @apply relative bg-white/90 backdrop-blur-sm rounded-xl p-6 border border-purple-100/50 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden;
+  }
+
+  .stat-card::before {
+    content: "";
+    @apply absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 via-purple-500 to-purple-400;
+  }
+
+  /* Modern button with gradient */
+  .btn-primary-gradient {
+    @apply bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 shadow-md hover:shadow-lg transition-all duration-200;
+  }
+
+  /* Glassmorphism effect for sidebar */
+  .glass-effect {
+    @apply bg-white/10 backdrop-blur-md border-white/20;
   }
 }
