@@ -71,7 +71,7 @@ export async function POST(request: Request) {
       console.log("[v0] company_id do usuário:", user.company_id)
 
       try {
-        const existingClient = await query("SELECT id FROM clients WHERE document = $1 AND company_id = $2", [
+        const existingClient = await query("SELECT id FROM clients WHERE cpf_cnpj = $1 AND company_id = $2", [
           nfeData.recipient_cnpj,
           user.company_id,
         ])
@@ -82,10 +82,10 @@ export async function POST(request: Request) {
         } else {
           console.log("[v0] Criando novo cliente")
           const newClient = await query(
-            `INSERT INTO clients (company_id, name, document, document_type, created_at, updated_at) 
-             VALUES ($1, $2, $3, $4, NOW(), NOW()) 
+            `INSERT INTO clients (company_id, name, cpf_cnpj, created_at, updated_at) 
+             VALUES ($1, $2, $3, NOW(), NOW()) 
              RETURNING id`,
-            [user.company_id, nfeData.recipient_name, nfeData.recipient_cnpj, "CNPJ"],
+            [user.company_id, nfeData.recipient_name, nfeData.recipient_cnpj],
           )
           clientId = newClient[0].id
           console.log("[v0] Novo cliente criado:", clientId)
