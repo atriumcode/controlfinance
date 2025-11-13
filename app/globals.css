@@ -4,43 +4,43 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Atendezap Brand Colors */
+  /* Modern Professional Color System - Indigo + Slate */
   --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
+  --foreground: 222.2 84% 4.9%;
 
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --card-foreground: 222.2 84% 4.9%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
+  --popover-foreground: 222.2 84% 4.9%;
 
-  --primary: 262 83% 58%; /* Purple #7C3AED */
+  --primary: 239 84% 67%; /* Modern Indigo #6366F1 */
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 215 20% 65%;
-  --secondary-foreground: 222 47% 11%;
+  --secondary: 215 20.2% 65.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
 
-  --muted: 220 13% 96%;
-  --muted-foreground: 215 16% 47%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
 
-  --accent: 217 91% 95%;
-  --accent-foreground: 222 47% 11%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
 
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
 
-  --border: 220 13% 91%;
-  --input: 220 13% 91%;
-  --ring: 262 83% 58%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 239 84% 67%;
 
   --radius: 0.5rem;
 
-  /* Chart colors - vibrant and distinct */
-  --chart-1: 262 83% 58%; /* Purple */
+  /* Modern Chart Colors */
+  --chart-1: 239 84% 67%; /* Indigo */
   --chart-2: 142 76% 36%; /* Green */
   --chart-3: 217 91% 60%; /* Blue */
   --chart-4: 38 92% 50%; /* Orange */
-  --chart-5: 346 77% 50%; /* Red */
+  --chart-5: 346 77% 50%;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -52,35 +52,35 @@
 }
 
 .dark {
-  --background: 222 47% 11%;
+  --background: 222.2 84% 4.9%;
   --foreground: 210 40% 98%;
 
-  --card: 222 47% 11%;
+  --card: 222.2 84% 4.9%;
   --card-foreground: 210 40% 98%;
 
-  --popover: 222 47% 11%;
+  --popover: 222.2 84% 4.9%;
   --popover-foreground: 210 40% 98%;
 
-  --primary: 262 83% 58%;
+  --primary: 239 84% 67%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 217 33% 17%;
+  --secondary: 217.2 32.6% 17.5%;
   --secondary-foreground: 210 40% 98%;
 
-  --muted: 217 33% 17%;
-  --muted-foreground: 215 20% 65%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
 
-  --accent: 217 33% 17%;
+  --accent: 217.2 32.6% 17.5%;
   --accent-foreground: 210 40% 98%;
 
-  --destructive: 0 63% 31%;
+  --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 210 40% 98%;
 
-  --border: 217 33% 17%;
-  --input: 217 33% 17%;
-  --ring: 262 83% 58%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 239 84% 67%;
 
-  --chart-1: 262 83% 58%;
+  --chart-1: 239 84% 67%;
   --chart-2: 142 76% 36%;
   --chart-3: 217 91% 60%;
   --chart-4: 38 92% 50%;
@@ -141,6 +141,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 
   h1,
@@ -187,5 +188,20 @@
   /* Table modern style */
   .table-modern {
     @apply bg-white border border-gray-200 rounded-lg overflow-hidden;
+  }
+}
+
+/* Added modern component utilities for consistent design */
+@layer utilities {
+  .card-shadow {
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  }
+
+  .card-shadow-hover:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+
+  .text-balance {
+    text-wrap: balance;
   }
 }

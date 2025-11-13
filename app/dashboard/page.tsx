@@ -86,11 +86,11 @@ export default async function DashboardPage() {
   const clientsCount = Number.parseInt(clientsCountRows[0]?.count || "0")
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-gray-50">
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-gray-200 bg-white px-6 shadow-sm">
-        <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
+    <div className="flex min-h-screen w-full flex-col bg-slate-50">
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-slate-200 bg-white px-6 shadow-sm">
+        <h1 className="text-xl font-bold text-slate-900">Dashboard</h1>
         <div className="ml-auto">
-          <Button asChild size="sm" className="bg-purple-600 hover:bg-purple-700">
+          <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
             <Link href="/dashboard/reports">Ver Relatórios</Link>
           </Button>
         </div>
@@ -98,8 +98,8 @@ export default async function DashboardPage() {
 
       <main className="flex-1 space-y-6 p-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Visão Geral</h2>
-          <p className="text-gray-600 mt-1">Acompanhe o desempenho do seu negócio</p>
+          <h2 className="text-2xl font-bold text-slate-900">Visão Geral</h2>
+          <p className="text-slate-600 mt-1">Acompanhe o desempenho do seu negócio</p>
         </div>
 
         <DashboardStats invoices={invoices} clientsCount={clientsCount} />
@@ -112,22 +112,37 @@ export default async function DashboardPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           <RecentInvoices invoices={invoices.slice(0, 5)} />
 
-          <Card className="border-gray-200 shadow-sm">
+          <Card className="border-slate-200 shadow-sm bg-white">
             <CardHeader>
-              <CardTitle className="text-gray-900">Ações Rápidas</CardTitle>
-              <CardDescription className="text-gray-600">Acesse as principais funcionalidades</CardDescription>
+              <CardTitle className="text-slate-900">Ações Rápidas</CardTitle>
+              <CardDescription className="text-slate-600">Acesse as principais funcionalidades</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button asChild className="w-full bg-purple-600 hover:bg-purple-700" size="sm">
+              <Button asChild className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm" size="sm">
                 <Link href="/dashboard/clients/new">Cadastrar Novo Cliente</Link>
               </Button>
-              <Button asChild variant="outline" className="w-full border-gray-300 bg-transparent" size="sm">
+              <Button
+                asChild
+                variant="outline"
+                className="w-full border-slate-300 hover:bg-slate-50 bg-transparent"
+                size="sm"
+              >
                 <Link href="/dashboard/invoices/new">Criar Nova Nota Fiscal</Link>
               </Button>
-              <Button asChild variant="outline" className="w-full border-gray-300 bg-transparent" size="sm">
+              <Button
+                asChild
+                variant="outline"
+                className="w-full border-slate-300 hover:bg-slate-50 bg-transparent"
+                size="sm"
+              >
                 <Link href="/dashboard/import">Importar XML de NF-e</Link>
               </Button>
-              <Button asChild variant="outline" className="w-full border-gray-300 bg-transparent" size="sm">
+              <Button
+                asChild
+                variant="outline"
+                className="w-full border-slate-300 hover:bg-slate-50 bg-transparent"
+                size="sm"
+              >
                 <Link href="/dashboard/reports">Ver Relatórios</Link>
               </Button>
             </CardContent>
