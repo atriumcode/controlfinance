@@ -315,59 +315,41 @@ export default function InvoicesPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-purple-100/50 bg-white/80 backdrop-blur-md px-4 md:px-6 shadow-sm">
-        <nav className="flex-1 flex items-center gap-4">
-          <Link
-            href="/dashboard"
-            className="text-sm text-slate-600 hover:text-purple-600 transition-colors font-medium"
-          >
+    <div className="flex min-h-screen w-full flex-col bg-gray-50">
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-gray-200 bg-white px-6 shadow-sm">
+        <nav className="flex-1 flex items-center gap-2">
+          <Link href="/dashboard" className="text-sm text-gray-600 hover:text-purple-600 transition-colors">
             Dashboard
           </Link>
-          <span className="text-sm text-slate-400">/</span>
-          <h1 className="text-lg font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-            Notas Fiscais
-          </h1>
+          <span className="text-sm text-gray-400">/</span>
+          <h1 className="text-sm font-semibold text-gray-900">Notas Fiscais</h1>
         </nav>
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            asChild
-            className="border-purple-200 hover:bg-purple-50 hover:border-purple-300 transition-all duration-200 bg-transparent"
-          >
-            <Link href="/dashboard/import">Importar XML de NF-e</Link>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild size="sm" className="border-gray-300 bg-transparent">
+            <Link href="/dashboard/import">Importar XML</Link>
           </Button>
-          <Button
-            asChild
-            className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-md hover:shadow-lg transition-all duration-200"
-          >
+          <Button asChild size="sm" className="bg-purple-600 hover:bg-purple-700">
             <Link href="/dashboard/invoices/new">Nova Nota Fiscal</Link>
           </Button>
         </div>
       </header>
 
-      <main className="flex-1 space-y-8 p-4 md:p-8">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <h2 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-purple-900 to-purple-700 bg-clip-text text-transparent">
-              Notas Fiscais
-            </h2>
-            <p className="text-slate-600 text-lg">
-              Gerencie suas notas fiscais eletrônicas agrupadas por cidade e cliente
-            </p>
-          </div>
+      <main className="flex-1 space-y-6 p-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h2 className="text-xl font-bold text-gray-900">Notas Fiscais</h2>
+          <p className="text-gray-600 mt-1">Gerencie suas notas fiscais eletrônicas agrupadas por cidade e cliente</p>
         </div>
 
         <InvoiceStats invoices={invoices} />
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {cityGroups.map((cityGroup) => {
             const cityKey = `${cityGroup.city}, ${cityGroup.state}`
             return (
-              <div key={cityKey} className="space-y-3">
-                <Card className="bg-gradient-to-r from-purple-50 to-white border-purple-200 shadow-sm hover:shadow-md transition-all duration-200">
+              <div key={cityKey} className="space-y-2">
+                <Card className="border-gray-200 shadow-sm">
                   <CardHeader
-                    className="cursor-pointer hover:bg-purple-50/50 transition-colors py-4 rounded-t-lg"
+                    className="cursor-pointer hover:bg-gray-50 transition-colors py-3"
                     onClick={() => toggleCity(cityKey)}
                   >
                     <div className="flex items-center justify-between">
@@ -378,10 +360,8 @@ export default function InvoicesPage() {
                           <ChevronRight className="h-5 w-5 text-purple-600" />
                         )}
                         <div className="flex items-center gap-3">
-                          <div className="p-2 bg-purple-100 rounded-lg">
-                            <MapPin className="h-5 w-5 text-purple-600" />
-                          </div>
-                          <CardTitle className="text-lg font-bold text-slate-900">{cityKey}</CardTitle>
+                          <MapPin className="h-5 w-5 text-purple-600" />
+                          <CardTitle className="text-base font-semibold text-gray-900">{cityKey}</CardTitle>
                         </div>
                       </div>
                     </div>
@@ -389,11 +369,11 @@ export default function InvoicesPage() {
                 </Card>
 
                 {expandedCities.has(cityKey) && (
-                  <div className="ml-6 space-y-3">
+                  <div className="ml-6 space-y-2">
                     {cityGroup.clientGroups.map((group) => (
-                      <Card key={group.client.document} className="overflow-hidden">
+                      <Card key={group.client.document} className="border-gray-200 shadow-sm">
                         <CardHeader
-                          className="cursor-pointer hover:bg-purple-50/50 transition-colors py-3"
+                          className="cursor-pointer hover:bg-gray-50 transition-colors py-3"
                           onClick={() => toggleClient(group.client.document)}
                         >
                           <div className="flex items-center justify-between">
@@ -444,7 +424,7 @@ export default function InvoicesPage() {
                               {group.invoices.map((invoice) => (
                                 <div
                                   key={invoice.id}
-                                  className="p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                                  className="p-3 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors"
                                 >
                                   <div className="flex items-center justify-between">
                                     <Link

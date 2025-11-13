@@ -1,12 +1,12 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* Removed problematic @import "tw-animate-css" and @custom-variant */
+/* Complete clean redesign using LICITANET style - flat, minimal, professional */
 
 :root {
   /* Atendezap Brand Colors - Navy Blue + Purple */
   --background: 0 0% 100%;
-  --foreground: 222 47% 11%; /* Navy Blue */
+  --foreground: 222 47% 11%; /* Navy Blue #0F172A */
 
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
@@ -18,29 +18,29 @@
   --primary: 262 83% 58%; /* Purple #7C3AED */
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 220 14% 96%;
+  --secondary: 240 5% 96%; /* Light gray */
   --secondary-foreground: 222 47% 11%;
 
   --muted: 240 5% 96%;
-  --muted-foreground: 240 4% 46%;
+  --muted-foreground: 215 16% 47%;
 
-  --accent: 262 90% 95%; /* Light purple accent */
-  --accent-foreground: 262 83% 30%;
+  --accent: 217 91% 95%; /* Light blue accent like LICITANET */
+  --accent-foreground: 222 47% 11%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 240 6% 90%;
-  --input: 240 6% 90%;
+  --border: 214 32% 91%; /* Subtle borders */
+  --input: 214 32% 91%;
   --ring: 262 83% 58%;
 
-  --radius: 0.75rem;
+  --radius: 0.5rem; /* More subtle rounded corners */
 
-  /* Chart colors with purple as primary */
+  /* Chart colors */
   --chart-1: 262 83% 58%; /* Purple */
   --chart-2: 142 76% 36%; /* Green */
-  --chart-3: 221 83% 53%; /* Blue */
-  --chart-4: 25 95% 53%; /* Orange */
+  --chart-3: 217 91% 60%; /* Blue */
+  --chart-4: 38 92% 50%; /* Orange */
   --chart-5: 346 77% 50%; /* Red */
 
   /* Sidebar uses navy blue from atendezap */
@@ -85,8 +85,8 @@
 
   --chart-1: 262 83% 58%;
   --chart-2: 142 76% 36%;
-  --chart-3: 221 83% 53%;
-  --chart-4: 25 95% 53%;
+  --chart-3: 217 91% 60%;
+  --chart-4: 38 92% 50%;
   --chart-5: 346 77% 50%;
 
   --sidebar: 222 47% 11%;
@@ -141,43 +141,26 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
-@layer base {
-  * {
     @apply border-border;
   }
 
   body {
-    @apply bg-gradient-to-br from-slate-50 via-white to-purple-50/30 text-foreground antialiased;
+    /* Clean white background, no gradients */
+    @apply bg-white text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
-  /* Modern heading styles with better typography */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-semibold tracking-tight;
-  }
-
+  /* Clean typography */
   h1 {
-    @apply text-4xl;
+    @apply text-3xl font-bold tracking-tight;
   }
 
   h2 {
-    @apply text-3xl;
+    @apply text-2xl font-semibold tracking-tight;
   }
 
   h3 {
-    @apply text-2xl;
+    @apply text-xl font-semibold;
   }
 }
 

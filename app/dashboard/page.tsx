@@ -86,16 +86,20 @@ export default async function DashboardPage() {
   const clientsCount = Number.parseInt(clientsCountRows[0]?.count || "0")
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
-      <main className="flex-1 space-y-6 p-4 md:p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-            <p className="text-muted-foreground">Visão geral do seu negócio</p>
-          </div>
-          <Button asChild>
-            <Link href="/dashboard/reports">Ver Relatórios Detalhados</Link>
+    <div className="flex min-h-screen w-full flex-col bg-gray-50">
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-gray-200 bg-white px-6 shadow-sm">
+        <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
+        <div className="ml-auto">
+          <Button asChild size="sm" className="bg-purple-600 hover:bg-purple-700">
+            <Link href="/dashboard/reports">Ver Relatórios</Link>
           </Button>
+        </div>
+      </header>
+
+      <main className="flex-1 space-y-6 p-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Visão Geral</h2>
+          <p className="text-gray-600 mt-1">Acompanhe o desempenho do seu negócio</p>
         </div>
 
         <DashboardStats invoices={invoices} clientsCount={clientsCount} />
@@ -108,22 +112,22 @@ export default async function DashboardPage() {
         <div className="grid gap-6 lg:grid-cols-2">
           <RecentInvoices invoices={invoices.slice(0, 5)} />
 
-          <Card>
+          <Card className="border-gray-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Ações Rápidas</CardTitle>
-              <CardDescription>Acesse as principais funcionalidades</CardDescription>
+              <CardTitle className="text-gray-900">Ações Rápidas</CardTitle>
+              <CardDescription className="text-gray-600">Acesse as principais funcionalidades</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <Button asChild className="w-full">
+            <CardContent className="space-y-3">
+              <Button asChild className="w-full bg-purple-600 hover:bg-purple-700" size="sm">
                 <Link href="/dashboard/clients/new">Cadastrar Novo Cliente</Link>
               </Button>
-              <Button asChild variant="outline" className="w-full bg-transparent">
+              <Button asChild variant="outline" className="w-full border-gray-300 bg-transparent" size="sm">
                 <Link href="/dashboard/invoices/new">Criar Nova Nota Fiscal</Link>
               </Button>
-              <Button asChild variant="outline" className="w-full bg-transparent">
+              <Button asChild variant="outline" className="w-full border-gray-300 bg-transparent" size="sm">
                 <Link href="/dashboard/import">Importar XML de NF-e</Link>
               </Button>
-              <Button asChild variant="outline" className="w-full bg-transparent">
+              <Button asChild variant="outline" className="w-full border-gray-300 bg-transparent" size="sm">
                 <Link href="/dashboard/reports">Ver Relatórios</Link>
               </Button>
             </CardContent>
