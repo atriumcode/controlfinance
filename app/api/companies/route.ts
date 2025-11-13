@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Dados inválidos" }, { status: 400 })
     }
 
-    const { name, cnpj, email, phone, address, city, state, zip_code, logo_url } = body
+    const { name, cnpj, email, phone, address, city, state, zip_code } = body
 
     if (!name || !cnpj || !email) {
       console.log("[v0] Missing required fields:", { name: !!name, cnpj: !!cnpj, email: !!email })
@@ -40,10 +40,10 @@ export async function POST(request: Request) {
     try {
       console.log("[v0] Inserting company...")
       rows = await query(
-        `INSERT INTO companies (name, cnpj, email, phone, address, city, state, zip_code, logo_url, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+        `INSERT INTO companies (name, cnpj, email, phone, address, city, state, zip_code, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
          RETURNING *`,
-        [name, cnpj, email, phone || "", address || "", city || "", state || "", zip_code || "", logo_url || ""],
+        [name, cnpj, email, phone || "", address || "", city || "", state || "", zip_code || ""],
       )
       console.log("[v0] Insert successful, rows:", rows?.length)
     } catch (insertError: any) {
