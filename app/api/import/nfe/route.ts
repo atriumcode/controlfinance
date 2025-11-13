@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     const result = await query(
       `INSERT INTO invoices (
         company_id, client_id, invoice_number, 
-        issue_date, due_date, amount, status, created_at, updated_at
+        issue_date, due_date, total_amount, status, created_at, updated_at
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW()) 
       RETURNING id`,
       [
