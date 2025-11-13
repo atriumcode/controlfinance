@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { PaymentForm } from "@/components/payments/payment-form"
-import { getAuthenticatedUser } from "@/lib/auth/server-auth"
+import { getCurrentUser } from "@/lib/auth"
 import { query } from "@/lib/db/postgres"
 
 interface PaymentPageProps {
@@ -11,16 +11,9 @@ interface PaymentPageProps {
 export default async function PaymentPage({ params }: PaymentPageProps) {
   const { id } = await params
 
-  const user = await getAuthenticatedUser()
+  const user = await getCurrentUser()
 
-  if (!user) {
-    redirect("/auth/login")
-  }
-
-  const profileResult = await query("SELECT company_id FROM profiles WHERE id = $1", [user.id])
-  const profile = profileResult.rows[0]
-
-  if (!profile?.company_id) {
+  if (!user || !user.company_id) {
     redirect("/auth/login")
   }
 
@@ -28,19 +21,19 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     `SELECT i.*,
       json_build_object(
         'name', c.name,
-        'document', c.cpf_cnpj,
-        'document_type', 'cpf'
-      ) as clients
+        'cpf_cnpj', c.cpf_cnpj
+      ) as client
     FROM invoices i
     LEFT JOIN clients c ON c.id = i.client_id
     WHERE i.id = $1 AND i.company_id = $2`,
-    [id, profile.company_id],
+    [id, user.company_id],
   )
-  const invoice = invoiceResult.rows[0]
 
-  if (!invoice) {
+  if (!invoiceResult || invoiceResult.length === 0) {
     redirect("/dashboard/invoices")
   }
+
+  const invoice = invoiceResult[0]
 
   if (invoice.status === "paid") {
     redirect(`/dashboard/invoices/${id}`)
@@ -48,33 +41,31 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+      <header className="sticky top-0 flex h-16 items-center gap-4 border-b border-gray-200 bg-white px-4 md:px-6">
         <nav className="flex-1 flex items-center gap-4">
-          <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+          <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">
             Dashboard
           </Link>
-          <span className="text-sm text-muted-foreground">/</span>
-          <Link href="/dashboard/invoices" className="text-sm text-muted-foreground hover:text-foreground">
+          <span className="text-sm text-gray-400">/</span>
+          <Link href="/dashboard/invoices" className="text-sm text-gray-600 hover:text-gray-900">
             Notas Fiscais
           </Link>
-          <span className="text-sm text-muted-foreground">/</span>
-          <Link href={`/dashboard/invoices/${id}`} className="text-sm text-muted-foreground hover:text-foreground">
+          <span className="text-sm text-gray-400">/</span>
+          <Link href={`/dashboard/invoices/${id}`} className="text-sm text-gray-600 hover:text-gray-900">
             NF-e {invoice.invoice_number}
           </Link>
-          <span className="text-sm text-muted-foreground">/</span>
-          <h1 className="text-lg font-semibold">Registrar Pagamento</h1>
+          <span className="text-sm text-gray-400">/</span>
+          <h1 className="text-lg font-semibold text-gray-900">Registrar Pagamento</h1>
         </nav>
       </header>
 
-      <main className="flex-1 space-y-4 p-4 md:p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Registrar Pagamento</h2>
-            <p className="text-muted-foreground">
-              Registre o pagamento da NF-e {invoice.invoice_number}
-              {invoice.clients && ` - ${invoice.clients.name}`}
-            </p>
-          </div>
+      <main className="flex-1 space-y-6 p-6 md:p-8">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Registrar Pagamento</h2>
+          <p className="text-gray-600 mt-1">
+            Registre o pagamento da NF-e {invoice.invoice_number}
+            {invoice.client && ` - ${invoice.client.name}`}
+          </p>
         </div>
 
         <div className="max-w-2xl">

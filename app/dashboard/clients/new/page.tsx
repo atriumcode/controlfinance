@@ -7,16 +7,17 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { ClientForm } from "@/components/clients/client-form"
-import { getAuthenticatedUser } from "@/lib/auth/server-auth"
+import { getCurrentUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { queryOne } from "@/lib/db/helpers"
 
 export default async function NewClientPage() {
-  const user = await getAuthenticatedUser()
+  const user = await getCurrentUser()
 
-  const profile = await queryOne<{ company_id: string }>("SELECT company_id FROM profiles WHERE id = $1", [user.id])
+  if (!user) {
+    redirect("/auth/login")
+  }
 
-  if (!profile?.company_id) {
+  if (!user.company_id) {
     redirect("/dashboard/settings")
   }
 

@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { validateCPF, validateCNPJ, formatCPF, formatCNPJ } from "@/lib/utils/document-validation"
 
 interface ClientFormProps {
   client?: {
@@ -42,26 +41,12 @@ export function ClientForm({ client }: ClientFormProps) {
 
   const handleDocumentChange = (value: string) => {
     const cleanValue = value.replace(/\D/g, "")
-
-    let formatted = value
-    if (cleanValue.length <= 11) {
-      formatted = formatCPF(cleanValue)
-    } else {
-      formatted = formatCNPJ(cleanValue)
-    }
-
-    setFormData({ ...formData, cpf_cnpj: formatted })
+    setFormData({ ...formData, cpf_cnpj: cleanValue })
   }
 
   const validateDocument = () => {
     const cleanDocument = formData.cpf_cnpj.replace(/\D/g, "")
-
-    if (cleanDocument.length === 11) {
-      return validateCPF(cleanDocument)
-    } else if (cleanDocument.length === 14) {
-      return validateCNPJ(cleanDocument)
-    }
-    return false
+    return cleanDocument.length === 11 || cleanDocument.length === 14
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,21 +55,17 @@ export function ClientForm({ client }: ClientFormProps) {
     setError(null)
 
     if (!validateDocument()) {
-      const cleanDocument = formData.cpf_cnpj.replace(/\D/g, "")
-      const docType = cleanDocument.length === 11 ? "CPF" : "CNPJ"
-      setError(`${docType} inválido`)
+      setError("CPF/CNPJ inválido. Use 11 dígitos para CPF ou 14 para CNPJ")
       setIsLoading(false)
       return
     }
 
     try {
       const cleanDocument = formData.cpf_cnpj.replace(/\D/g, "")
-      const paddedDocument =
-        cleanDocument.length === 11 ? cleanDocument.padStart(11, "0") : cleanDocument.padStart(14, "0")
 
       const clientData = {
         ...formData,
-        cpf_cnpj: paddedDocument,
+        cpf_cnpj: cleanDocument,
       }
 
       console.log("[v0] Submitting client data:", clientData)
