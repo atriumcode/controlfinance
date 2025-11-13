@@ -97,9 +97,9 @@ export function DashboardSidebar({ className }: SidebarProps) {
 
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
-      <div className="flex h-14 lg:h-[60px] items-center border-b px-4">
+      <div className="flex h-14 lg:h-[60px] items-center border-b px-4 bg-primary/10">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-          <FileText className="h-6 w-6" />
+          <FileText className="h-6 w-6 text-primary" />
           <span className="text-lg">NF-e System</span>
         </Link>
       </div>
@@ -112,7 +112,10 @@ export function DashboardSidebar({ className }: SidebarProps) {
               return (
                 <Collapsible key={item.name} open={isOpen} onOpenChange={() => toggleItem(item.name)}>
                   <CollapsibleTrigger asChild>
-                    <Button variant="ghost" className="w-full justify-start gap-2 px-3">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-2 px-3 hover:bg-primary/10 hover:text-primary"
+                    >
                       <item.icon className="h-4 w-4" />
                       <span className="flex-1 text-left">{item.name}</span>
                       {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -126,8 +129,8 @@ export function DashboardSidebar({ className }: SidebarProps) {
                         size="sm"
                         asChild
                         className={cn(
-                          "w-full justify-start gap-2",
-                          pathname === child.href && "bg-accent text-accent-foreground",
+                          "w-full justify-start gap-2 hover:bg-primary/10 hover:text-primary",
+                          pathname === child.href && "bg-primary/20 text-primary font-medium",
                         )}
                       >
                         <Link href={child.href}>
@@ -147,8 +150,8 @@ export function DashboardSidebar({ className }: SidebarProps) {
                 variant="ghost"
                 asChild
                 className={cn(
-                  "w-full justify-start gap-2",
-                  pathname === item.href && "bg-accent text-accent-foreground",
+                  "w-full justify-start gap-2 hover:bg-primary/10 hover:text-primary",
+                  pathname === item.href && "bg-primary/20 text-primary font-medium",
                 )}
               >
                 <Link href={item.href}>
@@ -166,7 +169,7 @@ export function DashboardSidebar({ className }: SidebarProps) {
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className={cn("hidden border-r bg-muted/40 md:block w-64 fixed h-full", className)}>
+      <div className={cn("hidden border-r bg-card md:block w-64 fixed h-full", className)}>
         <div className="flex h-full max-h-screen flex-col gap-2">
           <SidebarContent />
         </div>
@@ -175,7 +178,11 @@ export function DashboardSidebar({ className }: SidebarProps) {
       {/* Mobile Sidebar */}
       <Sheet>
         <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="shrink-0 md:hidden fixed top-4 left-4 z-40 bg-transparent">
+          <Button
+            variant="outline"
+            size="icon"
+            className="shrink-0 md:hidden fixed top-4 left-4 z-40 bg-primary text-primary-foreground hover:bg-primary/90"
+          >
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
