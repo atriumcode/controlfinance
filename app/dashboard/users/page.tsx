@@ -16,23 +16,23 @@ export default async function UsersPage() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 space-y-6 p-6 md:p-8">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Usuários</h2>
-          <p className="text-muted-foreground">Gerencie usuários da empresa</p>
+          <h1 className="text-3xl font-bold text-gray-900">Usuários</h1>
+          <p className="text-gray-600 mt-1">Gerencie usuários da empresa</p>
         </div>
-        <Button asChild>
+        <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
           <Link href="/dashboard/users/new">Adicionar Usuário</Link>
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Usuários</CardTitle>
-          <CardDescription>Usuários com acesso ao sistema</CardDescription>
+      <Card className="border-gray-200 shadow-sm">
+        <CardHeader className="bg-gray-50 border-b border-gray-200">
+          <CardTitle className="text-lg font-semibold text-gray-900">Lista de Usuários</CardTitle>
+          <CardDescription className="text-gray-600">Usuários com acesso ao sistema</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <UsersTable users={users || []} />
         </CardContent>
       </Card>

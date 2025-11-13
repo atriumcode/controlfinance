@@ -21,37 +21,45 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="container mx-auto py-6 px-4">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Configurações</h1>
-        <p className="text-muted-foreground">Configure sua empresa e perfil de usuário</p>
+    <div className="flex-1 space-y-6 p-6 md:p-8">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Configurações</h1>
+        <p className="text-gray-600 mt-1">Configure sua empresa e perfil de usuário</p>
       </div>
 
       <Tabs defaultValue="company" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="company">Empresa</TabsTrigger>
-          <TabsTrigger value="appearance">Aparência</TabsTrigger>
+        <TabsList className="bg-gray-100 border border-gray-200">
+          <TabsTrigger value="company" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            Empresa
+          </TabsTrigger>
+          <TabsTrigger value="appearance" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            Aparência
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="company">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações da Empresa</CardTitle>
-              <CardDescription>Configure os dados da sua empresa para emissão de faturas</CardDescription>
+          <Card className="border-gray-200 shadow-sm">
+            <CardHeader className="bg-gray-50 border-b border-gray-200">
+              <CardTitle className="text-lg font-semibold text-gray-900">Informações da Empresa</CardTitle>
+              <CardDescription className="text-gray-600">
+                Configure os dados da sua empresa para emissão de faturas
+              </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <CompanyForm company={company} userId={user.id} profileId={user.id} />
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="appearance">
-          <Card>
-            <CardHeader>
-              <CardTitle>Aparência</CardTitle>
-              <CardDescription>Personalize a aparência da interface do sistema</CardDescription>
+          <Card className="border-gray-200 shadow-sm">
+            <CardHeader className="bg-gray-50 border-b border-gray-200">
+              <CardTitle className="text-lg font-semibold text-gray-900">Aparência</CardTitle>
+              <CardDescription className="text-gray-600">
+                Personalize a aparência da interface do sistema
+              </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-6">
               <ThemeSelector />
             </CardContent>
           </Card>
