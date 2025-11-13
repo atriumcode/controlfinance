@@ -16,7 +16,6 @@ export async function GET() {
       `SELECT 
         i.id,
         i.invoice_number,
-        i.nfe_key,
         i.issue_date,
         i.total_amount,
         i.status,
