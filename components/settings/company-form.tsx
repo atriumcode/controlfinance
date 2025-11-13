@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -9,8 +8,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { Upload, X } from "lucide-react"
-import Image from "next/image"
 
 interface Company {
   id?: string
@@ -22,7 +19,6 @@ interface Company {
   city: string
   state: string
   zip_code: string
-  logo_url?: string
 }
 
 interface CompanyFormProps {
@@ -35,8 +31,6 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
-  const [uploadingLogo, setUploadingLogo] = useState(false)
-  const [logoPreview, setLogoPreview] = useState<string | null>(company?.logo_url || null)
   const [formData, setFormData] = useState({
     name: company?.name || "",
     cnpj: company?.cnpj || "",
@@ -46,73 +40,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
     city: company?.city || "",
     state: company?.state || "",
     zip_code: company?.zip_code || "",
-    logo_url: company?.logo_url || "",
   })
-
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Erro",
-        description: "Por favor, selecione uma imagem válida",
-        variant: "destructive",
-      })
-      return
-    }
-
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      toast({
-        title: "Erro",
-        description: "A imagem deve ter no máximo 2MB",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setUploadingLogo(true)
-
-    try {
-      // Convert image to base64
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const base64String = reader.result as string
-        setLogoPreview(base64String)
-        setFormData({ ...formData, logo_url: base64String })
-
-        toast({
-          title: "Sucesso",
-          description: "Logo carregada com sucesso!",
-        })
-        setUploadingLogo(false)
-      }
-      reader.onerror = () => {
-        toast({
-          title: "Erro",
-          description: "Erro ao carregar logo",
-          variant: "destructive",
-        })
-        setUploadingLogo(false)
-      }
-      reader.readAsDataURL(file)
-    } catch (error) {
-      console.error("Error loading logo:", error)
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar logo",
-        variant: "destructive",
-      })
-      setUploadingLogo(false)
-    }
-  }
-
-  const handleRemoveLogo = () => {
-    setLogoPreview(null)
-    setFormData({ ...formData, logo_url: "" })
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -130,7 +58,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
 
       if (!response.ok) {
         const error = await response.json()
-        throw new Error(error.message || "Erro ao salvar dados da empresa")
+        throw new Error(error.error || "Erro ao salvar dados da empresa")
       }
 
       toast({
@@ -153,43 +81,9 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-2">
-        <Label>Logo da Empresa</Label>
-        <div className="flex items-start gap-4">
-          {logoPreview ? (
-            <div className="relative w-32 h-32 border rounded-lg overflow-hidden bg-muted">
-              <Image
-                src={logoPreview || "/placeholder.svg"}
-                alt="Logo da empresa"
-                fill
-                className="object-contain p-2"
-              />
-              <button
-                type="button"
-                onClick={handleRemoveLogo}
-                className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
-              <Upload className="h-8 w-8 text-muted-foreground" />
-            </div>
-          )}
-          <div className="flex-1 space-y-2">
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={handleLogoUpload}
-              disabled={uploadingLogo}
-              className="cursor-pointer"
-            />
-            <p className="text-sm text-muted-foreground">
-              Recomendado: PNG ou JPG, máximo 2MB. A logo será exibida nos relatórios em PDF.
-            </p>
-          </div>
-        </div>
+      <div>
+        <h3 className="text-lg font-medium">Informações da Empresa</h3>
+        <p className="text-sm text-muted-foreground">Configure os dados da sua empresa para emissão de faturas</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -255,6 +149,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
             value={formData.state}
             onChange={(e) => setFormData({ ...formData, state: e.target.value })}
             placeholder="SP"
+            maxLength={2}
           />
         </div>
         <div>
