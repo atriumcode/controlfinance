@@ -17,9 +17,9 @@ export default async function UsersPage() {
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Usuários</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Usuários</h1>
           <p className="text-gray-600 mt-1">Gerencie usuários da empresa</p>
         </div>
         <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
@@ -27,7 +27,7 @@ export default async function UsersPage() {
         </Button>
       </div>
 
-      <Card className="border-gray-200 shadow-sm">
+      <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="bg-gray-50 border-b border-gray-200">
           <CardTitle className="text-lg font-semibold text-gray-900">Lista de Usuários</CardTitle>
           <CardDescription className="text-gray-600">Usuários com acesso ao sistema</CardDescription>

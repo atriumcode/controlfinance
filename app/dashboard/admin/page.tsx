@@ -16,9 +16,9 @@ export default async function AdminPage() {
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Administração</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Administração</h1>
           <p className="text-gray-600 mt-1">Painel de controle do sistema</p>
         </div>
         <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200">

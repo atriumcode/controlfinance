@@ -30,19 +30,16 @@ export default async function DashboardPage() {
 
   const profile = profileRows[0]
 
-  console.log("[v0] Dashboard - Profile:", profile?.id, "Company ID:", profile?.company_id)
-
   if (!profile?.company_id) {
-    console.log("[v0] No company_id found, showing configuration prompt")
     return (
       <div className="flex min-h-screen w-full items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md border-gray-200 shadow-sm">
           <CardHeader>
             <CardTitle>Configuração Necessária</CardTitle>
             <CardDescription>Você precisa configurar sua empresa antes de continuar.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full">
+            <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
               <Link href="/dashboard/settings">Configurar Empresa</Link>
             </Button>
           </CardContent>
@@ -51,10 +48,7 @@ export default async function DashboardPage() {
     )
   }
 
-  console.log("[v0] Company configured, loading dashboard data")
-
   const [invoicesRows, clientsCountRows] = await Promise.all([
-    // Get only last 90 days of invoices for performance
     query(
       `
       SELECT i.*, cl.name as client_name, cl.cpf_cnpj as document,
@@ -70,8 +64,6 @@ export default async function DashboardPage() {
     `,
       [profile.company_id],
     ),
-
-    // Get clients count
     query(
       `
       SELECT COUNT(*) as count
@@ -86,16 +78,7 @@ export default async function DashboardPage() {
   const clientsCount = Number.parseInt(clientsCountRows[0]?.count || "0")
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-slate-50">
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-slate-200 bg-white px-6 shadow-sm">
-        <h1 className="text-xl font-bold text-slate-900">Dashboard</h1>
-        <div className="ml-auto">
-          <Button asChild size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm">
-            <Link href="/dashboard/reports">Ver Relatórios</Link>
-          </Button>
-        </div>
-      </header>
-
+    <div className="flex min-h-screen w-full flex-col bg-gray-50">
       <main className="flex-1 space-y-6 p-6 md:p-8">
         <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
           <div>

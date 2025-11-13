@@ -23,7 +23,7 @@ export default async function SettingsPage() {
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Configurações</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Configurações</h1>
         <p className="text-gray-600 mt-1">Configure sua empresa e perfil de usuário</p>
       </div>
 
@@ -38,7 +38,7 @@ export default async function SettingsPage() {
         </TabsList>
 
         <TabsContent value="company">
-          <Card className="border-gray-200 shadow-sm">
+          <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="bg-gray-50 border-b border-gray-200">
               <CardTitle className="text-lg font-semibold text-gray-900">Informações da Empresa</CardTitle>
               <CardDescription className="text-gray-600">
@@ -52,7 +52,7 @@ export default async function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="appearance">
-          <Card className="border-gray-200 shadow-sm">
+          <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="bg-gray-50 border-b border-gray-200">
               <CardTitle className="text-lg font-semibold text-gray-900">Aparência</CardTitle>
               <CardDescription className="text-gray-600">

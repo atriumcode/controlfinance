@@ -316,24 +316,6 @@ export default function InvoicesPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-gray-50">
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-gray-200 bg-white px-6 shadow-sm">
-        <nav className="flex-1 flex items-center gap-2">
-          <Link href="/dashboard" className="text-sm text-gray-600 hover:text-purple-600 transition-colors">
-            Dashboard
-          </Link>
-          <span className="text-sm text-gray-400">/</span>
-          <h1 className="text-sm font-semibold text-gray-900">Notas Fiscais</h1>
-        </nav>
-        <div className="flex gap-2">
-          <Button variant="outline" asChild size="sm" className="border-gray-300 bg-transparent">
-            <Link href="/dashboard/import">Importar XML</Link>
-          </Button>
-          <Button asChild size="sm" className="bg-purple-600 hover:bg-purple-700">
-            <Link href="/dashboard/invoices/new">Nova Nota Fiscal</Link>
-          </Button>
-        </div>
-      </header>
-
       <main className="flex-1 space-y-6 p-6 md:p-8">
         <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
           <div>
@@ -342,7 +324,7 @@ export default function InvoicesPage() {
           </div>
           <div className="flex gap-2">
             <Button variant="outline" asChild className="border-gray-300 bg-transparent">
-              <Link href="/dashboard/import">Importar XML</Link>
+              <Link href="/dashboard/import">Importar XML de NF-e</Link>
             </Button>
             <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
               <Link href="/dashboard/invoices/new">Nova Nota Fiscal</Link>

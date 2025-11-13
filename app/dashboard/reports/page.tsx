@@ -2,6 +2,8 @@ import { redirect } from "next/navigation"
 import { queryOne, queryMany } from "@/lib/db/helpers"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 import { ReportsContent } from "@/components/reports/reports-content"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default async function ReportsPage() {
   const user = await getAuthenticatedUser()
@@ -43,6 +45,16 @@ export default async function ReportsPage() {
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Relatórios</h1>
+          <p className="text-gray-600 mt-1">Análises detalhadas do seu negócio</p>
+        </div>
+        <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
+          <Link href="/dashboard">Voltar ao Dashboard</Link>
+        </Button>
+      </div>
+
       <div
         data-user-email={user.email}
         data-user-name={user.full_name || user.email}
@@ -56,11 +68,6 @@ export default async function ReportsPage() {
         data-company-logo={company?.logo_url || ""}
         style={{ display: "none" }}
       />
-
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Relatórios</h1>
-        <p className="text-gray-600 mt-1">Análises detalhadas do seu negócio</p>
-      </div>
 
       <ReportsContent initialInvoices={invoices || []} clients={clients || []} />
     </div>
