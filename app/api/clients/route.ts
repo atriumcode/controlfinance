@@ -10,18 +10,22 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, cpf_cnpj, email, phone, address, city, state, zip_code } = body
+    const { name, document, email, phone, address, city, state, zip_code } = body
 
-    console.log("[v0] Creating client with data:", { name, cpf_cnpj, company_id: user.company_id })
+    const cleanDoc = document.replace(/\D/g, "")
+    const document_type = cleanDoc.length === 11 ? "CPF" : "CNPJ"
+
+    console.log("[v0] Creating client with data:", { name, document, document_type, company_id: user.company_id })
 
     const result = await query(
-      `INSERT INTO clients (company_id, name, cpf_cnpj, email, phone, address, city, state, zip_code)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO clients (company_id, name, document, document_type, email, phone, address, city, state, zip_code)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
       [
         user.company_id,
         name,
-        cpf_cnpj,
+        cleanDoc,
+        document_type,
         email || null,
         phone || null,
         address || null,

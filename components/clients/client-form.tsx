@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,7 +14,7 @@ interface ClientFormProps {
   client?: {
     id: string
     name: string
-    cpf_cnpj: string
+    document: string
     email?: string
     phone?: string
     address?: string
@@ -27,7 +27,7 @@ interface ClientFormProps {
 export function ClientForm({ client }: ClientFormProps) {
   const [formData, setFormData] = useState({
     name: client?.name || "",
-    cpf_cnpj: client?.cpf_cnpj || "",
+    document: client?.document || "",
     email: client?.email || "",
     phone: client?.phone || "",
     address: client?.address || "",
@@ -41,11 +41,11 @@ export function ClientForm({ client }: ClientFormProps) {
 
   const handleDocumentChange = (value: string) => {
     const cleanValue = value.replace(/\D/g, "")
-    setFormData({ ...formData, cpf_cnpj: cleanValue })
+    setFormData({ ...formData, document: cleanValue })
   }
 
   const validateDocument = () => {
-    const cleanDocument = formData.cpf_cnpj.replace(/\D/g, "")
+    const cleanDocument = formData.document.replace(/\D/g, "")
     return cleanDocument.length === 11 || cleanDocument.length === 14
   }
 
@@ -61,11 +61,11 @@ export function ClientForm({ client }: ClientFormProps) {
     }
 
     try {
-      const cleanDocument = formData.cpf_cnpj.replace(/\D/g, "")
+      const cleanDocument = formData.document.replace(/\D/g, "")
 
       const clientData = {
         ...formData,
-        cpf_cnpj: cleanDocument,
+        document: cleanDocument,
       }
 
       console.log("[v0] Submitting client data:", clientData)
@@ -120,11 +120,11 @@ export function ClientForm({ client }: ClientFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="cpf_cnpj">CPF/CNPJ *</Label>
+              <Label htmlFor="document">CPF/CNPJ *</Label>
               <Input
-                id="cpf_cnpj"
+                id="document"
                 required
-                value={formData.cpf_cnpj}
+                value={formData.document}
                 onChange={(e) => handleDocumentChange(e.target.value)}
                 placeholder="000.000.000-00 ou 00.000.000/0000-00"
                 className="border-gray-300"

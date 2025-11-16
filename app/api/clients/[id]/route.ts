@@ -10,18 +10,22 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const body = await request.json()
-    const { name, cpf_cnpj, email, phone, address, city, state, zip_code } = body
+    const { name, document, email, phone, address, city, state, zip_code } = body
+
+    const cleanDoc = document.replace(/\D/g, "")
+    const document_type = cleanDoc.length === 11 ? "CPF" : "CNPJ"
 
     console.log("[v0] Updating client:", params.id)
 
     const result = await query(
       `UPDATE clients 
-       SET name = $1, cpf_cnpj = $2, email = $3, phone = $4, address = $5, city = $6, state = $7, zip_code = $8, updated_at = NOW()
-       WHERE id = $9 AND company_id = $10
+       SET name = $1, document = $2, document_type = $3, email = $4, phone = $5, address = $6, city = $7, state = $8, zip_code = $9, updated_at = NOW()
+       WHERE id = $10 AND company_id = $11
        RETURNING *`,
       [
         name,
-        cpf_cnpj,
+        cleanDoc,
+        document_type,
         email || null,
         phone || null,
         address || null,
