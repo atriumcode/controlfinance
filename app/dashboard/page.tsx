@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation"
+import { redirect } from 'next/navigation'
 import { query } from "@/lib/db/postgres"
 import { getSession } from "@/lib/auth/session"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +8,7 @@ import { DashboardStats } from "@/components/dashboard/dashboard-stats"
 import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { RecentInvoices } from "@/components/dashboard/recent-invoices"
 import { PaymentStatusChart } from "@/components/dashboard/payment-status-chart"
+import { PageHeader } from "@/components/shared/page-header"
 
 export const dynamic = "force-dynamic"
 
@@ -80,15 +81,15 @@ export default async function DashboardPage() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-gray-50">
       <main className="flex-1 space-y-6 p-6 md:p-8">
-        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
-            <p className="text-gray-600 mt-1">Acompanhe o desempenho do seu negócio</p>
-          </div>
-          <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
-            <Link href="/dashboard/reports">Ver Relatórios</Link>
-          </Button>
-        </div>
+        <PageHeader
+          title="Dashboard"
+          description="Acompanhe o desempenho do seu negócio"
+          action={
+            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
+              <Link href="/dashboard/reports">Ver Relatórios</Link>
+            </Button>
+          }
+        />
 
         <DashboardStats invoices={invoices} clientsCount={clientsCount} />
 

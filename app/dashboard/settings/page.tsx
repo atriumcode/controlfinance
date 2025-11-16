@@ -1,10 +1,11 @@
 import { queryOne } from "@/lib/db/helpers"
-import { redirect } from "next/navigation"
+import { redirect } from 'next/navigation'
 import { CompanyForm } from "@/components/settings/company-form"
 import { ThemeSelector } from "@/components/settings/theme-selector"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
+import { PageHeader } from "@/components/shared/page-header"
 
 export const dynamic = "force-dynamic"
 
@@ -22,10 +23,10 @@ export default async function SettingsPage() {
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Configurações</h1>
-        <p className="text-gray-600 mt-1">Configure sua empresa e perfil de usuário</p>
-      </div>
+      <PageHeader
+        title="Configurações"
+        description="Configure sua empresa e perfil de usuário"
+      />
 
       <Tabs defaultValue="company" className="space-y-6">
         <TabsList className="bg-gray-100 border border-gray-200">
