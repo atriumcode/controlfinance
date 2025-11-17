@@ -5,6 +5,14 @@ import { redirect } from "next/navigation"
 import { hashPassword, verifyPassword, validatePassword } from "./password"
 import { createSession, deleteSession, requireAuth as requireAuthSession } from "./session"
 
+export interface RegisterUserInput {
+  email: string
+  password: string
+  fullName: string
+  role: string
+  companyId: string | null
+}
+
 export interface User {
   id: string
   email: string
@@ -18,25 +26,13 @@ export async function requireAuth(): Promise<User> {
   return requireAuthSession()
 }
 
-export async function registerUserAction(formData: FormData) {
-  const email = formData.get("email") as string
-  const password = formData.get("password") as string
-  const confirmPassword = formData.get("confirmPassword") as string
-  const fullName = formData.get("fullName") as string
-  const role = formData.get("role") as string
-  const cnpj = formData.get("cnpj") as string
+export async function registerUserAction(data: RegisterUserInput) {
+  const { email, password, fullName, role, companyId } = data
 
   if (!email || !password || !fullName) {
     return {
       success: false,
       error: "Preencha todos os campos obrigatórios",
-    }
-  }
-
-  if (password !== confirmPassword) {
-    return {
-      success: false,
-      error: "As senhas não coincidem",
     }
   }
 
@@ -49,11 +45,12 @@ export async function registerUserAction(formData: FormData) {
   }
 
   try {
+    // Verifica se é o primeiro usuário
     const existingUsers = await query("SELECT id FROM profiles")
     const isFirstUser = !existingUsers || existingUsers.length === 0
 
+    // Verifica e-mail duplicado
     const existingUser = await query("SELECT id FROM profiles WHERE email = $1 LIMIT 1", [email])
-
     if (existingUser && existingUser.length > 0) {
       return {
         success: false,
@@ -62,13 +59,17 @@ export async function registerUserAction(formData: FormData) {
     }
 
     const passwordHash = await hashPassword(password)
+
     const finalRole = isFirstUser ? "admin" : role || "user"
+    const finalCompanyId = isFirstUser ? null : companyId
 
     const newUsers = await query(
-      `INSERT INTO profiles (email, full_name, role, cnpj, password_hash, is_active) 
-       VALUES ($1, $2, $3, $4, $5, $6) 
-       RETURNING id`,
-      [email, fullName, finalRole, cnpj || null, passwordHash, true],
+      `
+      INSERT INTO profiles (email, full_name, role, company_id, password_hash, is_active)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id
+      `,
+      [email, fullName, finalRole, finalCompanyId, passwordHash, true],
     )
 
     if (!newUsers || newUsers.length === 0) {
@@ -88,7 +89,7 @@ export async function registerUserAction(formData: FormData) {
     console.error("Registration exception:", error)
     return {
       success: false,
-      error: "Erro ao criar usuário. Tente novamente.",
+      error: "Erro ao criar usuário.",
       details: error instanceof Error ? error.message : "Erro desconhecido",
     }
   }
@@ -98,8 +99,6 @@ export async function loginUserAction(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
 
-  console.log("[v0] Login attempt for email:", email)
-
   if (!email || !password) {
     return {
       success: false,
@@ -108,16 +107,14 @@ export async function loginUserAction(formData: FormData) {
   }
 
   try {
-    const users = await query("SELECT id, email, password_hash, is_active FROM profiles WHERE email = $1 LIMIT 1", [
-      email,
-    ])
-
-    console.log("[v0] Database query result - users found:", users?.length || 0)
+    const users = await query(
+      "SELECT id, email, password_hash, is_active FROM profiles WHERE email = $1 LIMIT 1",
+      [email]
+    )
 
     const user = users && users.length > 0 ? users[0] : null
 
     if (!user) {
-      console.log("[v0] User not found for email:", email)
       return {
         success: false,
         error: "Email ou senha incorretos",
@@ -127,36 +124,32 @@ export async function loginUserAction(formData: FormData) {
     if (!user.is_active) {
       return {
         success: false,
-        error: "Usuário inativo. Entre em contato com o administrador.",
+        error: "Usuário inativo.",
       }
     }
 
-    const isPasswordValid = await verifyPassword(password, user.password_hash)
+    const isValid = await verifyPassword(password, user.password_hash)
 
-    if (!isPasswordValid) {
+    if (!isValid) {
       return {
         success: false,
         error: "Email ou senha incorretos",
       }
     }
 
-    try {
-      await execute("UPDATE profiles SET last_login = $1 WHERE id = $2", [new Date().toISOString(), user.id])
-    } catch (lastLoginError) {
-      // Silently ignore if last_login column doesn't exist
-      console.log("[v0] Could not update last_login (column may not exist):", lastLoginError)
-    }
+    await execute("UPDATE profiles SET last_login = $1 WHERE id = $2", [
+      new Date().toISOString(),
+      user.id,
+    ])
 
     await createSession(user.id)
 
-    return {
-      success: true,
-    }
+    return { success: true }
   } catch (error) {
     console.error("[v0] Login exception:", error)
     return {
       success: false,
-      error: "Erro ao fazer login. Tente novamente.",
+      error: "Erro ao fazer login.",
       details: error instanceof Error ? error.message : "Erro desconhecido",
     }
   }
