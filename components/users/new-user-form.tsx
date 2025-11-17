@@ -92,9 +92,9 @@ export function NewUserForm() {
             <SelectValue placeholder="Selecione um nível" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="leitura">Leitura</SelectItem>
-            <SelectItem value="escrita">Escrita</SelectItem>
-            <SelectItem value="administrador">Administrador</SelectItem>
+            <SelectItem value="viewer">Leitura</SelectItem>
+            <SelectItem value="user">Escrita</SelectItem>
+            <SelectItem value="admin">Administrador</SelectItem>
           </SelectContent>
         </Select>
       </div>

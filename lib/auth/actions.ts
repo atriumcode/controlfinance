@@ -22,12 +22,25 @@ export interface User {
   is_active: boolean
 }
 
-// Autenticação existente
+// Mapeia roles da UI para roles aceitas no banco
+function mapRole(uiRole: string): "admin" | "user" | "viewer" {
+  switch (uiRole) {
+    case "administrador":
+      return "admin"
+    case "escrita":
+      return "user"
+    case "leitura":
+      return "viewer"
+    default:
+      return "viewer"
+  }
+}
+
 export async function requireAuth(): Promise<User> {
   return requireAuthSession()
 }
 
-// -------- REGISTRO DE USUÁRIO CORRIGIDO ----------
+// REGISTRO DE USUÁRIO COM ROLE CORRIGIDA
 export async function registerUserAction(data: RegisterUserInput) {
   const { email, password, fullName, role, companyId } = data
 
@@ -47,7 +60,9 @@ export async function registerUserAction(data: RegisterUserInput) {
   }
 
   try {
-    // Checa se email já existe
+    // Garantir que o role enviado existe no banco
+    const dbRole = mapRole(role)
+
     const existingUser = await query(
       "SELECT id FROM profiles WHERE email = $1 LIMIT 1",
       [email]
@@ -60,38 +75,33 @@ export async function registerUserAction(data: RegisterUserInput) {
       }
     }
 
-    const passwordHash = await hashPassword(password)
+    const hash = await hashPassword(password)
 
     const newUser = await query(
       `
       INSERT INTO profiles (email, full_name, role, company_id, password_hash, is_active)
-      VALUES ($1, $2, $3, $4, $5, true)
+      VALUES ($1, $2, $3, $4, $5, TRUE)
       RETURNING id
       `,
-      [email, fullName, role, companyId, passwordHash]
+      [email, fullName, dbRole, companyId, hash]
     )
 
     await createSession(newUser[0].id)
 
-    return {
-      success: true
-    }
+    return { success: true }
+
   } catch (error) {
     console.error("REGISTER ERROR:", error)
-    return {
-      success: false,
-      error: "Erro ao criar usuário."
-    }
+    return { success: false, error: "Erro ao criar usuário." }
   }
 }
 
-// -------- LOGIN ----------
 export async function loginUserAction(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
 
   if (!email || !password) {
-    return { success: false, error: "Email e senha são obrigatórios." }
+    return { success: false, error: "Email e senha obrigatórios." }
   }
 
   try {
@@ -101,37 +111,32 @@ export async function loginUserAction(formData: FormData) {
     )
 
     const user = users[0]
-    if (!user) {
-      return { success: false, error: "Email ou senha incorretos." }
-    }
+    if (!user) return { success: false, error: "Email ou senha incorretos." }
 
     if (!user.is_active) {
       return { success: false, error: "Usuário inativo." }
     }
 
-    const isValid = await verifyPassword(password, user.password_hash)
-    if (!isValid) {
+    const valid = await verifyPassword(password, user.password_hash)
+    if (!valid) {
       return { success: false, error: "Email ou senha incorretos." }
     }
 
-    await execute("UPDATE profiles SET last_login = $1 WHERE id = $2", [
-      new Date().toISOString(),
-      user.id
-    ])
+    await execute(
+      "UPDATE profiles SET last_login = $1 WHERE id = $2",
+      [new Date().toISOString(), user.id]
+    )
 
     await createSession(user.id)
 
     return { success: true }
+
   } catch (error) {
-    console.error("[v0] LOGIN ERROR:", error)
-    return {
-      success: false,
-      error: "Erro ao fazer login."
-    }
+    console.error("LOGIN ERROR:", error)
+    return { success: false, error: "Erro ao fazer login." }
   }
 }
 
-// -------- LOGOUT ----------
 export async function logoutAction() {
   await deleteSession()
   redirect("/auth/login")
