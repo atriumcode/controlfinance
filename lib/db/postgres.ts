@@ -42,6 +42,10 @@ export async function queryOne<T = any>(text: string, params?: any[]): Promise<T
   return rows[0] || null
 }
 
+export async function queryMany<T = any>(text: string, params?: any[]): Promise<T[]> {
+  return query<T>(text, params)
+}
+
 export async function execute(text: string, params?: any[]): Promise<number> {
   const pool = getPool()
   const client = await pool.connect()

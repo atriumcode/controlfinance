@@ -1,2 +1,2 @@
-// Re-export auth functions for simplified imports
-export { getCurrentUser, getAuthenticatedUser } from "./auth/server-auth"
+// Re-export from server-auth for backward compatibility
+export { getCurrentUser, getAuthenticatedUser } from "@/lib/auth/server-auth"

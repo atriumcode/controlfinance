@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/alert-dialog"
 import { deleteInvoice } from "@/lib/actions/invoice-actions"
 import { useToast } from "@/hooks/use-toast"
-import { PageHeader } from "@/components/shared/page-header"
 
 interface Invoice {
   id: string
@@ -318,20 +317,20 @@ export default function InvoicesPage() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-gray-50">
       <main className="flex-1 space-y-6 p-6 md:p-8">
-        <PageHeader
-          title="Notas Fiscais"
-          description="Gerencie suas notas fiscais eletrônicas agrupadas por cidade e cliente"
-          action={
-            <div className="flex gap-2">
-              <Button variant="outline" asChild className="border-gray-300 bg-transparent">
-                <Link href="/dashboard/import">Importar XML de NF-e</Link>
-              </Button>
-              <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
-                <Link href="/dashboard/invoices/new">Nova Nota Fiscal</Link>
-              </Button>
-            </div>
-          }
-        />
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Notas Fiscais</h1>
+            <p className="text-gray-600 mt-1">Gerencie suas notas fiscais eletrônicas agrupadas por cidade e cliente</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild className="border-gray-300 bg-transparent">
+              <Link href="/dashboard/import">Importar XML de NF-e</Link>
+            </Button>
+            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
+              <Link href="/dashboard/invoices/new">Nova Nota Fiscal</Link>
+            </Button>
+          </div>
+        </div>
 
         <InvoiceStats invoices={invoices} />
 

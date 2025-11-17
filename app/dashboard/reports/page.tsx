@@ -1,10 +1,9 @@
 import { redirect } from 'next/navigation'
-import { queryOne, queryMany } from "@/lib/db/helpers"
+import { queryOne, queryMany } from "@/lib/db/postgres"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 import { ReportsContent } from "@/components/reports/reports-content"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { PageHeader } from "@/components/shared/page-header"
 
 export default async function ReportsPage() {
   const user = await getAuthenticatedUser()
@@ -46,15 +45,15 @@ export default async function ReportsPage() {
 
   return (
     <div className="flex-1 space-y-6 p-6 md:p-8">
-      <PageHeader
-        title="Relatórios"
-        description="Análises detalhadas do seu negócio"
-        action={
-          <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
-            <Link href="/dashboard">Voltar ao Dashboard</Link>
-          </Button>
-        }
-      />
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Relatórios</h1>
+          <p className="text-gray-600 mt-1">Análises detalhadas do seu negócio</p>
+        </div>
+        <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
+          <Link href="/dashboard">Voltar ao Dashboard</Link>
+        </Button>
+      </div>
 
       <div
         data-user-email={user.email}

@@ -12,12 +12,9 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
   const { id } = await params
 
   const user = await getCurrentUser()
+  if (!user || !user.company_id) redirect("/auth/login")
 
-  if (!user || !user.company_id) {
-    redirect("/auth/login")
-  }
-
-  const invoiceResult = await query(
+  const invoiceRows = await query(
     `SELECT i.*,
       json_build_object(
         'name', c.name,
@@ -29,12 +26,13 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     [id, user.company_id],
   )
 
-  if (!invoiceResult || invoiceResult.length === 0) {
+  if (!invoiceRows || invoiceRows.length === 0) {
     redirect("/dashboard/invoices")
   }
 
-  const invoice = invoiceResult[0]
+  const invoice = invoiceRows[0]
 
+  // Não permitir pagamento se já estiver paga
   if (invoice.status === "paid") {
     redirect(`/dashboard/invoices/${id}`)
   }

@@ -1,4 +1,4 @@
-import { queryMany } from "@/lib/db/helpers"
+import { queryMany } from "@/lib/db/postgres"
 import { requireAdmin } from "@/lib/auth/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"

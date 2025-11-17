@@ -1,10 +1,10 @@
-import { redirect } from "next/navigation"
+import { redirect } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { ClientsTable } from "@/components/clients/clients-table"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
-import { queryMany, queryOne } from "@/lib/db/helpers"
+import { queryMany, queryOne } from "@/lib/db/postgres"
 
 export default async function ClientsPage() {
   const user = await getAuthenticatedUser()

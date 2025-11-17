@@ -1,11 +1,11 @@
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
-import { redirect } from "next/navigation"
-import { queryMany, queryOne } from "@/lib/db/helpers"
+import { redirect } from 'next/navigation'
+import { queryMany, queryOne } from "@/lib/db/postgres"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
-import { DollarSign, TrendingUp, AlertCircle, Calendar } from "lucide-react"
+import { DollarSign, TrendingUp, AlertCircle, Calendar } from 'lucide-react'
 
 export const dynamic = "force-dynamic"
 
