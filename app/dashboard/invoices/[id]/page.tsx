@@ -45,7 +45,7 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
           'description', ii.description,
           'quantity', ii.quantity,
           'unit_price', ii.unit_price,
-          'total_price', ii.total_price,
+          'total_price', ii.total_price
         )
       ) FILTER (WHERE ii.id IS NOT NULL) as invoice_items
     FROM invoices i
