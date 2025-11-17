@@ -22,17 +22,19 @@ export interface User {
   is_active: boolean
 }
 
+// Autenticação existente
 export async function requireAuth(): Promise<User> {
   return requireAuthSession()
 }
 
+// -------- REGISTRO DE USUÁRIO CORRIGIDO ----------
 export async function registerUserAction(data: RegisterUserInput) {
   const { email, password, fullName, role, companyId } = data
 
-  if (!email || !password || !fullName) {
+  if (!email || !password || !fullName || !role) {
     return {
       success: false,
-      error: "Preencha todos os campos obrigatórios",
+      error: "Preencha todos os campos obrigatórios."
     }
   }
 
@@ -40,70 +42,56 @@ export async function registerUserAction(data: RegisterUserInput) {
   if (!passwordValidation.valid) {
     return {
       success: false,
-      error: passwordValidation.error,
+      error: passwordValidation.error
     }
   }
 
   try {
-    // Verifica se é o primeiro usuário
-    const existingUsers = await query("SELECT id FROM profiles")
-    const isFirstUser = !existingUsers || existingUsers.length === 0
+    // Checa se email já existe
+    const existingUser = await query(
+      "SELECT id FROM profiles WHERE email = $1 LIMIT 1",
+      [email]
+    )
 
-    // Verifica e-mail duplicado
-    const existingUser = await query("SELECT id FROM profiles WHERE email = $1 LIMIT 1", [email])
-    if (existingUser && existingUser.length > 0) {
+    if (existingUser.length > 0) {
       return {
         success: false,
-        error: "Este email já está cadastrado",
+        error: "Este email já está cadastrado."
       }
     }
 
     const passwordHash = await hashPassword(password)
 
-    const finalRole = isFirstUser ? "admin" : role || "user"
-    const finalCompanyId = isFirstUser ? null : companyId
-
-    const newUsers = await query(
+    const newUser = await query(
       `
       INSERT INTO profiles (email, full_name, role, company_id, password_hash, is_active)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      VALUES ($1, $2, $3, $4, $5, true)
       RETURNING id
       `,
-      [email, fullName, finalRole, finalCompanyId, passwordHash, true],
+      [email, fullName, role, companyId, passwordHash]
     )
 
-    if (!newUsers || newUsers.length === 0) {
-      return {
-        success: false,
-        error: "Erro ao criar usuário. Tente novamente.",
-      }
-    }
-
-    await createSession(newUsers[0].id)
+    await createSession(newUser[0].id)
 
     return {
-      success: true,
-      isFirstUser,
+      success: true
     }
   } catch (error) {
-    console.error("Registration exception:", error)
+    console.error("REGISTER ERROR:", error)
     return {
       success: false,
-      error: "Erro ao criar usuário.",
-      details: error instanceof Error ? error.message : "Erro desconhecido",
+      error: "Erro ao criar usuário."
     }
   }
 }
 
+// -------- LOGIN ----------
 export async function loginUserAction(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
 
   if (!email || !password) {
-    return {
-      success: false,
-      error: "Email e senha são obrigatórios",
-    }
+    return { success: false, error: "Email e senha são obrigatórios." }
   }
 
   try {
@@ -112,49 +100,38 @@ export async function loginUserAction(formData: FormData) {
       [email]
     )
 
-    const user = users && users.length > 0 ? users[0] : null
-
+    const user = users[0]
     if (!user) {
-      return {
-        success: false,
-        error: "Email ou senha incorretos",
-      }
+      return { success: false, error: "Email ou senha incorretos." }
     }
 
     if (!user.is_active) {
-      return {
-        success: false,
-        error: "Usuário inativo.",
-      }
+      return { success: false, error: "Usuário inativo." }
     }
 
     const isValid = await verifyPassword(password, user.password_hash)
-
     if (!isValid) {
-      return {
-        success: false,
-        error: "Email ou senha incorretos",
-      }
+      return { success: false, error: "Email ou senha incorretos." }
     }
 
     await execute("UPDATE profiles SET last_login = $1 WHERE id = $2", [
       new Date().toISOString(),
-      user.id,
+      user.id
     ])
 
     await createSession(user.id)
 
     return { success: true }
   } catch (error) {
-    console.error("[v0] Login exception:", error)
+    console.error("[v0] LOGIN ERROR:", error)
     return {
       success: false,
-      error: "Erro ao fazer login.",
-      details: error instanceof Error ? error.message : "Erro desconhecido",
+      error: "Erro ao fazer login."
     }
   }
 }
 
+// -------- LOGOUT ----------
 export async function logoutAction() {
   await deleteSession()
   redirect("/auth/login")
