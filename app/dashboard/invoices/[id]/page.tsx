@@ -46,7 +46,6 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
           'quantity', ii.quantity,
           'unit_price', ii.unit_price,
           'total_price', ii.total_price,
-          'tax_rate', ii.tax_rate
         )
       ) FILTER (WHERE ii.id IS NOT NULL) as invoice_items
     FROM invoices i
@@ -282,7 +281,6 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
                           <p className="font-medium">{item.description}</p>
                           <p className="text-sm text-muted-foreground">
                             Qtd: {item.quantity} × {formatCurrency(item.unit_price)}
-                            {item.tax_rate > 0 && <span className="ml-2">({item.tax_rate}% imposto)</span>}
                           </p>
                         </div>
                         <p className="font-medium">{formatCurrency(item.total_price)}</p>
