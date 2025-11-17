@@ -33,8 +33,13 @@ export function NewUserForm() {
       return
     }
 
-    // BUSCAR PERFIL LOGADO
-    const profileRes = await fetch("/api/user/profile")
+    // BUSCAR PERFIL DO USUÁRIO
+    const profileRes = await fetch("/api/user/profile", {
+      method: "GET",
+      credentials: "include",  // <- AQUI ESTÁ A CORREÇÃO
+      cache: "no-store",
+    })
+
     if (!profileRes.ok) {
       setError("Não foi possível obter a empresa atual.")
       setIsLoading(false)
@@ -43,12 +48,13 @@ export function NewUserForm() {
 
     const profile = await profileRes.json()
 
+    // CHAMAR A SERVER ACTION
     const result = await registerUserAction({
       email,
       password,
       fullName,
       role,
-      companyId: profile.company_id, // ENVIA CORRETAMENTE
+      companyId: profile.company_id,
     })
 
     if (!result.success) {

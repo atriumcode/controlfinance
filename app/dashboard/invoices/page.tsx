@@ -76,8 +76,7 @@ export default function InvoicesPage() {
 
   const fetchInvoices = useCallback(async () => {
     try {
-      const response = await fetch("/api/user/profile")
-
+      const response = await fetch("/api/user/profile", { credentials: "same-origin" })
       if (!response.ok) {
         router.push("/auth/login")
         return
@@ -90,7 +89,7 @@ export default function InvoicesPage() {
         return
       }
 
-      const invoicesResponse = await fetch(`/api/invoices?company_id=${profileData.company_id}`)
+      const invoicesResponse = await fetch(`/api/invoices?company_id=${profileData.company_id}`, { credentials: "same-origin" })
 
       if (!invoicesResponse.ok) {
         console.error("[v0] Error fetching invoices")
