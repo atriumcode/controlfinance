@@ -1,23 +1,23 @@
 import { NextResponse } from "next/server"
 import { queryMany } from "@/lib/db/helpers"
-import { getCurrentUser } from "@/lib/auth/server-auth"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
-// 🔥 ESSENCIAL PARA EVITAR ERRO DE PRERENDER DO VERCEL
+// Importante para Vercel
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
-    const user = await getCurrentUser()
+    const user = await getAuthenticatedUser()
+
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const url = new URL(req.url)
-    const company_id = url.searchParams.get("company_id")
+    const company_id = user.company_id
 
     if (!company_id) {
-      return NextResponse.json({ error: "Missing company_id" }, { status: 400 })
+      return NextResponse.json({ error: "Usuário sem empresa associada" }, { status: 400 })
     }
 
     const invoices = await queryMany(
