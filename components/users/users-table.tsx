@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 
 interface User {
   id: string
@@ -68,11 +69,11 @@ export function UsersTable({ users }: UsersTableProps) {
     setIsDeleting(true)
 
     try {
-      const response = await fetch(`/api/users/${user.id}`, {
-        method: "DELETE",
-      })
+      const supabase = createClient()
 
-      if (!response.ok) throw new Error("Failed to delete user")
+      const { error } = await supabase.from("profiles").delete().eq("id", user.id)
+
+      if (error) throw error
 
       setDeleteDialog({ open: false, user: null })
       router.refresh()

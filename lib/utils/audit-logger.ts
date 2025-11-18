@@ -1,4 +1,4 @@
-import { execute } from "@/lib/db/postgres"
+import { createAdminClient } from "@/lib/supabase/server"
 
 export interface AuditLogData {
   action: string
@@ -14,35 +14,21 @@ export interface AuditLogData {
 
 export async function createAuditLog(data: AuditLogData) {
   try {
+    const supabase = createAdminClient()
+
     const auditLog = {
-      action: data.action,
-      resource_type: data.resource_type,
-      resource_id: data.resource_id || null,
-      user_id: data.user_id,
-      company_id: data.company_id,
+      ...data,
       severity: data.severity || "info",
       ip_address: data.ip_address || "unknown",
       user_agent: data.user_agent || "unknown",
-      details: data.details ? JSON.stringify(data.details) : null,
       created_at: new Date().toISOString(),
     }
 
-    await execute(
-      `INSERT INTO audit_logs (action, resource_type, resource_id, user_id, company_id, severity, ip_address, user_agent, details, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-      [
-        auditLog.action,
-        auditLog.resource_type,
-        auditLog.resource_id,
-        auditLog.user_id,
-        auditLog.company_id,
-        auditLog.severity,
-        auditLog.ip_address,
-        auditLog.user_agent,
-        auditLog.details,
-        auditLog.created_at,
-      ],
-    )
+    const { error } = await supabase.from("audit_logs").insert([auditLog])
+
+    if (error) {
+      console.error("Error creating audit log:", error)
+    }
   } catch (error) {
     console.error("Error in createAuditLog:", error)
   }

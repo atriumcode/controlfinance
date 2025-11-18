@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server"
 import { getSession } from "@/lib/auth/session"
 
-export const dynamic = "force-dynamic"
-export const runtime = "nodejs"
-
 export async function GET() {
   try {
-    const { user } = await getSession()
+    const { user, session } = await getSession()
 
-    if (!user) {
+    if (!user || !session) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
     }
 
@@ -18,9 +15,10 @@ export async function GET() {
       full_name: user.full_name,
       role: user.role,
       company_id: user.company_id,
-      is_active: user.is_active
+      company_name: user.company_name,
+      cnpj: user.cnpj,
+      is_active: user.is_active,
     })
-
   } catch (error) {
     console.error("Error getting profile:", error)
     return NextResponse.json({ error: "Erro ao buscar perfil" }, { status: 500 })

@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation'
-import { query } from "@/lib/db/postgres"
+import { redirect } from "next/navigation"
+import { createAdminClient } from "@/lib/supabase/server"
 import { getSession } from "@/lib/auth/session"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,28 +18,60 @@ export default async function DashboardPage() {
     redirect("/auth/login")
   }
 
-  const profileRows = await query(
-    `
-    SELECT p.*, c.name as company_name, c.cnpj as company_cnpj
-    FROM profiles p
-    LEFT JOIN companies c ON p.company_id = c.id
-    WHERE p.id = $1
-  `,
-    [user.id],
-  )
+  const supabase = createAdminClient()
 
-  const profile = profileRows[0]
+  const [profileResult, invoicesResult, clientsCountResult] = await Promise.all([
+    // Get user profile and company info
+    supabase
+      .from("profiles")
+      .select(`
+        *,
+        companies (
+          name,
+          cnpj
+        )
+      `)
+      .eq("id", user.id)
+      .single(),
+
+    // Get only last 90 days of invoices for performance (not ALL invoices)
+    supabase
+      .from("invoices")
+      .select(`
+        *,
+        amount_paid,
+        clients (
+          name,
+          document,
+          document_type
+        )
+      `)
+      .eq("company_id", user.company_id || "")
+      .gte("created_at", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
+      .order("created_at", { ascending: false })
+      .limit(100), // Limit to 100 most recent
+
+    // Get clients count
+    supabase
+      .from("clients")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", user.company_id || ""),
+  ])
+
+  const profile = profileResult.data
+  const invoices = invoicesResult.data
+  const clientsCount = clientsCountResult.count
 
   if (!profile?.company_id) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center p-4">
-        <Card className="w-full max-w-md border-gray-200 shadow-sm">
+        <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Configuração Necessária</CardTitle>
             <CardDescription>Você precisa configurar sua empresa antes de continuar.</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild className="w-full bg-purple-600 hover:bg-purple-700">
+            <Button asChild className="w-full">
               <Link href="/dashboard/settings">Configurar Empresa</Link>
             </Button>
           </CardContent>
@@ -48,89 +80,45 @@ export default async function DashboardPage() {
     )
   }
 
-  const [invoicesRows, clientsCountRows] = await Promise.all([
-    query(
-      `
-      SELECT i.*, cl.name as client_name, cl.cpf_cnpj as document,
-             COALESCE(SUM(py.amount), 0) as amount_paid
-      FROM invoices i
-      LEFT JOIN clients cl ON i.client_id = cl.id
-      LEFT JOIN payments py ON i.id = py.invoice_id
-      WHERE i.company_id = $1
-        AND i.created_at >= NOW() - INTERVAL '90 days'
-      GROUP BY i.id, cl.name, cl.cpf_cnpj
-      ORDER BY i.created_at DESC
-      LIMIT 100
-    `,
-      [profile.company_id],
-    ),
-    query(
-      `
-      SELECT COUNT(*) as count
-      FROM clients
-      WHERE company_id = $1
-    `,
-      [profile.company_id],
-    ),
-  ])
-
-  const invoices = invoicesRows || []
-  const clientsCount = Number.parseInt(clientsCountRows[0]?.count || "0")
-
   return (
-    <div className="flex min-h-screen w-full flex-col bg-gray-50">
-      <main className="flex-1 space-y-6 p-6 md:p-8">
-        <div className="flex justify-between items-center">
+    <div className="flex min-h-screen w-full flex-col">
+      <main className="flex-1 space-y-6 p-4 md:p-8">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600 mt-1">Acompanhe o desempenho do seu negócio</p>
+            <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+            <p className="text-muted-foreground">Visão geral do seu negócio</p>
           </div>
-          <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
-            <Link href="/dashboard/reports">Ver Relatórios</Link>
+          <Button asChild>
+            <Link href="/dashboard/reports">Ver Relatórios Detalhados</Link>
           </Button>
         </div>
 
-        <DashboardStats invoices={invoices} clientsCount={clientsCount} />
+        <DashboardStats invoices={invoices || []} clientsCount={clientsCount || 0} />
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <RevenueChart invoices={invoices} />
-          <PaymentStatusChart invoices={invoices} />
+          <RevenueChart invoices={invoices || []} />
+          <PaymentStatusChart invoices={invoices || []} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <RecentInvoices invoices={invoices.slice(0, 5)} />
+          <RecentInvoices invoices={invoices?.slice(0, 5) || []} />
 
-          <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="bg-gray-50 border-b border-gray-200">
-              <CardTitle className="text-lg font-semibold text-gray-900">Ações Rápidas</CardTitle>
-              <CardDescription className="text-gray-600">Acesse as principais funcionalidades</CardDescription>
+          <Card>
+            <CardHeader>
+              <CardTitle>Ações Rápidas</CardTitle>
+              <CardDescription>Acesse as principais funcionalidades</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 p-6">
-              <Button asChild className="w-full bg-purple-600 hover:bg-purple-700 text-white shadow-sm" size="sm">
+            <CardContent className="space-y-4">
+              <Button asChild className="w-full">
                 <Link href="/dashboard/clients/new">Cadastrar Novo Cliente</Link>
               </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="w-full border-gray-300 hover:bg-gray-50 bg-transparent"
-                size="sm"
-              >
+              <Button asChild variant="outline" className="w-full bg-transparent">
                 <Link href="/dashboard/invoices/new">Criar Nova Nota Fiscal</Link>
               </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="w-full border-gray-300 hover:bg-gray-50 bg-transparent"
-                size="sm"
-              >
+              <Button asChild variant="outline" className="w-full bg-transparent">
                 <Link href="/dashboard/import">Importar XML de NF-e</Link>
               </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="w-full border-gray-300 hover:bg-gray-50 bg-transparent"
-                size="sm"
-              >
+              <Button asChild variant="outline" className="w-full bg-transparent">
                 <Link href="/dashboard/reports">Ver Relatórios</Link>
               </Button>
             </CardContent>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -28,6 +28,8 @@ interface Certificate {
   uploaded_at: string
   expiration_date: string
   created_by_profile: { full_name: string } | null
+  daysUntilExpiration: number
+  isExpiringSoon: boolean
 }
 
 interface CertificatesTableProps {
@@ -41,12 +43,6 @@ export function CertificatesTable({ certificates, type }: CertificatesTableProps
   const [certificateToDelete, setCertificateToDelete] = useState<string | null>(null)
   const [emailDialogOpen, setEmailDialogOpen] = useState(false)
 
-  const today = useMemo(() => {
-    const date = new Date()
-    date.setHours(0, 0, 0, 0)
-    return date
-  }, [])
-
   const toggleSelection = (id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]))
   }
@@ -57,14 +53,6 @@ export function CertificatesTable({ certificates, type }: CertificatesTableProps
     } else {
       setSelectedIds(certificates.map((cert) => cert.id))
     }
-  }
-
-  const getDaysUntilExpiration = (expirationDate: string) => {
-    const expiration = new Date(expirationDate)
-    expiration.setHours(0, 0, 0, 0)
-    const diffTime = expiration.getTime() - today.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
   }
 
   const formatFileSize = (bytes: number) => {
@@ -95,7 +83,6 @@ export function CertificatesTable({ certificates, type }: CertificatesTableProps
     const selectedCertificates = certificates.filter((cert) => selectedIds.includes(cert.id))
     for (const cert of selectedCertificates) {
       await handleDownload(cert)
-      // Pequeno delay entre downloads
       await new Promise((resolve) => setTimeout(resolve, 500))
     }
   }
@@ -167,8 +154,8 @@ export function CertificatesTable({ certificates, type }: CertificatesTableProps
             </TableHeader>
             <TableBody>
               {certificates.map((certificate) => {
-                const daysUntilExpiration = getDaysUntilExpiration(certificate.expiration_date)
-                const isExpiringSoon = daysUntilExpiration <= 5 && daysUntilExpiration > 0
+                const daysUntilExpiration = certificate.daysUntilExpiration
+                const isExpiringSoon = certificate.isExpiringSoon
 
                 return (
                   <TableRow key={certificate.id}>

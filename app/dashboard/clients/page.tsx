@@ -1,57 +1,65 @@
-import { redirect } from 'next/navigation'
+import { redirect } from "next/navigation"
+import { createAdminClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { ClientsTable } from "@/components/clients/clients-table"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
-import { queryMany, queryOne } from "@/lib/db/postgres"
 
 export default async function ClientsPage() {
   const user = await getAuthenticatedUser()
+  const supabase = createAdminClient()
 
-  const profile = await queryOne<{ company_id: string }>("SELECT company_id FROM profiles WHERE id = $1", [user.id])
+  // Get user's company
+  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
 
   if (!profile?.company_id) {
     redirect("/dashboard/settings")
   }
 
-  const clients = await queryMany("SELECT * FROM clients WHERE company_id = $1 ORDER BY created_at DESC", [
-    profile.company_id,
-  ])
+  // Get clients for the company
+  const { data: clients } = await supabase
+    .from("clients")
+    .select("*")
+    .eq("company_id", profile.company_id)
+    .order("created_at", { ascending: false })
 
   return (
-    <div className="flex-1 space-y-6 p-6 md:p-8">
-      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Clientes</h1>
-          <p className="text-gray-600 mt-1">Gerencie seus clientes cadastrados</p>
-        </div>
-        <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
+    <div className="flex min-h-screen w-full flex-col">
+      <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+        <nav className="flex-1 flex items-center gap-4">
+          <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+            Dashboard
+          </Link>
+          <span className="text-sm text-muted-foreground">/</span>
+          <h1 className="text-lg font-semibold">Clientes</h1>
+        </nav>
+        <Button asChild>
           <Link href="/dashboard/clients/new">Novo Cliente</Link>
         </Button>
-      </div>
+      </header>
 
-      <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-        <CardHeader className="bg-gray-50 border-b border-gray-200">
-          <CardTitle className="text-lg font-semibold text-gray-900">Lista de Clientes</CardTitle>
-          <CardDescription className="text-gray-600">
-            {clients?.length || 0} cliente{clients?.length !== 1 ? "s" : ""} cadastrado
-            {clients?.length !== 1 ? "s" : ""}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-6">
-          {clients && clients.length > 0 ? (
-            <ClientsTable clients={clients} />
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">Nenhum cliente cadastrado ainda.</p>
-              <Button asChild className="bg-purple-600 hover:bg-purple-700">
-                <Link href="/dashboard/clients/new">Cadastrar Primeiro Cliente</Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <main className="flex-1 space-y-4 p-4 md:p-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Clientes</h2>
+            <p className="text-muted-foreground">Gerencie seus clientes cadastrados</p>
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Lista de Clientes</CardTitle>
+            <CardDescription>
+              {clients?.length || 0} cliente{clients?.length !== 1 ? "s" : ""} cadastrado
+              {clients?.length !== 1 ? "s" : ""}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ClientsTable clients={clients || []} />
+          </CardContent>
+        </Card>
+      </main>
     </div>
   )
 }

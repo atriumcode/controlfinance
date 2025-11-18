@@ -1,14 +1,17 @@
 "use client"
 
 import type React from "react"
+
 import { useState } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
+import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { Upload } from 'lucide-react'
+import { Upload, X } from "lucide-react"
+import Image from "next/image"
 
 interface Company {
   id?: string
@@ -20,7 +23,7 @@ interface Company {
   city: string
   state: string
   zip_code: string
-  logo_url?: string | null
+  logo_url?: string
 }
 
 interface CompanyFormProps {
@@ -34,6 +37,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [logoPreview, setLogoPreview] = useState<string | null>(company?.logo_url || null)
   const [formData, setFormData] = useState({
     name: company?.name || "",
     cnpj: company?.cnpj || "",
@@ -50,16 +54,17 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"]
-    if (!allowedTypes.includes(file.type)) {
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
       toast({
         title: "Erro",
-        description: "Por favor, selecione uma imagem válida (PNG, JPG, WebP ou GIF)",
+        description: "Por favor, selecione uma imagem válida",
         variant: "destructive",
       })
       return
     }
 
+    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast({
         title: "Erro",
@@ -70,41 +75,44 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
     }
 
     setUploadingLogo(true)
+
     try {
-      console.log("[v0] Iniciando upload do arquivo:", file.name)
+      // Convert image to base64
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setLogoPreview(base64String)
+        setFormData({ ...formData, logo_url: base64String })
 
-      const uploadFormData = new FormData()
-      uploadFormData.append("file", file)
-
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: uploadFormData,
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || data.details || "Erro ao fazer upload")
+        toast({
+          title: "Sucesso",
+          description: "Logo carregada com sucesso!",
+        })
+        setUploadingLogo(false)
       }
-
-      console.log("[v0] Upload concluído:", data.url)
-
-      setFormData((prev) => ({ ...prev, logo_url: data.url }))
-
-      toast({
-        title: "Sucesso",
-        description: "Logo carregado com sucesso!",
-      })
+      reader.onerror = () => {
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar logo",
+          variant: "destructive",
+        })
+        setUploadingLogo(false)
+      }
+      reader.readAsDataURL(file)
     } catch (error) {
-      console.error("[v0] Error uploading logo:", error)
+      console.error("Error loading logo:", error)
       toast({
-        title: "Erro ao fazer upload",
-        description: error instanceof Error ? error.message : "Erro desconhecido ao fazer upload do logo",
+        title: "Erro",
+        description: "Erro ao carregar logo",
         variant: "destructive",
       })
-    } finally {
       setUploadingLogo(false)
     }
+  }
+
+  const handleRemoveLogo = () => {
+    setLogoPreview(null)
+    setFormData({ ...formData, logo_url: "" })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -112,18 +120,44 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
     setLoading(true)
 
     try {
-      const url = company?.id ? `/api/companies/${company.id}` : "/api/companies"
-      const method = company?.id ? "PUT" : "POST"
+      const supabase = createBrowserClient()
 
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      })
+      if (company?.id) {
+        // Update existing company
+        const { error } = await supabase.from("companies").update(formData).eq("id", company.id)
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Erro ao salvar dados da empresa")
+        if (error) throw error
+      } else {
+        // Create new company
+        const { data: newCompany, error: companyError } = await supabase
+          .from("companies")
+          .insert([formData])
+          .select()
+          .single()
+
+        if (companyError) throw companyError
+
+        // Update or create profile with company_id
+        if (profileId) {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .update({ company_id: newCompany.id })
+            .eq("id", profileId)
+
+          if (profileError) throw profileError
+        } else {
+          const { error: profileError } = await supabase.from("profiles").insert([
+            {
+              id: userId,
+              company_id: newCompany.id,
+              full_name: "",
+              email: "",
+              role: "admin",
+            },
+          ])
+
+          if (profileError) throw profileError
+        }
       }
 
       toast({
@@ -136,7 +170,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
       console.error("Error saving company:", error)
       toast({
         title: "Erro",
-        description: error instanceof Error ? error.message : "Erro ao salvar dados da empresa",
+        description: "Erro ao salvar dados da empresa",
         variant: "destructive",
       })
     } finally {
@@ -145,53 +179,49 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="pb-4 border-b border-border">
-        <h3 className="text-xl font-semibold text-foreground">Informações da Empresa</h3>
-        <p className="text-sm text-muted-foreground mt-1">Configure os dados da sua empresa para emissão de faturas</p>
-      </div>
-
-      <div className="space-y-3">
-        <Label htmlFor="logo" className="text-sm font-medium text-foreground">
-          Logo da Empresa
-        </Label>
-        <div className="flex items-start gap-6">
-          <div className="flex h-32 w-32 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 hover:bg-muted transition-colors overflow-hidden">
-            {formData.logo_url ? (
-              <img
-                src={formData.logo_url || "/placeholder.svg"}
-                alt="Logo"
-                className="h-full w-full object-contain p-2"
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-2">
+        <Label>Logo da Empresa</Label>
+        <div className="flex items-start gap-4">
+          {logoPreview ? (
+            <div className="relative w-32 h-32 border rounded-lg overflow-hidden bg-muted">
+              <Image
+                src={logoPreview || "/placeholder.svg"}
+                alt="Logo da empresa"
+                fill
+                className="object-contain p-2"
               />
-            ) : (
-              <div className="flex flex-col items-center">
-                <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                <span className="text-xs text-muted-foreground">Upload</span>
-              </div>
-            )}
-          </div>
+              <button
+                type="button"
+                onClick={handleRemoveLogo}
+                className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
+              <Upload className="h-8 w-8 text-muted-foreground" />
+            </div>
+          )}
           <div className="flex-1 space-y-2">
             <Input
-              id="logo"
               type="file"
               accept="image/*"
               onChange={handleLogoUpload}
               disabled={uploadingLogo}
               className="cursor-pointer"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Recomendado: PNG ou JPG, máximo 2MB. A logo será exibida nos relatórios em PDF.
             </p>
-            {uploadingLogo && <p className="text-xs text-purple-600 dark:text-purple-400">Fazendo upload...</p>}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="name" className="text-sm font-medium text-foreground">
-            Nome da Empresa *
-          </Label>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="name">Nome da Empresa *</Label>
           <Input
             id="name"
             value={formData.name}
@@ -199,10 +229,8 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
             required
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="cnpj" className="text-sm font-medium text-foreground">
-            CNPJ *
-          </Label>
+        <div>
+          <Label htmlFor="cnpj">CNPJ *</Label>
           <Input
             id="cnpj"
             value={formData.cnpj}
@@ -211,10 +239,8 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
             required
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium text-foreground">
-            Email *
-          </Label>
+        <div>
+          <Label htmlFor="email">Email *</Label>
           <Input
             id="email"
             type="email"
@@ -223,10 +249,8 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
             required
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="phone" className="text-sm font-medium text-foreground">
-            Telefone
-          </Label>
+        <div>
+          <Label htmlFor="phone">Telefone</Label>
           <Input
             id="phone"
             value={formData.phone}
@@ -236,45 +260,32 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="address" className="text-sm font-medium text-foreground">
-          Endereço
-        </Label>
+      <div>
+        <Label htmlFor="address">Endereço</Label>
         <Textarea
           id="address"
           value={formData.address}
           onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-          rows={3}
+          rows={2}
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="city" className="text-sm font-medium text-foreground">
-            Cidade
-          </Label>
-          <Input
-            id="city"
-            value={formData.city}
-            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-          />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <Label htmlFor="city">Cidade</Label>
+          <Input id="city" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="state" className="text-sm font-medium text-foreground">
-            Estado
-          </Label>
+        <div>
+          <Label htmlFor="state">Estado</Label>
           <Input
             id="state"
             value={formData.state}
             onChange={(e) => setFormData({ ...formData, state: e.target.value })}
             placeholder="SP"
-            maxLength={2}
           />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="zip_code" className="text-sm font-medium text-foreground">
-            CEP
-          </Label>
+        <div>
+          <Label htmlFor="zip_code">CEP</Label>
           <Input
             id="zip_code"
             value={formData.zip_code}
@@ -284,20 +295,11 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
         </div>
       </div>
 
-      <div className="flex gap-3 pt-4 border-t border-border">
-        <Button
-          type="submit"
-          disabled={loading || uploadingLogo}
-          className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 text-white shadow-sm"
-        >
+      <div className="flex gap-2">
+        <Button type="submit" disabled={loading}>
           {loading ? "Salvando..." : "Salvar Empresa"}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.push("/dashboard")}
-          className="border-border bg-background hover:bg-accent"
-        >
+        <Button type="button" variant="outline" onClick={() => router.push("/dashboard")}>
           Cancelar
         </Button>
       </div>

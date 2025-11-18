@@ -4,95 +4,84 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Modern Professional Color System - Indigo + Slate */
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-
-  --primary: 239 84% 67%; /* Modern Indigo #6366F1 */
-  --primary-foreground: 0 0% 100%;
-
-  --secondary: 215 20.2% 65.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 239 84% 67%;
-
-  --radius: 0.5rem;
-
-  /* Modern Chart Colors */
-  --chart-1: 239 84% 67%; /* Indigo */
-  --chart-2: 142 76% 36%; /* Green */
-  --chart-3: 217 91% 60%; /* Blue */
-  --chart-4: 38 92% 50%; /* Orange */
-  --chart-5: 346 77% 50%;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  /* Updated primary color to modern blue accent matching landing page */
+  --primary: oklch(0.488 0.243 264.376);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  /* Updated accent color to modern blue theme */
+  --accent: oklch(0.488 0.243 264.376);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  /* Updated ring color to match accent */
+  --ring: oklch(0.488 0.243 264.376);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
+  /* Updated sidebar primary to match modern blue theme */
+  --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Updated sidebar ring to match accent */
+  --sidebar-ring: oklch(0.488 0.243 264.376);
 }
 
 .dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-
-  --primary: 239 84% 67%;
-  --primary-foreground: 0 0% 100%;
-
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 239 84% 67%;
-
-  --chart-1: 239 84% 67%;
-  --chart-2: 142 76% 36%;
-  --chart-3: 217 91% 60%;
-  --chart-4: 38 92% 50%;
-  --chart-5: 346 77% 50%;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  /* Updated primary color for dark mode */
+  --primary: oklch(0.488 0.243 264.376);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  /* Updated accent color for dark mode */
+  --accent: oklch(0.488 0.243 264.376);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.396 0.141 25.723);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  /* Updated ring color for dark mode */
+  --ring: oklch(0.488 0.243 264.376);
+  /* Updated chart colors for dark mode */
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
+  /* Updated sidebar colors for dark mode */
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --sidebar-ring: oklch(0.488 0.243 264.376);
 }
 
 @theme inline {
@@ -139,141 +128,7 @@
   * {
     @apply border-border outline-ring/50;
   }
-
-  html {
-    color-scheme: light dark;
-  }
-
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-semibold tracking-tight;
-  }
-
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="number"],
-  input[type="tel"],
-  input[type="url"],
-  input[type="search"],
-  input[type="date"],
-  textarea,
-  select {
-    @apply bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700;
-  }
-
-  input[type="text"]:focus,
-  input[type="email"]:focus,
-  input[type="password"]:focus,
-  input[type="number"]:focus,
-  input[type="tel"]:focus,
-  input[type="url"]:focus,
-  input[type="search"]:focus,
-  input[type="date"]:focus,
-  textarea:focus,
-  select:focus {
-    @apply ring-purple-600 dark:ring-purple-500;
-  }
-
-  table {
-    @apply border-gray-200 dark:border-neutral-800;
-  }
-
-  th {
-    @apply bg-gray-50 dark:bg-neutral-900 text-gray-900 dark:text-gray-100;
-  }
-
-  td {
-    @apply border-gray-200 dark:border-neutral-800 text-gray-900 dark:text-gray-100;
-  }
-
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-gray-100 dark:bg-neutral-900;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 dark:bg-neutral-700 rounded-md;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400 dark:bg-neutral-600;
-  }
-}
-
-@layer components {
-  /* Modern card with subtle shadow and hover effect */
-  .card-modern {
-    @apply bg-white dark:bg-neutral-900 rounded-lg border border-gray-200 dark:border-neutral-800 shadow-sm hover:shadow-md transition-shadow duration-200;
-  }
-
-  /* Stat card with accent border */
-  .stat-card {
-    @apply relative bg-white dark:bg-neutral-900 rounded-lg p-6 border border-gray-200 dark:border-neutral-800 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden;
-  }
-
-  .stat-card::before {
-    content: "";
-    @apply absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 to-purple-400;
-  }
-
-  /* Primary button with modern style */
-  .btn-primary-modern {
-    @apply bg-purple-600 dark:bg-purple-700 text-white hover:bg-purple-700 dark:hover:bg-purple-600 shadow-sm hover:shadow transition-all duration-200 rounded-lg px-4 py-2 font-medium;
-  }
-
-  .btn-secondary-modern {
-    @apply bg-gray-100 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-neutral-700 border border-gray-300 dark:border-neutral-700 rounded-lg px-4 py-2 font-medium transition-all;
-  }
-
-  /* Info banner like LICITANET */
-  .info-banner {
-    @apply bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-blue-900 dark:text-blue-100;
-  }
-
-  /* Page header */
-  .page-header {
-    @apply bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800 px-6 py-4 shadow-sm;
-  }
-
-  /* Table modern style */
-  .table-modern {
-    @apply bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-lg overflow-hidden;
-  }
-
-  .dropdown-menu {
-    @apply bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 shadow-lg;
-  }
-
-  .dropdown-item {
-    @apply text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-neutral-800;
-  }
-}
-
-/* Added modern component utilities for consistent design */
-@layer utilities {
-  .card-shadow {
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  }
-
-  .card-shadow-hover:hover {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  }
-
-  .text-balance {
-    text-wrap: balance;
   }
 }

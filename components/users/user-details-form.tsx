@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -58,18 +59,26 @@ export function UserDetailsForm({ user }: UserDetailsFormProps) {
     console.log("[v0] Updating user with data:", formData)
 
     try {
-      const response = await fetch(`/api/users/${user.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const supabase = createClient()
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({
           full_name: formData.fullName,
           role: formData.role,
-        }),
-      })
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id)
 
-      if (!response.ok) throw new Error("Failed to update user")
+      if (error) {
+        console.log("[v0] Database update error:", error)
+        throw error
+      }
 
+      console.log("[v0] User updated successfully")
       setSuccess("Usuário atualizado com sucesso!")
+
+      // Refresh the page data
       router.refresh()
     } catch (error: any) {
       console.log("[v0] Update failed:", error.message)
@@ -84,15 +93,15 @@ export function UserDetailsForm({ user }: UserDetailsFormProps) {
     setError(null)
 
     try {
-      const response = await fetch(`/api/users/${user.id}`, {
-        method: "DELETE",
-      })
+      const supabase = createClient()
 
-      if (!response.ok) throw new Error("Failed to delete user")
+      // Delete from profiles table (this will cascade to auth.users via RLS)
+      const { error } = await supabase.from("profiles").delete().eq("id", user.id)
+
+      if (error) throw error
 
       router.push("/dashboard/users?success=user-deleted")
     } catch (error: any) {
-      console.log("[v0] Delete failed:", error.message)
       setError(error.message || "Erro ao excluir usuário")
       setIsLoading(false)
     }

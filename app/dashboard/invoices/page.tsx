@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ChevronDown, ChevronRight, FileText, MapPin, CreditCard, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, FileText, MapPin, CreditCard, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { InvoiceStats } from "@/components/invoices/invoice-stats"
 import {
@@ -74,9 +75,12 @@ export default function InvoicesPage() {
   const router = useRouter()
   const { toast } = useToast()
 
+  const supabase = createClient()
+
   const fetchInvoices = useCallback(async () => {
     try {
-      const response = await fetch("/api/user/profile", { credentials: "same-origin" })
+      const response = await fetch("/api/user/profile")
+
       if (!response.ok) {
         router.push("/auth/login")
         return
@@ -89,18 +93,43 @@ export default function InvoicesPage() {
         return
       }
 
-      const invoicesResponse = await fetch(`/api/invoices?company_id=${profileData.company_id}`, { credentials: "same-origin" })
+      const { data: invoicesData, error: invoicesError } = await supabase
+        .from("invoices")
+        .select("*")
+        .eq("company_id", profileData.company_id)
+        .order("created_at", { ascending: false })
+        .limit(200)
 
-      if (!invoicesResponse.ok) {
-        console.error("[v0] Error fetching invoices")
+      if (invoicesError) {
+        console.error("[v0] Error fetching invoices:", invoicesError)
         setInvoices([])
         setLoading(false)
         return
       }
 
-      const invoicesWithClients = await invoicesResponse.json()
+      const clientIds = [...new Set(invoicesData?.map((inv) => inv.client_id).filter(Boolean))]
+
+      const { data: clientsData, error: clientsError } = await supabase
+        .from("clients")
+        .select("id, name, document, document_type, city, state")
+        .in("id", clientIds)
+
+      if (clientsError) {
+        console.error("[v0] Error fetching clients:", clientsError)
+      }
+
+      const clientsMap = new Map(clientsData?.map((client) => [client.id, client]) || [])
+
+      const invoicesWithClients = invoicesData?.map((invoice) => ({
+        ...invoice,
+        clients: invoice.client_id ? clientsMap.get(invoice.client_id) || null : null,
+      }))
 
       console.log("[v0] Total invoices fetched:", invoicesWithClients?.length)
+      console.log("[v0] Total clients fetched:", clientsData?.length)
+      console.log("[v0] Invoices with client data:", invoicesWithClients?.filter((inv) => inv.clients).length)
+      console.log("[v0] Invoices without client data:", invoicesWithClients?.filter((inv) => !inv.clients).length)
+
       setInvoices(invoicesWithClients || [])
     } catch (error) {
       console.error("Error fetching invoices:", error)
@@ -108,7 +137,7 @@ export default function InvoicesPage() {
     } finally {
       setLoading(false)
     }
-  }, [router])
+  }, [router, supabase])
 
   useEffect(() => {
     fetchInvoices()
@@ -314,45 +343,57 @@ export default function InvoicesPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-gray-50">
-      <main className="flex-1 space-y-6 p-6 md:p-8">
-        <div className="flex justify-between items-center">
+    <div className="flex min-h-screen w-full flex-col">
+      <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+        <nav className="flex-1 flex items-center gap-4">
+          <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+            Dashboard
+          </Link>
+          <span className="text-sm text-muted-foreground">/</span>
+          <h1 className="text-lg font-semibold">Notas Fiscais</h1>
+        </nav>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/dashboard/import">Importar XML de NF-e</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/dashboard/invoices/new">Nova Nota Fiscal</Link>
+          </Button>
+        </div>
+      </header>
+
+      <main className="flex-1 space-y-6 p-4 md:p-8">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Notas Fiscais</h1>
-            <p className="text-gray-600 mt-1">Gerencie suas notas fiscais eletrônicas agrupadas por cidade e cliente</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" asChild className="border-gray-300 bg-transparent">
-              <Link href="/dashboard/import">Importar XML de NF-e</Link>
-            </Button>
-            <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
-              <Link href="/dashboard/invoices/new">Nova Nota Fiscal</Link>
-            </Button>
+            <h2 className="text-3xl font-bold tracking-tight">Notas Fiscais</h2>
+            <p className="text-muted-foreground">
+              Gerencie suas notas fiscais eletrônicas agrupadas por cidade e cliente
+            </p>
           </div>
         </div>
 
         <InvoiceStats invoices={invoices} />
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           {cityGroups.map((cityGroup) => {
             const cityKey = `${cityGroup.city}, ${cityGroup.state}`
             return (
               <div key={cityKey} className="space-y-2">
-                <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                <Card className="bg-muted/30 w-full">
                   <CardHeader
-                    className="cursor-pointer hover:bg-gray-50 transition-colors py-3"
+                    className="cursor-pointer hover:bg-muted/50 transition-colors py-1"
                     onClick={() => toggleCity(cityKey)}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         {expandedCities.has(cityKey) ? (
-                          <ChevronDown className="h-5 w-5 text-purple-600" />
+                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          <ChevronRight className="h-5 w-5 text-purple-600" />
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
                         )}
-                        <div className="flex items-center gap-3">
-                          <MapPin className="h-5 w-5 text-purple-600" />
-                          <CardTitle className="text-base font-semibold text-gray-900">{cityKey}</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-primary" />
+                          <CardTitle className="text-sm">{cityKey}</CardTitle>
                         </div>
                       </div>
                     </div>
@@ -360,14 +401,11 @@ export default function InvoicesPage() {
                 </Card>
 
                 {expandedCities.has(cityKey) && (
-                  <div className="ml-6 space-y-2">
+                  <div className="ml-6 space-y-3">
                     {cityGroup.clientGroups.map((group) => (
-                      <Card
-                        key={group.client.document}
-                        className="border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-                      >
+                      <Card key={group.client.document} className="overflow-hidden">
                         <CardHeader
-                          className="cursor-pointer hover:bg-gray-50 transition-colors py-3"
+                          className="cursor-pointer hover:bg-muted/50 transition-colors py-3"
                           onClick={() => toggleClient(group.client.document)}
                         >
                           <div className="flex items-center justify-between">
@@ -418,7 +456,7 @@ export default function InvoicesPage() {
                               {group.invoices.map((invoice) => (
                                 <div
                                   key={invoice.id}
-                                  className="p-3 rounded-md border border-gray-200 hover:bg-gray-50 transition-colors"
+                                  className="p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                                 >
                                   <div className="flex items-center justify-between">
                                     <Link

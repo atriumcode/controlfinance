@@ -1,17 +1,9 @@
 "use server"
 
-import { query, execute } from "@/lib/db/postgres"
+import { createAdminClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { hashPassword, verifyPassword, validatePassword } from "./password"
 import { createSession, deleteSession, requireAuth as requireAuthSession } from "./session"
-
-export interface RegisterUserInput {
-  email: string
-  password: string
-  fullName: string
-  role: string
-  companyId: string | null
-}
 
 export interface User {
   id: string
@@ -22,32 +14,31 @@ export interface User {
   is_active: boolean
 }
 
-// Mapeia roles da UI para roles aceitas no banco
-function mapRole(uiRole: string): "admin" | "user" | "viewer" {
-  switch (uiRole) {
-    case "administrador":
-      return "admin"
-    case "escrita":
-      return "user"
-    case "leitura":
-      return "viewer"
-    default:
-      return "viewer"
-  }
-}
-
 export async function requireAuth(): Promise<User> {
   return requireAuthSession()
 }
 
-// REGISTRO DE USUÁRIO COM ROLE CORRIGIDA
-export async function registerUserAction(data: RegisterUserInput) {
-  const { email, password, fullName, role, companyId } = data
+export async function registerUserAction(formData: FormData) {
+  const email = formData.get("email") as string
+  const password = formData.get("password") as string
+  const confirmPassword = formData.get("confirmPassword") as string
+  const fullName = formData.get("fullName") as string
+  const role = formData.get("role") as string
+  const cnpj = formData.get("cnpj") as string
+  const companyName = formData.get("companyName") as string
 
-  if (!email || !password || !fullName || !role) {
+  // Validações
+  if (!email || !password || !fullName) {
     return {
       success: false,
-      error: "Preencha todos os campos obrigatórios."
+      error: "Preencha todos os campos obrigatórios",
+    }
+  }
+
+  if (password !== confirmPassword) {
+    return {
+      success: false,
+      error: "As senhas não coincidem",
     }
   }
 
@@ -55,44 +46,89 @@ export async function registerUserAction(data: RegisterUserInput) {
   if (!passwordValidation.valid) {
     return {
       success: false,
-      error: passwordValidation.error
+      error: passwordValidation.error,
     }
   }
 
   try {
-    // Garantir que o role enviado existe no banco
-    const dbRole = mapRole(role)
+    const supabase = createAdminClient()
 
-    const existingUser = await query(
-      "SELECT id FROM profiles WHERE email = $1 LIMIT 1",
-      [email]
-    )
+    const { data: existingUsers, error: countError } = await supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
 
-    if (existingUser.length > 0) {
-      return {
-        success: false,
-        error: "Este email já está cadastrado."
+    if (countError) {
+      console.error("Error checking users:", countError)
+
+      // Check if table doesn't exist
+      if (countError.code === "42P01" || countError.message.includes("does not exist")) {
+        return {
+          success: false,
+          error: "Sistema não configurado. Execute o script SQL primeiro.",
+          details: "Tabela 'profiles' não existe no banco de dados",
+        }
       }
     }
 
-    const hash = await hashPassword(password)
+    const isFirstUser = !countError && (!existingUsers || existingUsers.length === 0)
 
-    const newUser = await query(
-      `
-      INSERT INTO profiles (email, full_name, role, company_id, password_hash, is_active)
-      VALUES ($1, $2, $3, $4, $5, TRUE)
-      RETURNING id
-      `,
-      [email, fullName, dbRole, companyId, hash]
-    )
+    // Verificar se o email já existe
+    const { data: existingUser, error: checkError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .single()
 
-    await createSession(newUser[0].id)
+    if (existingUser) {
+      return {
+        success: false,
+        error: "Este email já está cadastrado",
+      }
+    }
 
-    return { success: true }
+    // Hash da senha
+    const passwordHash = await hashPassword(password)
 
+    const finalRole = isFirstUser ? "admin" : role || "user"
+
+    // Criar usuário
+    const { data: newUser, error: insertError } = await supabase
+      .from("profiles")
+      .insert({
+        email,
+        full_name: fullName,
+        role: finalRole,
+        cnpj: cnpj || null,
+        company_name: companyName || null,
+        password_hash: passwordHash,
+        is_active: true,
+      })
+      .select()
+      .single()
+
+    if (insertError) {
+      console.error("Insert error:", insertError)
+      return {
+        success: false,
+        error: "Erro ao criar usuário. Tente novamente.",
+        details: insertError.message,
+      }
+    }
+
+    // Criar sessão automaticamente
+    await createSession(newUser.id)
+
+    return {
+      success: true,
+      isFirstUser,
+    }
   } catch (error) {
-    console.error("REGISTER ERROR:", error)
-    return { success: false, error: "Erro ao criar usuário." }
+    console.error("Registration exception:", error)
+    return {
+      success: false,
+      error: "Erro ao criar usuário. Tente novamente.",
+      details: error instanceof Error ? error.message : "Erro desconhecido",
+    }
   }
 }
 
@@ -101,39 +137,77 @@ export async function loginUserAction(formData: FormData) {
   const password = formData.get("password") as string
 
   if (!email || !password) {
-    return { success: false, error: "Email e senha obrigatórios." }
+    return {
+      success: false,
+      error: "Email e senha são obrigatórios",
+    }
   }
 
   try {
-    const users = await query(
-      "SELECT id, email, password_hash, is_active FROM profiles WHERE email = $1 LIMIT 1",
-      [email]
-    )
+    const supabase = createAdminClient()
 
-    const user = users[0]
-    if (!user) return { success: false, error: "Email ou senha incorretos." }
+    // Buscar usuário
+    const { data: user, error: userError } = await supabase
+      .from("profiles")
+      .select("id, email, password_hash, is_active")
+      .eq("email", email)
+      .single()
+
+    if (userError) {
+      console.error("Database error:", userError)
+
+      // Check if table doesn't exist
+      if (userError.code === "42P01" || userError.message.includes("does not exist")) {
+        return {
+          success: false,
+          error: "Sistema não configurado. Execute o script SQL primeiro.",
+          details: "Tabela 'profiles' não existe no banco de dados",
+        }
+      }
+    }
+
+    if (!user) {
+      return {
+        success: false,
+        error: "Email ou senha incorretos",
+        details: "Usuário não encontrado no banco de dados",
+      }
+    }
 
     if (!user.is_active) {
-      return { success: false, error: "Usuário inativo." }
+      return {
+        success: false,
+        error: "Usuário inativo. Entre em contato com o administrador.",
+      }
     }
 
-    const valid = await verifyPassword(password, user.password_hash)
-    if (!valid) {
-      return { success: false, error: "Email ou senha incorretos." }
+    // Verificar senha
+    const isPasswordValid = await verifyPassword(password, user.password_hash)
+
+    if (!isPasswordValid) {
+      return {
+        success: false,
+        error: "Email ou senha incorretos",
+        details: "Senha não corresponde ao hash armazenado",
+      }
     }
 
-    await execute(
-      "UPDATE profiles SET last_login = $1 WHERE id = $2",
-      [new Date().toISOString(), user.id]
-    )
+    // Atualizar último login
+    await supabase.from("profiles").update({ last_login: new Date().toISOString() }).eq("id", user.id)
 
+    // Criar sessão
     await createSession(user.id)
 
-    return { success: true }
-
+    return {
+      success: true,
+    }
   } catch (error) {
-    console.error("LOGIN ERROR:", error)
-    return { success: false, error: "Erro ao fazer login." }
+    console.error("Login error:", error)
+    return {
+      success: false,
+      error: "Erro ao fazer login. Tente novamente.",
+      details: error instanceof Error ? error.message : "Erro desconhecido",
+    }
   }
 }
 

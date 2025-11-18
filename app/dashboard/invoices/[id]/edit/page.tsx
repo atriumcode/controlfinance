@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { query } from "@/lib/db/postgres"
+import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import { InvoiceForm } from "@/components/invoices/invoice-form"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
@@ -10,6 +10,7 @@ interface EditInvoicePageProps {
 
 export default async function EditInvoicePage({ params }: EditInvoicePageProps) {
   const { id } = await params
+  const supabase = await createClient()
 
   const user = await getAuthenticatedUser()
 
@@ -17,40 +18,39 @@ export default async function EditInvoicePage({ params }: EditInvoicePageProps) 
     redirect("/auth/login")
   }
 
-  const profileResult = await query("SELECT company_id FROM profiles WHERE id = $1", [user.id])
-  const profile = profileResult.rows[0]
+  // Get user's company
+  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
 
   if (!profile?.company_id) {
     redirect("/auth/login")
   }
 
-  const invoiceResult = await query(
-    `SELECT i.*,
-      json_agg(
-        json_build_object(
-          'description', ii.description,
-          'quantity', ii.quantity,
-          'unit_price', ii.unit_price,
-          'total_price', ii.total_price
-        )
-      ) FILTER (WHERE ii.id IS NOT NULL) as invoice_items
-    FROM invoices i
-    LEFT JOIN invoice_items ii ON ii.invoice_id = i.id
-    WHERE i.id = $1 AND i.company_id = $2
-    GROUP BY i.id`,
-    [id, profile.company_id],
-  )
-  const invoice = invoiceResult.rows[0]
+  // Get invoice data with items
+  const { data: invoice } = await supabase
+    .from("invoices")
+    .select(`
+      *,
+      invoice_items (
+        description,
+        quantity,
+        unit_price,
+        total_price
+      )
+    `)
+    .eq("id", id)
+    .eq("company_id", profile.company_id)
+    .single()
 
   if (!invoice) {
     redirect("/dashboard/invoices")
   }
 
-  const clientsResult = await query(
-    "SELECT id, name, cpf_cnpj as document, 'cpf' as document_type FROM clients WHERE company_id = $1 ORDER BY name",
-    [profile.company_id],
-  )
-  const clients = clientsResult.rows
+  // Get clients for the company
+  const { data: clients } = await supabase
+    .from("clients")
+    .select("id, name, document, document_type")
+    .eq("company_id", profile.company_id)
+    .order("name")
 
   return (
     <div className="flex min-h-screen w-full flex-col">

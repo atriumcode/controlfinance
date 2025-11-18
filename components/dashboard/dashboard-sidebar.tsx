@@ -2,12 +2,27 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from 'next/navigation'
+import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { BarChart3, FileText, DollarSign, FileBarChart, FolderOpen, Settings, Users, CreditCard, Building2, Menu, ChevronDown, ChevronRight, Landmark, FileCheck } from 'lucide-react'
+import {
+  BarChart3,
+  FileText,
+  DollarSign,
+  FileBarChart,
+  FolderOpen,
+  Settings,
+  Users,
+  CreditCard,
+  Building2,
+  Menu,
+  ChevronDown,
+  ChevronRight,
+  Landmark,
+  FileCheck,
+} from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 const navigation = [
@@ -87,32 +102,29 @@ export function DashboardSidebar({ className }: SidebarProps) {
   }
 
   const SidebarContent = () => (
-    <div className="flex h-full flex-col bg-sidebar border-r border-sidebar-border">
-      <div className="flex h-16 items-center border-b border-sidebar-border px-6 bg-gradient-to-r from-indigo-600 to-indigo-500">
-        <Link href="/dashboard" className="flex items-center gap-3 font-semibold group">
-          <FileText className="h-6 w-6 text-white" />
-          <span className="text-xl text-white font-bold tracking-tight">NF-e System</span>
+    <div className="flex h-full flex-col">
+      <div className="flex h-14 lg:h-[60px] items-center border-b px-4">
+        <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+          <FileText className="h-6 w-6" />
+          <span className="text-lg">NF-e System</span>
         </Link>
       </div>
 
       <ScrollArea className="flex-1 px-3">
-        <div className="space-y-1 py-4">
+        <div className="space-y-2 py-4">
           {navigation.map((item) => {
             if (item.children) {
               const isOpen = openItems.includes(item.name)
               return (
                 <Collapsible key={item.name} open={isOpen} onOpenChange={() => toggleItem(item.name)}>
                   <CollapsibleTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start gap-3 px-3 py-2.5 text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-lg font-medium transition-colors"
-                    >
-                      <item.icon className="h-5 w-5" />
+                    <Button variant="ghost" className="w-full justify-start gap-2 px-3">
+                      <item.icon className="h-4 w-4" />
                       <span className="flex-1 text-left">{item.name}</span>
                       {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                     </Button>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-1 pl-11 pt-1">
+                  <CollapsibleContent className="space-y-1 pl-6">
                     {item.children.map((child) => (
                       <Button
                         key={child.href}
@@ -120,13 +132,13 @@ export function DashboardSidebar({ className }: SidebarProps) {
                         size="sm"
                         asChild
                         className={cn(
-                          "w-full justify-start gap-3 px-3 py-2 text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-lg transition-colors",
-                          pathname === child.href && "bg-indigo-50 text-indigo-700 font-semibold hover:bg-indigo-100",
+                          "w-full justify-start gap-2",
+                          pathname === child.href && "bg-accent text-accent-foreground",
                         )}
                       >
                         <Link href={child.href}>
                           <child.icon className="h-4 w-4" />
-                          <span className="text-sm">{child.name}</span>
+                          {child.name}
                         </Link>
                       </Button>
                     ))}
@@ -141,13 +153,13 @@ export function DashboardSidebar({ className }: SidebarProps) {
                 variant="ghost"
                 asChild
                 className={cn(
-                  "w-full justify-start gap-3 px-3 py-2.5 text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-lg font-medium transition-colors",
-                  pathname === item.href && "bg-indigo-50 text-indigo-700 font-semibold hover:bg-indigo-100",
+                  "w-full justify-start gap-2",
+                  pathname === item.href && "bg-accent text-accent-foreground",
                 )}
               >
                 <Link href={item.href}>
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.name}</span>
+                  <item.icon className="h-4 w-4" />
+                  {item.name}
                 </Link>
               </Button>
             )
@@ -159,7 +171,8 @@ export function DashboardSidebar({ className }: SidebarProps) {
 
   return (
     <>
-      <div className={cn("hidden border-r border-sidebar-border md:block w-64 fixed h-full bg-sidebar z-30", className)}>
+      {/* Desktop Sidebar */}
+      <div className={cn("hidden border-r bg-muted/40 md:block w-64 fixed h-full", className)}>
         <div className="flex h-full max-h-screen flex-col gap-2">
           <SidebarContent />
         </div>
@@ -168,16 +181,12 @@ export function DashboardSidebar({ className }: SidebarProps) {
       {/* Mobile Sidebar */}
       <Sheet>
         <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="shrink-0 md:hidden fixed top-4 left-4 z-40 bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 border-0 shadow-lg"
-          >
+          <Button variant="outline" size="icon" className="shrink-0 md:hidden fixed top-4 left-4 z-40 bg-transparent">
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="flex flex-col p-0 w-64 border-sidebar-border">
+        <SheetContent side="left" className="flex flex-col p-0 w-64">
           <SidebarContent />
         </SheetContent>
       </Sheet>

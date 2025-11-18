@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -26,17 +27,38 @@ export function ImportHistory() {
 
   useEffect(() => {
     const fetchImportHistory = async () => {
-      try {
-        const response = await fetch("/api/import-history")
-        if (!response.ok) return
+      const supabase = createClient()
 
-        const data = await response.json()
-        setInvoices(data)
-      } catch (error) {
-        console.error("Error fetching import history:", error)
-      } finally {
-        setIsLoading(false)
-      }
+      const response = await fetch("/api/user/profile")
+      if (!response.ok) return
+
+      const { company_id } = await response.json()
+      if (!company_id) return
+
+      // Get recent imported invoices (those with XML content)
+      const { data } = await supabase
+        .from("invoices")
+        .select(
+          `
+          id,
+          invoice_number,
+          nfe_key,
+          issue_date,
+          total_amount,
+          status,
+          created_at,
+          clients (
+            name
+          )
+        `,
+        )
+        .eq("company_id", company_id)
+        .not("xml_content", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(10)
+
+      setInvoices(data || [])
+      setIsLoading(false)
     }
 
     fetchImportHistory()

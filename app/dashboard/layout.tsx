@@ -2,7 +2,7 @@ import type React from "react"
 import { requireAuth } from "@/lib/auth/actions"
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
-import { query } from "@/lib/db/postgres"
+import { createAdminClient } from "@/lib/supabase/server"
 
 export const dynamic = "force-dynamic"
 
@@ -13,11 +13,8 @@ export default async function DashboardLayout({
 }) {
   const user = await requireAuth()
 
-  let company = null
-  if (user.company_id) {
-    const companyResult = await query("SELECT name, cnpj FROM companies WHERE id = $1", [user.company_id])
-    company = companyResult?.rows?.[0] || null
-  }
+  const supabase = createAdminClient()
+  const { data: company } = await supabase.from("companies").select("name, cnpj").eq("id", user.company_id).single()
 
   return (
     <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-muted/20 to-background">

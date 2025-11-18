@@ -1,60 +1,46 @@
-import { redirect } from 'next/navigation'
-import { queryOne, queryMany } from "@/lib/db/postgres"
+import { redirect } from "next/navigation"
+import { createAdminClient } from "@/lib/supabase/server"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
-import { ReportsContent } from "@/components/reports/reports-content"
-import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { ReportsContent } from "@/components/reports/reports-content"
 
 export default async function ReportsPage() {
   const user = await getAuthenticatedUser()
+  const supabase = createAdminClient()
 
-  const profile = await queryOne<{ company_id: string }>("SELECT company_id FROM profiles WHERE id = $1", [user.id])
+  // Get user's company
+  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
 
   if (!profile?.company_id) {
     redirect("/dashboard/settings")
   }
 
-  const company = await queryOne(
-    "SELECT name, cnpj, address, city, state, zip_code, phone, logo_url FROM companies WHERE id = $1",
-    [profile.company_id],
-  )
+  const { data: company } = await supabase
+    .from("companies")
+    .select("name, cnpj, address, city, state, zip_code, phone, logo_url")
+    .eq("id", profile.company_id)
+    .single()
 
-  const invoices = await queryMany(
-    `
-    SELECT 
-      i.*,
-      json_build_object(
-        'name', c.name,
-        'document', c.cpf_cnpj,
-        'document_type', CASE 
-          WHEN LENGTH(REPLACE(REPLACE(c.cpf_cnpj, '.', ''), '-', '')) = 11 THEN 'CPF'
-          ELSE 'CNPJ'
-        END,
-        'city', c.city,
-        'state', c.state
-      ) as clients
-    FROM invoices i
-    LEFT JOIN clients c ON i.client_id = c.id
-    WHERE i.company_id = $1
-    ORDER BY i.created_at DESC
-  `,
-    [profile.company_id],
-  )
+  // Get comprehensive data for reports
+  const { data: invoices } = await supabase
+    .from("invoices")
+    .select(`
+      *,
+      clients (
+        name,
+        document,
+        document_type,
+        city,
+        state
+      )
+    `)
+    .eq("company_id", profile.company_id)
+    .order("created_at", { ascending: false })
 
-  const clients = await queryMany("SELECT * FROM clients WHERE company_id = $1", [profile.company_id])
+  const { data: clients } = await supabase.from("clients").select("*").eq("company_id", profile.company_id)
 
   return (
-    <div className="flex-1 space-y-6 p-6 md:p-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Relatórios</h1>
-          <p className="text-gray-600 mt-1">Análises detalhadas do seu negócio</p>
-        </div>
-        <Button asChild className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm">
-          <Link href="/dashboard">Voltar ao Dashboard</Link>
-        </Button>
-      </div>
-
+    <div className="flex min-h-screen w-full flex-col">
       <div
         data-user-email={user.email}
         data-user-name={user.full_name || user.email}
@@ -69,7 +55,26 @@ export default async function ReportsPage() {
         style={{ display: "none" }}
       />
 
-      <ReportsContent initialInvoices={invoices || []} clients={clients || []} />
+      <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+        <nav className="flex-1 flex items-center gap-4">
+          <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
+            Dashboard
+          </Link>
+          <span className="text-sm text-muted-foreground">/</span>
+          <h1 className="text-lg font-semibold">Relatórios</h1>
+        </nav>
+      </header>
+
+      <main className="flex-1 space-y-6 p-4 md:p-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Relatórios</h2>
+            <p className="text-muted-foreground">Análises detalhadas do seu negócio</p>
+          </div>
+        </div>
+
+        <ReportsContent initialInvoices={invoices || []} clients={clients || []} />
+      </main>
     </div>
   )
 }

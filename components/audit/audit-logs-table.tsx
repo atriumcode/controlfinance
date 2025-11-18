@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { createBrowserClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -37,12 +38,44 @@ export function AuditLogsTable({ companyId }: AuditLogsTableProps) {
 
   useEffect(() => {
     async function fetchLogs() {
+      const supabase = createBrowserClient()
+
       try {
-        const response = await fetch(
-          `/api/audit-logs?company_id=${companyId}&severity=${severityFilter}&action=${actionFilter}&search=${searchTerm}`,
-        )
-        const data = await response.json()
-        setLogs(data)
+        let query = supabase
+          .from("audit_logs")
+          .select(`
+            *,
+            profiles!audit_logs_user_id_fkey(email)
+          `)
+          .eq("company_id", companyId)
+          .order("created_at", { ascending: false })
+          .limit(100)
+
+        if (severityFilter !== "all") {
+          query = query.eq("severity", severityFilter)
+        }
+
+        if (actionFilter !== "all") {
+          query = query.eq("action", actionFilter)
+        }
+
+        if (searchTerm) {
+          query = query.or(
+            `action.ilike.%${searchTerm}%,resource_type.ilike.%${searchTerm}%,user_email.ilike.%${searchTerm}%`,
+          )
+        }
+
+        const { data, error } = await query
+
+        if (error) throw error
+
+        const formattedLogs =
+          data?.map((log) => ({
+            ...log,
+            user_email: log.profiles?.email || "Sistema",
+          })) || []
+
+        setLogs(formattedLogs)
       } catch (error) {
         console.error("Error fetching audit logs:", error)
       } finally {
