@@ -9,7 +9,7 @@ export async function middleware(request: NextRequest) {
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route))
 
   // Get session cookie
-  const cookieStore = await cookies()
+  const cookieStore = cookies()
   const sessionToken = cookieStore.get("auth_session")?.value
 
   // If accessing protected route without session, redirect to login

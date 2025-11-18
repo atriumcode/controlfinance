@@ -40,7 +40,7 @@ export async function createSession(userId: string): Promise<string> {
 
   console.log("[v0] Session created in database, setting cookie...")
 
-  const cookieStore = await cookies()
+  const cookieStore = cookies()
   const isProduction = process.env.NODE_ENV === "production"
   const isHttps = process.env.NEXT_PUBLIC_SITE_URL?.startsWith("https://") || false
 
