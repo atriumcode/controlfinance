@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { queryOne, queryMany } from "@/lib/db/helpers"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }

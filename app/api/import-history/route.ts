@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server"
 import { query } from "@/lib/db/postgres"
-import { getCurrentUser } from "@/lib/auth"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
+
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
 
 export async function GET() {
   try {
     console.log("[v0] API /api/import-history - Buscando histórico")
 
-    const user = await getCurrentUser()
+    const user = await getAuthenticatedUser()
     if (!user) {
-      console.log("[v0] Usuário não autenticado")
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
@@ -28,8 +30,6 @@ export async function GET() {
        LIMIT 20`,
       [user.company_id],
     )
-
-    console.log("[v0] Encontradas", invoices.length, "NF-e importadas")
 
     return NextResponse.json(invoices)
   } catch (error) {

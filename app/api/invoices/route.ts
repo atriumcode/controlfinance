@@ -2,12 +2,20 @@ import { NextResponse } from "next/server"
 import { queryMany } from "@/lib/db/helpers"
 import { getCurrentUser } from "@/lib/auth/server-auth"
 
-export async function GET(req) {
+// 🔥 ESSENCIAL PARA EVITAR ERRO DE PRERENDER DO VERCEL
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
+export async function GET(req: Request) {
   try {
     const user = await getCurrentUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
 
-    const company_id = req.nextUrl.searchParams.get("company_id")
+    const url = new URL(req.url)
+    const company_id = url.searchParams.get("company_id")
+
     if (!company_id) {
       return NextResponse.json({ error: "Missing company_id" }, { status: 400 })
     }
@@ -43,8 +51,8 @@ export async function GET(req) {
     )
 
     return NextResponse.json(invoices)
-  } catch (err) {
-    console.error(err)
-    return NextResponse.json({ error: "Internal error" }, { status: 500 })
+  } catch (error) {
+    console.error("[API] Error in /api/invoices:", error)
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
   }
 }
