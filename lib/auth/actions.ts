@@ -1,7 +1,7 @@
 "use server"
 
 import { createAdminClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { redirect } from 'next/navigation'
 import { hashPassword, verifyPassword, validatePassword } from "./password"
 import { createSession, deleteSession, requireAuth as requireAuthSession } from "./session"
 
@@ -26,6 +26,7 @@ export async function registerUserAction(formData: FormData) {
   const role = formData.get("role") as string
   const cnpj = formData.get("cnpj") as string
   const companyName = formData.get("companyName") as string
+  const companyId = formData.get("company_id") as string
 
   // Validações
   if (!email || !password || !fullName) {
@@ -102,6 +103,7 @@ export async function registerUserAction(formData: FormData) {
         company_name: companyName || null,
         password_hash: passwordHash,
         is_active: true,
+        company_id: companyId || null,
       })
       .select()
       .single()

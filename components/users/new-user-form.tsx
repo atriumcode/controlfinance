@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft } from 'lucide-react'
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { registerUserAction } from "@/lib/auth/actions"
 
 export function NewUserForm() {
@@ -57,14 +57,17 @@ export function NewUserForm() {
         return
       }
 
-      // Use our custom registration action
-      const result = await registerUserAction({
-        email,
-        password,
-        fullName,
-        role,
-        companyId: company_id,
-      })
+      const registrationFormData = new FormData()
+      registrationFormData.append("email", email)
+      registrationFormData.append("password", password)
+      registrationFormData.append("confirmPassword", confirmPassword)
+      registrationFormData.append("fullName", fullName)
+      registrationFormData.append("role", role)
+      registrationFormData.append("cnpj", "")
+      registrationFormData.append("companyName", "")
+      registrationFormData.append("company_id", company_id)
+
+      const result = await registerUserAction(registrationFormData)
 
       if (!result.success) {
         setError(result.error || "Erro ao criar usuário")
