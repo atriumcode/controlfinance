@@ -4,7 +4,13 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { registerUserAction } from "@/lib/auth/actions"
@@ -33,13 +39,14 @@ export function NewUserForm() {
       return
     }
 
-    // BUSCAR PERFIL DO USUÁRIO
-    const profileRes = await fetch("/api/user/profile", {
-      method: "GET",
-      credentials: "include",  // <- AQUI ESTÁ A CORREÇÃO
-      cache: "no-store",
-    })
+    if (!role) {
+      setError("Selecione um nível de acesso")
+      setIsLoading(false)
+      return
+    }
 
+    // BUSCAR PERFIL LOGADO
+    const profileRes = await fetch("/api/user/profile", { cache: "no-store" })
     if (!profileRes.ok) {
       setError("Não foi possível obter a empresa atual.")
       setIsLoading(false)
@@ -48,7 +55,6 @@ export function NewUserForm() {
 
     const profile = await profileRes.json()
 
-    // CHAMAR A SERVER ACTION
     const result = await registerUserAction({
       email,
       password,
