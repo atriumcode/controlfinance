@@ -2,13 +2,13 @@
 
 import type React from "react"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { Upload } from "lucide-react"
+import { Upload } from 'lucide-react'
 
 interface Company {
   id?: string
@@ -146,17 +146,17 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="pb-4 border-b border-gray-200">
-        <h3 className="text-xl font-semibold text-gray-900">Informações da Empresa</h3>
-        <p className="text-sm text-gray-600 mt-1">Configure os dados da sua empresa para emissão de faturas</p>
+      <div className="pb-4 border-b border-border">
+        <h3 className="text-xl font-semibold text-foreground">Informações da Empresa</h3>
+        <p className="text-sm text-muted-foreground mt-1">Configure os dados da sua empresa para emissão de faturas</p>
       </div>
 
       <div className="space-y-3">
-        <Label htmlFor="logo" className="text-sm font-medium text-gray-900">
+        <Label htmlFor="logo" className="text-sm font-medium text-foreground">
           Logo da Empresa
         </Label>
         <div className="flex items-start gap-6">
-          <div className="flex h-32 w-32 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 transition-colors overflow-hidden">
+          <div className="flex h-32 w-32 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted hover:bg-accent transition-colors overflow-hidden">
             {formData.logo_url ? (
               <img
                 src={formData.logo_url || "/placeholder.svg"}
@@ -166,7 +166,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
             ) : (
               <div className="flex flex-col items-center">
                 <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                <span className="text-xs text-gray-500">Upload</span>
+                <span className="text-xs text-muted-foreground">Upload</span>
               </div>
             )}
           </div>
@@ -177,9 +177,9 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
               accept="image/*"
               onChange={handleLogoUpload}
               disabled={uploadingLogo}
-              className="cursor-pointer border-gray-300"
+              className="cursor-pointer"
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Recomendado: PNG ou JPG, máximo 2MB. A logo será exibida nos relatórios em PDF.
             </p>
             {uploadingLogo && <p className="text-xs text-purple-600">Fazendo upload...</p>}
@@ -189,7 +189,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="name" className="text-sm font-medium text-gray-900">
+          <Label htmlFor="name" className="text-sm font-medium text-foreground">
             Nome da Empresa *
           </Label>
           <Input
@@ -197,11 +197,10 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
-            className="border-gray-300"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="cnpj" className="text-sm font-medium text-gray-900">
+          <Label htmlFor="cnpj" className="text-sm font-medium text-foreground">
             CNPJ *
           </Label>
           <Input
@@ -210,11 +209,10 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
             onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
             placeholder="00.000.000/0000-00"
             required
-            className="border-gray-300"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium text-gray-900">
+          <Label htmlFor="email" className="text-sm font-medium text-foreground">
             Email *
           </Label>
           <Input
@@ -223,11 +221,10 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
-            className="border-gray-300"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="phone" className="text-sm font-medium text-gray-900">
+          <Label htmlFor="phone" className="text-sm font-medium text-foreground">
             Telefone
           </Label>
           <Input
@@ -235,13 +232,12 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             placeholder="(00) 00000-0000"
-            className="border-gray-300"
           />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="address" className="text-sm font-medium text-gray-900">
+        <Label htmlFor="address" className="text-sm font-medium text-foreground">
           Endereço
         </Label>
         <Textarea
@@ -249,24 +245,22 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
           value={formData.address}
           onChange={(e) => setFormData({ ...formData, address: e.target.value })}
           rows={3}
-          className="border-gray-300"
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="city" className="text-sm font-medium text-gray-900">
+          <Label htmlFor="city" className="text-sm font-medium text-foreground">
             Cidade
           </Label>
           <Input
             id="city"
             value={formData.city}
             onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-            className="border-gray-300"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="state" className="text-sm font-medium text-gray-900">
+          <Label htmlFor="state" className="text-sm font-medium text-foreground">
             Estado
           </Label>
           <Input
@@ -275,11 +269,10 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
             onChange={(e) => setFormData({ ...formData, state: e.target.value })}
             placeholder="SP"
             maxLength={2}
-            className="border-gray-300"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="zip_code" className="text-sm font-medium text-gray-900">
+          <Label htmlFor="zip_code" className="text-sm font-medium text-foreground">
             CEP
           </Label>
           <Input
@@ -287,12 +280,11 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
             value={formData.zip_code}
             onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
             placeholder="00000-000"
-            className="border-gray-300"
           />
         </div>
       </div>
 
-      <div className="flex gap-3 pt-4 border-t border-gray-200">
+      <div className="flex gap-3 pt-4 border-t border-border">
         <Button
           type="submit"
           disabled={loading || uploadingLogo}
@@ -304,7 +296,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
           type="button"
           variant="outline"
           onClick={() => router.push("/dashboard")}
-          className="border-gray-300 bg-transparent"
+          className="border-border bg-transparent"
         >
           Cancelar
         </Button>

@@ -2,27 +2,12 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname } from 'next/navigation'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import {
-  BarChart3,
-  FileText,
-  DollarSign,
-  FileBarChart,
-  FolderOpen,
-  Settings,
-  Users,
-  CreditCard,
-  Building2,
-  Menu,
-  ChevronDown,
-  ChevronRight,
-  Landmark,
-  FileCheck,
-} from "lucide-react"
+import { BarChart3, FileText, DollarSign, FileBarChart, FolderOpen, Settings, Users, CreditCard, Building2, Menu, ChevronDown, ChevronRight, Landmark, FileCheck } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 const navigation = [
@@ -102,8 +87,8 @@ export function DashboardSidebar({ className }: SidebarProps) {
   }
 
   const SidebarContent = () => (
-    <div className="flex h-full flex-col bg-white border-r border-slate-200">
-      <div className="flex h-16 items-center border-b border-slate-200 px-6 bg-gradient-to-r from-indigo-600 to-indigo-500">
+    <div className="flex h-full flex-col bg-sidebar border-r border-sidebar-border">
+      <div className="flex h-16 items-center border-b border-sidebar-border px-6 bg-gradient-to-r from-indigo-600 to-indigo-500">
         <Link href="/dashboard" className="flex items-center gap-3 font-semibold group">
           <FileText className="h-6 w-6 text-white" />
           <span className="text-xl text-white font-bold tracking-tight">NF-e System</span>
@@ -120,7 +105,7 @@ export function DashboardSidebar({ className }: SidebarProps) {
                   <CollapsibleTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="w-full justify-start gap-3 px-3 py-2.5 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+                      className="w-full justify-start gap-3 px-3 py-2.5 text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-lg font-medium transition-colors"
                     >
                       <item.icon className="h-5 w-5" />
                       <span className="flex-1 text-left">{item.name}</span>
@@ -135,7 +120,7 @@ export function DashboardSidebar({ className }: SidebarProps) {
                         size="sm"
                         asChild
                         className={cn(
-                          "w-full justify-start gap-3 px-3 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors",
+                          "w-full justify-start gap-3 px-3 py-2 text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-lg transition-colors",
                           pathname === child.href && "bg-indigo-50 text-indigo-700 font-semibold hover:bg-indigo-100",
                         )}
                       >
@@ -156,7 +141,7 @@ export function DashboardSidebar({ className }: SidebarProps) {
                 variant="ghost"
                 asChild
                 className={cn(
-                  "w-full justify-start gap-3 px-3 py-2.5 text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg font-medium transition-colors",
+                  "w-full justify-start gap-3 px-3 py-2.5 text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent rounded-lg font-medium transition-colors",
                   pathname === item.href && "bg-indigo-50 text-indigo-700 font-semibold hover:bg-indigo-100",
                 )}
               >
@@ -174,7 +159,7 @@ export function DashboardSidebar({ className }: SidebarProps) {
 
   return (
     <>
-      <div className={cn("hidden border-r border-slate-200 md:block w-64 fixed h-full bg-white z-30", className)}>
+      <div className={cn("hidden border-r border-sidebar-border md:block w-64 fixed h-full bg-sidebar z-30", className)}>
         <div className="flex h-full max-h-screen flex-col gap-2">
           <SidebarContent />
         </div>
@@ -192,7 +177,7 @@ export function DashboardSidebar({ className }: SidebarProps) {
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="flex flex-col p-0 w-64 border-slate-200">
+        <SheetContent side="left" className="flex flex-col p-0 w-64 border-sidebar-border">
           <SidebarContent />
         </SheetContent>
       </Sheet>

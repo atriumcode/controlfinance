@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
-import { redirect } from "next/navigation"
+import { redirect } from 'next/navigation'
 import { deleteSession } from "@/lib/auth/session"
 
 interface DashboardHeaderProps {
@@ -28,12 +28,12 @@ export function DashboardHeader({ companyName, userName }: DashboardHeaderProps)
     : "U"
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-gray-200 bg-white px-6 shadow-sm">
-      <div className="flex-1">{companyName && <p className="text-sm text-gray-600">{companyName}</p>}</div>
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border bg-background px-6 shadow-sm">
+      <div className="flex-1">{companyName && <p className="text-sm text-muted-foreground">{companyName}</p>}</div>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="rounded-full hover:bg-gray-100">
+          <Button variant="ghost" size="icon" className="rounded-full hover:bg-accent">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-purple-600 text-white">{initials}</AvatarFallback>
             </Avatar>
@@ -41,7 +41,7 @@ export function DashboardHeader({ companyName, userName }: DashboardHeaderProps)
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel className="text-gray-900">{userName || "Usuário"}</DropdownMenuLabel>
+          <DropdownMenuLabel>{userName || "Usuário"}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <Link href="/dashboard/settings" className="cursor-pointer">

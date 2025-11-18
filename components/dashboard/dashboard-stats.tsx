@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileText, DollarSign, Users, TrendingUp, Clock, CheckCircle } from "lucide-react"
+import { FileText, DollarSign, Users, TrendingUp, Clock, CheckCircle } from 'lucide-react'
 
 interface Invoice {
   id: string
@@ -66,74 +66,74 @@ export function DashboardStats({ invoices, clientsCount }: DashboardStatsProps) 
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow bg-white">
+      <Card className="border-border shadow-sm hover:shadow-md transition-shadow bg-card">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-slate-600">Total de Clientes</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Total de Clientes</CardTitle>
           <Users className="h-5 w-5 text-indigo-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-slate-900">{clientsCount}</div>
-          <p className="text-xs text-slate-500 mt-1">Clientes cadastrados</p>
+          <div className="text-3xl font-bold text-foreground">{clientsCount}</div>
+          <p className="text-xs text-muted-foreground mt-1">Clientes cadastrados</p>
         </CardContent>
       </Card>
 
-      <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow bg-white">
+      <Card className="border-border shadow-sm hover:shadow-md transition-shadow bg-card">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-slate-600">Notas Fiscais</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Notas Fiscais</CardTitle>
           <FileText className="h-5 w-5 text-indigo-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-slate-900">{totalInvoices}</div>
-          <p className="text-xs text-slate-500 mt-1">NF-e emitidas</p>
+          <div className="text-3xl font-bold text-foreground">{totalInvoices}</div>
+          <p className="text-xs text-muted-foreground mt-1">NF-e emitidas</p>
         </CardContent>
       </Card>
 
-      <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow bg-white">
+      <Card className="border-border shadow-sm hover:shadow-md transition-shadow bg-card">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-slate-600">Faturamento Total</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Faturamento Total</CardTitle>
           <DollarSign className="h-5 w-5 text-indigo-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-slate-900">{formatCurrency(totalRevenue)}</div>
-          <p className="text-xs text-slate-500 mt-1">Valor total das NF-e</p>
+          <div className="text-3xl font-bold text-foreground">{formatCurrency(totalRevenue)}</div>
+          <p className="text-xs text-muted-foreground mt-1">Valor total das NF-e</p>
         </CardContent>
       </Card>
 
-      <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow bg-white">
+      <Card className="border-border shadow-sm hover:shadow-md transition-shadow bg-card">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-slate-600">Este Mês</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Este Mês</CardTitle>
           <TrendingUp className="h-5 w-5 text-indigo-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-slate-900">{formatCurrency(thisMonthRevenue)}</div>
-          <p className="text-xs text-slate-500 mt-1">
+          <div className="text-3xl font-bold text-foreground">{formatCurrency(thisMonthRevenue)}</div>
+          <p className="text-xs text-muted-foreground mt-1">
             {growthPercentage > 0 ? "+" : ""}
             {growthPercentage.toFixed(1)}% vs mês anterior
           </p>
         </CardContent>
       </Card>
 
-      <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow bg-white">
+      <Card className="border-border shadow-sm hover:shadow-md transition-shadow bg-card">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-slate-600">Recebido</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Recebido</CardTitle>
           <CheckCircle className="h-5 w-5 text-emerald-600" />
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold text-emerald-600">{formatCurrency(totalReceivedRevenue)}</div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {paidInvoices.length} pagas + {partialInvoices.length} parciais
           </p>
         </CardContent>
       </Card>
 
-      <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow bg-white">
+      <Card className="border-border shadow-sm hover:shadow-md transition-shadow bg-card">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-slate-600">A Receber</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">A Receber</CardTitle>
           <Clock className="h-5 w-5 text-amber-600" />
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold text-amber-600">{formatCurrency(pendingRevenue)}</div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {
               invoices.filter((invoice) => {
                 const amountPaid = invoice.amount_paid || 0

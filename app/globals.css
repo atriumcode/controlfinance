@@ -139,6 +139,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+
+  html {
+    color-scheme: light dark;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -152,17 +157,72 @@
   h6 {
     @apply font-semibold tracking-tight;
   }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="date"],
+  textarea,
+  select {
+    @apply bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-neutral-700;
+  }
+
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="number"]:focus,
+  input[type="tel"]:focus,
+  input[type="url"]:focus,
+  input[type="search"]:focus,
+  input[type="date"]:focus,
+  textarea:focus,
+  select:focus {
+    @apply ring-purple-600 dark:ring-purple-500;
+  }
+
+  table {
+    @apply border-gray-200 dark:border-neutral-800;
+  }
+
+  th {
+    @apply bg-gray-50 dark:bg-neutral-900 text-gray-900 dark:text-gray-100;
+  }
+
+  td {
+    @apply border-gray-200 dark:border-neutral-800 text-gray-900 dark:text-gray-100;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-neutral-900;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-neutral-700 rounded-md;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-neutral-600;
+  }
 }
 
 @layer components {
   /* Modern card with subtle shadow and hover effect */
   .card-modern {
-    @apply bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200;
+    @apply bg-white dark:bg-neutral-900 rounded-lg border border-gray-200 dark:border-neutral-800 shadow-sm hover:shadow-md transition-shadow duration-200;
   }
 
   /* Stat card with accent border */
   .stat-card {
-    @apply relative bg-white rounded-lg p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden;
+    @apply relative bg-white dark:bg-neutral-900 rounded-lg p-6 border border-gray-200 dark:border-neutral-800 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden;
   }
 
   .stat-card::before {
@@ -172,22 +232,34 @@
 
   /* Primary button with modern style */
   .btn-primary-modern {
-    @apply bg-purple-600 text-white hover:bg-purple-700 shadow-sm hover:shadow transition-all duration-200 rounded-lg px-4 py-2 font-medium;
+    @apply bg-purple-600 dark:bg-purple-700 text-white hover:bg-purple-700 dark:hover:bg-purple-600 shadow-sm hover:shadow transition-all duration-200 rounded-lg px-4 py-2 font-medium;
+  }
+
+  .btn-secondary-modern {
+    @apply bg-gray-100 dark:bg-neutral-800 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-neutral-700 border border-gray-300 dark:border-neutral-700 rounded-lg px-4 py-2 font-medium transition-all;
   }
 
   /* Info banner like LICITANET */
   .info-banner {
-    @apply bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-900;
+    @apply bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-blue-900 dark:text-blue-100;
   }
 
   /* Page header */
   .page-header {
-    @apply bg-white border-b border-gray-200 px-6 py-4 shadow-sm;
+    @apply bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-800 px-6 py-4 shadow-sm;
   }
 
   /* Table modern style */
   .table-modern {
-    @apply bg-white border border-gray-200 rounded-lg overflow-hidden;
+    @apply bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-lg overflow-hidden;
+  }
+
+  .dropdown-menu {
+    @apply bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 shadow-lg;
+  }
+
+  .dropdown-item {
+    @apply text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-neutral-800;
   }
 }
 

@@ -96,12 +96,12 @@ export function ClientForm({ client }: ClientFormProps) {
   }
 
   return (
-    <Card className="border-gray-200 shadow-sm">
-      <CardHeader className="bg-gray-50 border-b border-gray-200">
-        <CardTitle className="text-lg font-semibold text-gray-900">
+    <Card className="border-border shadow-sm">
+      <CardHeader className="bg-muted border-b border-border">
+        <CardTitle className="text-lg font-semibold text-foreground">
           {client ? "Editar Cliente" : "Novo Cliente"}
         </CardTitle>
-        <CardDescription className="text-gray-600">
+        <CardDescription className="text-muted-foreground">
           {client ? "Atualize as informações do cliente" : "Preencha os dados do novo cliente"}
         </CardDescription>
       </CardHeader>
@@ -115,7 +115,6 @@ export function ClientForm({ client }: ClientFormProps) {
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="border-gray-300"
               />
             </div>
 
@@ -127,7 +126,6 @@ export function ClientForm({ client }: ClientFormProps) {
                 value={formData.document}
                 onChange={(e) => handleDocumentChange(e.target.value)}
                 placeholder="000.000.000-00 ou 00.000.000/0000-00"
-                className="border-gray-300"
               />
             </div>
 
@@ -138,7 +136,6 @@ export function ClientForm({ client }: ClientFormProps) {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="border-gray-300"
               />
             </div>
 
@@ -148,7 +145,6 @@ export function ClientForm({ client }: ClientFormProps) {
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="border-gray-300"
               />
             </div>
 
@@ -158,7 +154,6 @@ export function ClientForm({ client }: ClientFormProps) {
                 id="zip_code"
                 value={formData.zip_code}
                 onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
-                className="border-gray-300"
               />
             </div>
 
@@ -168,7 +163,6 @@ export function ClientForm({ client }: ClientFormProps) {
                 id="city"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                className="border-gray-300"
               />
             </div>
           </div>
@@ -179,7 +173,6 @@ export function ClientForm({ client }: ClientFormProps) {
               id="address"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              className="border-gray-300"
             />
           </div>
 
@@ -191,7 +184,6 @@ export function ClientForm({ client }: ClientFormProps) {
               onChange={(e) => setFormData({ ...formData, state: e.target.value })}
               placeholder="Ex: SP, RJ, MG"
               maxLength={2}
-              className="border-gray-300"
             />
           </div>
 
@@ -209,7 +201,7 @@ export function ClientForm({ client }: ClientFormProps) {
               type="button"
               variant="outline"
               onClick={() => router.push("/dashboard/clients")}
-              className="border-gray-300 hover:bg-gray-50"
+              className="border-border hover:bg-accent"
             >
               Cancelar
             </Button>
