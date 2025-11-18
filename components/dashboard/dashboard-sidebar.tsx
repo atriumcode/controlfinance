@@ -171,7 +171,7 @@ export function DashboardSidebar({ className }: SidebarProps) {
           <Button
             variant="outline"
             size="icon"
-            className="shrink-0 md:hidden fixed top-4 left-4 z-40 bg-indigo-600 text-white hover:bg-indigo-700 border-0 shadow-lg"
+            className="shrink-0 md:hidden fixed top-4 left-4 z-40 bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800 border-0 shadow-lg"
           >
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle navigation menu</span>

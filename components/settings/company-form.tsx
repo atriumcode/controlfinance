@@ -156,7 +156,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
           Logo da Empresa
         </Label>
         <div className="flex items-start gap-6">
-          <div className="flex h-32 w-32 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted hover:bg-accent transition-colors overflow-hidden">
+          <div className="flex h-32 w-32 items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 hover:bg-muted transition-colors overflow-hidden">
             {formData.logo_url ? (
               <img
                 src={formData.logo_url || "/placeholder.svg"}
@@ -165,7 +165,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
               />
             ) : (
               <div className="flex flex-col items-center">
-                <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                <Upload className="h-8 w-8 text-muted-foreground mb-2" />
                 <span className="text-xs text-muted-foreground">Upload</span>
               </div>
             )}
@@ -182,7 +182,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
             <p className="text-xs text-muted-foreground">
               Recomendado: PNG ou JPG, máximo 2MB. A logo será exibida nos relatórios em PDF.
             </p>
-            {uploadingLogo && <p className="text-xs text-purple-600">Fazendo upload...</p>}
+            {uploadingLogo && <p className="text-xs text-purple-600 dark:text-purple-400">Fazendo upload...</p>}
           </div>
         </div>
       </div>
@@ -288,7 +288,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
         <Button
           type="submit"
           disabled={loading || uploadingLogo}
-          className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm"
+          className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800 text-white shadow-sm"
         >
           {loading ? "Salvando..." : "Salvar Empresa"}
         </Button>
@@ -296,7 +296,7 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
           type="button"
           variant="outline"
           onClick={() => router.push("/dashboard")}
-          className="border-border bg-transparent"
+          className="border-border bg-background hover:bg-accent"
         >
           Cancelar
         </Button>
