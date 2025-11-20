@@ -3,7 +3,7 @@ import { cookies } from "next/headers"
 
 export async function createClient() {
   const cookieStore = await cookies()
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseUrl = process.env.SUPABASE_URL!
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -28,7 +28,7 @@ export async function createClient() {
 }
 
 export function createAdminClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseUrl = process.env.SUPABASE_URL!
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
   if (!supabaseUrl || !supabaseServiceRoleKey) {
