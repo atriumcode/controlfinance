@@ -128,6 +128,30 @@ print_step "[3/9] Instalando Docker e Docker Compose..."
 
 if command -v docker &> /dev/null; then
     print_warning "Docker já instalado"
+    
+    if ! docker ps &> /dev/null; then
+        print_error "═══════════════════════════════════════════════════════"
+        print_error "Docker detectado mas sem permissão de acesso!"
+        print_error "═══════════════════════════════════════════════════════"
+        print_info ""
+        print_info "Para resolver, execute QUALQUER UMA dessas opções:"
+        print_info ""
+        print_info "OPÇÃO 1 (Recomendado):"
+        print_info "  1. Feche este terminal completamente"
+        print_info "  2. Abra um NOVO terminal"
+        print_info "  3. Execute o script novamente"
+        print_info ""
+        print_info "OPÇÃO 2 (Mais rápido):"
+        print_info "  Execute: newgrp docker"
+        print_info "  Depois: bash scripts/setup/install-ubuntu-24.04-fresh.sh"
+        print_info ""
+        print_info "OPÇÃO 3 (Mais definitivo):"
+        print_info "  Faça logout e login novamente"
+        print_info ""
+        exit 1
+    fi
+    
+    print_success "Docker com permissões OK"
 else
     # Remover versões antigas
     sudo apt remove -y docker docker-engine docker.io containerd runc 2>/dev/null || true
@@ -144,23 +168,30 @@ else
     print_info "Configurando permissões do Docker..."
     sudo usermod -aG docker $USER
     
-    print_warning "═══════════════════════════════════════════════════════"
-    print_warning "Docker instalado! Aplicando permissões..."
-    print_warning "═══════════════════════════════════════════════════════"
-    newgrp docker << EONG
-        bash $0
-EONG
+    print_success "Docker instalado com sucesso!"
+    print_error "═══════════════════════════════════════════════════════"
+    print_warning "ATENÇÃO: Permissões do Docker foram configuradas"
+    print_error "═══════════════════════════════════════════════════════"
+    print_info ""
+    print_info "Para aplicar as permissões, escolha UMA opção:"
+    print_info ""
+    print_info "OPÇÃO 1 (Recomendado):"
+    print_info "  1. Feche este terminal completamente"
+    print_info "  2. Abra um NOVO terminal"
+    print_info "  3. Execute novamente: cd ~/controlfinance && bash scripts/setup/install-ubuntu-24.04-fresh.sh"
+    print_info ""
+    print_info "OPÇÃO 2 (Mais rápido):"
+    print_info "  Execute: newgrp docker"
+    print_info "  Depois: bash scripts/setup/install-ubuntu-24.04-fresh.sh"
+    print_info ""
+    print_info "O script continuará automaticamente após reiniciar o terminal."
+    print_info ""
     exit 0
-fi
-
-if ! docker ps &> /dev/null; then
-    print_error "Docker sem permissão! Execute: newgrp docker"
-    exit 1
 fi
 
 sudo systemctl start docker
 sudo systemctl enable docker
-print_success "Docker instalado e rodando"
+print_success "Docker rodando"
 echo ""
 
 ################################################################################
