@@ -101,7 +101,7 @@ print_step "[2/9] Instalando Node.js 20 LTS via NVM..."
 if [ -d "$HOME/.nvm" ]; then
     print_warning "NVM já instalado, pulando..."
 else
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
     print_success "NVM instalado"
 fi
 
