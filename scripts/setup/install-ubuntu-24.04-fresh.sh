@@ -101,8 +101,31 @@ print_step "[2/9] Instalando Node.js 20 LTS via NVM..."
 if [ -d "$HOME/.nvm" ]; then
     print_warning "NVM já instalado, pulando..."
 else
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-    print_success "NVM instalado"
+    print_info "Baixando instalador do NVM..."
+    
+    # Tentar baixar o script de instalação para arquivo temporário
+    if curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh -o /tmp/nvm-install.sh 2>/dev/null; then
+        # Verificar se o arquivo é válido (contém "nvm" e não é HTML de erro)
+        if grep -q "nvm" /tmp/nvm-install.sh && ! grep -q "<!DOCTYPE\|<html" /tmp/nvm-install.sh; then
+            bash /tmp/nvm-install.sh
+            rm -f /tmp/nvm-install.sh
+            print_success "NVM instalado"
+        else
+            print_warning "Download retornou conteúdo inválido. Tentando método alternativo..."
+            rm -f /tmp/nvm-install.sh
+            # Método alternativo: clonar repositório
+            git clone --depth 1 --branch v0.39.7 https://github.com/nvm-sh/nvm.git "$HOME/.nvm"
+            cd "$HOME/.nvm"
+            . "$HOME/.nvm/nvm.sh"
+            print_success "NVM instalado via git clone"
+        fi
+    else
+        print_warning "Falha no download. Usando método git clone..."
+        git clone --depth 1 --branch v0.39.7 https://github.com/nvm-sh/nvm.git "$HOME/.nvm"
+        cd "$HOME/.nvm"
+        . "$HOME/.nvm/nvm.sh"
+        print_success "NVM instalado via git clone"
+    fi
 fi
 
 # Carregar NVM
