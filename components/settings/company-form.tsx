@@ -1,10 +1,8 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -29,16 +27,19 @@ interface Company {
 interface CompanyFormProps {
   company?: Company | null
   userId: string
-  profileId?: string
 }
 
-export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
+export function CompanyForm({ company, userId }: CompanyFormProps) {
   const router = useRouter()
   const { toast } = useToast()
+
   const [loading, setLoading] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
-  const [logoPreview, setLogoPreview] = useState<string | null>(company?.logo_url || null)
-  const [formData, setFormData] = useState({
+  const [logoPreview, setLogoPreview] = useState<string | null>(
+    company?.logo_url || null
+  )
+
+  const [formData, setFormData] = useState<Company>({
     name: company?.name || "",
     cnpj: company?.cnpj || "",
     email: company?.email || "",
@@ -50,25 +51,25 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
     logo_url: company?.logo_url || "",
   })
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  /* ===================== LOGO ===================== */
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast({
         title: "Erro",
-        description: "Por favor, selecione uma imagem válida",
+        description: "Selecione uma imagem válida",
         variant: "destructive",
       })
       return
     }
 
-    // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast({
         title: "Erro",
-        description: "A imagem deve ter no máximo 2MB",
+        description: "Imagem deve ter no máximo 2MB",
         variant: "destructive",
       })
       return
@@ -76,101 +77,65 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
 
     setUploadingLogo(true)
 
-    try {
-      // Convert image to base64
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const base64String = reader.result as string
-        setLogoPreview(base64String)
-        setFormData({ ...formData, logo_url: base64String })
-
-        toast({
-          title: "Sucesso",
-          description: "Logo carregada com sucesso!",
-        })
-        setUploadingLogo(false)
-      }
-      reader.onerror = () => {
-        toast({
-          title: "Erro",
-          description: "Erro ao carregar logo",
-          variant: "destructive",
-        })
-        setUploadingLogo(false)
-      }
-      reader.readAsDataURL(file)
-    } catch (error) {
-      console.error("Error loading logo:", error)
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const base64 = reader.result as string
+      setLogoPreview(base64)
+      setFormData((prev) => ({ ...prev, logo_url: base64 }))
+      setUploadingLogo(false)
+    }
+    reader.onerror = () => {
       toast({
         title: "Erro",
-        description: "Erro ao carregar logo",
+        description: "Erro ao carregar imagem",
         variant: "destructive",
       })
       setUploadingLogo(false)
     }
+
+    reader.readAsDataURL(file)
   }
 
   const handleRemoveLogo = () => {
     setLogoPreview(null)
-    setFormData({ ...formData, logo_url: "" })
+    setFormData((prev) => ({ ...prev, logo_url: "" }))
   }
+
+  /* ===================== SUBMIT ===================== */
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const supabase = createBrowserClient()
+      const response = await fetch("/api/company", {
+        method: company?.id ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...formData,
+          id: company?.id,
+          user_id: userId,
+        }),
+      })
 
-      if (company?.id) {
-        // Update existing company
-        const { error } = await supabase.from("companies").update(formData).eq("id", company.id)
-
-        if (error) throw error
-      } else {
-        // Create new company
-        const { data: newCompany, error: companyError } = await supabase
-          .from("companies")
-          .insert([formData])
-          .select()
-          .single()
-
-        if (companyError) throw companyError
-
-        // Update or create profile with company_id
-        if (profileId) {
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .update({ company_id: newCompany.id })
-            .eq("id", profileId)
-
-          if (profileError) throw profileError
-        } else {
-          const { error: profileError } = await supabase.from("profiles").insert([
-            {
-              id: userId,
-              company_id: newCompany.id,
-              full_name: "",
-              email: "",
-              role: "admin",
-            },
-          ])
-
-          if (profileError) throw profileError
-        }
+      if (!response.ok) {
+        const err = await response.json()
+        throw new Error(err.error || "Erro ao salvar empresa")
       }
 
       toast({
         title: "Sucesso",
-        description: "Dados da empresa salvos com sucesso!",
+        description: "Empresa salva com sucesso",
       })
 
-      window.location.href = "/dashboard"
-    } catch (error) {
-      console.error("Error saving company:", error)
+      router.push("/dashboard")
+    } catch (error: any) {
+      console.error(error)
       toast({
         title: "Erro",
-        description: "Erro ao salvar dados da empresa",
+        description: error.message || "Erro ao salvar empresa",
         variant: "destructive",
       })
     } finally {
@@ -178,128 +143,136 @@ export function CompanyForm({ company, userId, profileId }: CompanyFormProps) {
     }
   }
 
+  /* ===================== UI ===================== */
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* LOGO */}
       <div className="space-y-2">
         <Label>Logo da Empresa</Label>
         <div className="flex items-start gap-4">
           {logoPreview ? (
-            <div className="relative w-32 h-32 border rounded-lg overflow-hidden bg-muted">
+            <div className="relative w-32 h-32 border rounded-lg overflow-hidden">
               <Image
-                src={logoPreview || "/placeholder.svg"}
-                alt="Logo da empresa"
+                src={logoPreview}
+                alt="Logo"
                 fill
                 className="object-contain p-2"
               />
               <button
                 type="button"
                 onClick={handleRemoveLogo}
-                className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90"
+                className="absolute top-1 right-1 bg-destructive text-white p-1 rounded-full"
               >
-                <X className="h-4 w-4" />
+                <X size={14} />
               </button>
             </div>
           ) : (
-            <div className="w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center bg-muted">
-              <Upload className="h-8 w-8 text-muted-foreground" />
+            <div className="w-32 h-32 border-2 border-dashed rounded-lg flex items-center justify-center">
+              <Upload className="text-muted-foreground" />
             </div>
           )}
-          <div className="flex-1 space-y-2">
-            <Input
-              type="file"
-              accept="image/*"
-              onChange={handleLogoUpload}
-              disabled={uploadingLogo}
-              className="cursor-pointer"
-            />
-            <p className="text-sm text-muted-foreground">
-              Recomendado: PNG ou JPG, máximo 2MB. A logo será exibida nos relatórios em PDF.
-            </p>
-          </div>
+
+          <Input
+            type="file"
+            accept="image/*"
+            disabled={uploadingLogo}
+            onChange={handleLogoUpload}
+          />
         </div>
       </div>
 
+      {/* CAMPOS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="name">Nome da Empresa *</Label>
+          <Label>Nome *</Label>
           <Input
-            id="name"
             value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
+            onChange={(e) =>
+              setFormData({ ...formData, name: e.target.value })
+            }
           />
         </div>
+
         <div>
-          <Label htmlFor="cnpj">CNPJ *</Label>
+          <Label>CNPJ *</Label>
           <Input
-            id="cnpj"
             value={formData.cnpj}
-            onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
-            placeholder="00.000.000/0000-00"
             required
+            onChange={(e) =>
+              setFormData({ ...formData, cnpj: e.target.value })
+            }
           />
         </div>
+
         <div>
-          <Label htmlFor="email">Email *</Label>
+          <Label>Email *</Label>
           <Input
-            id="email"
             type="email"
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
+            }
           />
         </div>
+
         <div>
-          <Label htmlFor="phone">Telefone</Label>
+          <Label>Telefone</Label>
           <Input
-            id="phone"
             value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            placeholder="(00) 00000-0000"
+            onChange={(e) =>
+              setFormData({ ...formData, phone: e.target.value })
+            }
           />
         </div>
       </div>
 
       <div>
-        <Label htmlFor="address">Endereço</Label>
+        <Label>Endereço</Label>
         <Textarea
-          id="address"
-          value={formData.address}
-          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
           rows={2}
+          value={formData.address}
+          onChange={(e) =>
+            setFormData({ ...formData, address: e.target.value })
+          }
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <Label htmlFor="city">Cidade</Label>
-          <Input id="city" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} />
-        </div>
-        <div>
-          <Label htmlFor="state">Estado</Label>
-          <Input
-            id="state"
-            value={formData.state}
-            onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-            placeholder="SP"
-          />
-        </div>
-        <div>
-          <Label htmlFor="zip_code">CEP</Label>
-          <Input
-            id="zip_code"
-            value={formData.zip_code}
-            onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
-            placeholder="00000-000"
-          />
-        </div>
+        <Input
+          placeholder="Cidade"
+          value={formData.city}
+          onChange={(e) =>
+            setFormData({ ...formData, city: e.target.value })
+          }
+        />
+        <Input
+          placeholder="Estado"
+          value={formData.state}
+          onChange={(e) =>
+            setFormData({ ...formData, state: e.target.value })
+          }
+        />
+        <Input
+          placeholder="CEP"
+          value={formData.zip_code}
+          onChange={(e) =>
+            setFormData({ ...formData, zip_code: e.target.value })
+          }
+        />
       </div>
 
       <div className="flex gap-2">
         <Button type="submit" disabled={loading}>
           {loading ? "Salvando..." : "Salvar Empresa"}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.push("/dashboard")}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push("/dashboard")}
+        >
           Cancelar
         </Button>
       </div>
