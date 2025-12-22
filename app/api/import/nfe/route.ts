@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic"
 import { type NextRequest, NextResponse } from "next/server"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 import { parseNFeXML } from "@/lib/utils/nfe-parser"

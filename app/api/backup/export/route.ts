@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic"
 import { createAdminClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
