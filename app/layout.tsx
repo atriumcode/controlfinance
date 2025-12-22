@@ -16,7 +16,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Controle de Pagamentos",
   description: "Copycenter Ltda",
-  generator: "v0.app",
+  generator: "Copycenter",
 }
 
 export default function RootLayout({

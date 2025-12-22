@@ -337,7 +337,7 @@ export default function HomePage() {
               <div className="h-6 w-6 rounded bg-accent flex items-center justify-center">
                 <FileText className="h-4 w-4 text-accent-foreground" />
               </div>
-              <span className="font-semibold">InvoiceFlow</span>
+              <span className="font-semibold">Copycenter Ltda</span>
             </div>
             <div className="flex items-center space-x-6 text-sm text-muted-foreground">
               <Link href="#" className="hover:text-foreground transition-colors">
@@ -352,7 +352,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-            © 2024 InvoiceFlow. Todos os direitos reservados.
+            © 2025 - 2026 Copycenter Ltda. Todos os direitos reservados.
           </div>
         </div>
       </footer>
