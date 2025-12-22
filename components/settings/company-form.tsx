@@ -11,6 +11,8 @@ import { useToast } from "@/hooks/use-toast"
 import { Upload, X } from "lucide-react"
 import Image from "next/image"
 
+/* ===================== TYPES ===================== */
+
 interface Company {
   id?: string
   name: string
@@ -26,29 +28,30 @@ interface Company {
 
 interface CompanyFormProps {
   company?: Company | null
-  userId: string
 }
 
-export function CompanyForm({ company, userId }: CompanyFormProps) {
+/* ===================== COMPONENT ===================== */
+
+export function CompanyForm({ company }: CompanyFormProps) {
   const router = useRouter()
   const { toast } = useToast()
 
   const [loading, setLoading] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [logoPreview, setLogoPreview] = useState<string | null>(
-    company?.logo_url || null
+    company?.logo_url ?? null
   )
 
   const [formData, setFormData] = useState<Company>({
-    name: company?.name || "",
-    cnpj: company?.cnpj || "",
-    email: company?.email || "",
-    phone: company?.phone || "",
-    address: company?.address || "",
-    city: company?.city || "",
-    state: company?.state || "",
-    zip_code: company?.zip_code || "",
-    logo_url: company?.logo_url || "",
+    name: company?.name ?? "",
+    cnpj: company?.cnpj ?? "",
+    email: company?.email ?? "",
+    phone: company?.phone ?? "",
+    address: company?.address ?? "",
+    city: company?.city ?? "",
+    state: company?.state ?? "",
+    zip_code: company?.zip_code ?? "",
+    logo_url: company?.logo_url ?? "",
   })
 
   /* ===================== LOGO ===================== */
@@ -84,6 +87,7 @@ export function CompanyForm({ company, userId }: CompanyFormProps) {
       setFormData((prev) => ({ ...prev, logo_url: base64 }))
       setUploadingLogo(false)
     }
+
     reader.onerror = () => {
       toast({
         title: "Erro",
@@ -108,16 +112,16 @@ export function CompanyForm({ company, userId }: CompanyFormProps) {
     setLoading(true)
 
     try {
+      const payload = company?.id
+        ? { ...formData, id: company.id } // PUT
+        : formData // POST
+
       const response = await fetch("/api/company", {
         method: company?.id ? "PUT" : "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...formData,
-          id: company?.id,
-          user_id: userId,
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
@@ -150,12 +154,13 @@ export function CompanyForm({ company, userId }: CompanyFormProps) {
       {/* LOGO */}
       <div className="space-y-2">
         <Label>Logo da Empresa</Label>
+
         <div className="flex items-start gap-4">
           {logoPreview ? (
             <div className="relative w-32 h-32 border rounded-lg overflow-hidden">
               <Image
                 src={logoPreview}
-                alt="Logo"
+                alt="Logo da empresa"
                 fill
                 className="object-contain p-2"
               />
@@ -268,6 +273,7 @@ export function CompanyForm({ company, userId }: CompanyFormProps) {
         <Button type="submit" disabled={loading}>
           {loading ? "Salvando..." : "Salvar Empresa"}
         </Button>
+
         <Button
           type="button"
           variant="outline"

@@ -1,86 +1,61 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
 export async function POST(req: Request) {
   try {
     const body = await req.json()
 
-    const {
-      name,
-      cnpj,
-      email,
-      phone,
-      address,
-      city,
-      state,
-      zip_code,
-      logo_url,
-      user_id,
-    } = body
+    const { data, error } = await supabase
+      .from("companies")
+      .insert(body)
+      .select()
+      .single()
 
-    if (!user_id) {
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    return NextResponse.json(data)
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Erro interno ao criar empresa" },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json()
+    const { id, ...updateData } = body
+
+    if (!id) {
       return NextResponse.json(
-        { error: "Usuário não informado" },
+        { error: "ID da empresa é obrigatório" },
         { status: 400 }
       )
     }
 
-    const supabase = createClient(
-      process.env.SUPABASE_URL!,               // ✅ BACKEND URL
-      process.env.SUPABASE_SERVICE_ROLE_KEY!   // ✅ SERVICE ROLE
-    )
-
-    /* =======================
-       CRIAR EMPRESA
-    ======================= */
-
-    const { data: company, error: companyError } = await supabase
+    const { data, error } = await supabase
       .from("companies")
-      .insert({
-        name,
-        cnpj,
-        email,
-        phone,
-        address,
-        city,
-        state,
-        zip_code,
-        logo_url,
-      })
+      .update(updateData)
+      .eq("id", id)
       .select()
       .single()
 
-    if (companyError) {
-      return NextResponse.json(
-        { error: companyError.message },
-        { status: 500 }
-      )
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    /* =======================
-       VINCULAR USUÁRIO À EMPRESA
-    ======================= */
-
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .update({
-        company_id: company.id,
-        role: "admin",
-      })
-      .eq("id", user_id)
-
-    if (profileError) {
-      return NextResponse.json(
-        { error: profileError.message },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json(company)
+    return NextResponse.json(data)
   } catch (error) {
-    console.error(error)
     return NextResponse.json(
-      { error: "Erro interno ao criar empresa" },
+      { error: "Erro interno ao atualizar empresa" },
       { status: 500 }
     )
   }
