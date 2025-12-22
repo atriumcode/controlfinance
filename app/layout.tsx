@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: "Controle de Pagamentos",
   description: "Copycenter Ltda",
   generator: "Copycenter",
+  icons: {
+    icon:"icon.png",
+  },
 }
 
 export default function RootLayout({
