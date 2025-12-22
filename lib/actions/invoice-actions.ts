@@ -20,7 +20,8 @@ export async function deleteInvoice(invoiceId: string) {
 
     // Verify the invoice belongs to the user's company
     const { data: invoice, error: invoiceError } = await supabase
-      .from("invoices")
+    //corrigido de invoices para invoices_dashboard
+      .from("invoices_dashboard")
       .select("id, company_id")
       .eq("id", invoiceId)
       .eq("company_id", user.company_id)

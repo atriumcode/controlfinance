@@ -94,7 +94,8 @@ export default function InvoicesPage() {
       }
 
       const { data: invoicesData, error: invoicesError } = await supabase
-        .from("invoices")
+      //corrigido de invoices para invoices_dashboard
+        .from("invoices_dashboard")
         .select("*")
         .eq("company_id", profileData.company_id)
         .order("created_at", { ascending: false })
