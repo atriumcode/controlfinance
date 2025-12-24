@@ -100,7 +100,7 @@ export default function InvoicesPage() {
       }
 
       const { data: invoicesData, error: invoicesError } = await supabase
-        .from("invoices_dashboard")
+        .from("invoices")
         .select("*")
         .eq("company_id", profileData.company_id)
         .order("created_at", { ascending: false })
