@@ -129,6 +129,8 @@ export default function InvoicesPage() {
         return
       }
       
+      setInvoices(invoicesData || [])
+
     } catch (error) {
       console.error("Error fetching invoices:", error)
       router.push("/auth/login")
