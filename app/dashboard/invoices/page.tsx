@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ChevronDown, ChevronRight, FileText, MapPin, CreditCard, Trash2 } from "lucide-react"
 import Link from "next/link"
-import { InvoiceStats } from "@/components/invoices/invoice-stats_old"
+import { InvoiceStats } from "@/components/invoices/invoice-stats"
 import {
   AlertDialog,
   AlertDialogAction,
