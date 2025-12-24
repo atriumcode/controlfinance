@@ -6,14 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import {
-  ChevronDown,
-  ChevronRight,
-  FileText,
-  MapPin,
-  CreditCard,
-  Trash2,
-} from "lucide-react"
+import { ChevronDown, ChevronRight, FileText, MapPin, CreditCard, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { InvoiceStats } from "@/components/invoices/invoice-stats"
 import {
@@ -29,16 +22,21 @@ import {
 import { deleteInvoice } from "@/lib/actions/invoice-actions"
 import { useToast } from "@/hooks/use-toast"
 
+/** 🔒 Blindagem contra NaN, null e undefined */
+const getNumber = (value: any): number => {
+  const n = Number(value)
+  return isNaN(n) ? 0 : n
+}
+
 interface Invoice {
   id: string
   invoice_number: string
-  total_amount: any
-  amount_paid: any
+  total_amount: number | string | null
+  amount_paid: number | string | null
   status: string
   issue_date: string
   due_date: string
-  client_id?: string | null
-  clients?: {
+  clients: {
     name: string
     document: string
     document_type: string
@@ -70,12 +68,6 @@ interface CityGroup {
   totalAmount: number
   totalPaid: number
   totalPending: number
-}
-
-/** 🔒 Blindagem contra NaN */
-const getNumber = (value: any): number => {
-  const n = Number(value)
-  return isNaN(n) ? 0 : n
 }
 
 export default function InvoicesPage() {
@@ -120,7 +112,7 @@ export default function InvoicesPage() {
       }
 
       const clientIds = [
-        ...new Set(invoicesData?.map((i) => i.client_id).filter(Boolean)),
+        ...new Set((invoicesData || []).map((i: any) => i.client_id).filter(Boolean)),
       ]
 
       const { data: clientsData } = await supabase
@@ -132,7 +124,7 @@ export default function InvoicesPage() {
         (clientsData || []).map((c) => [c.id, c])
       )
 
-      const normalized = (invoicesData || []).map((invoice) => ({
+      const normalized = (invoicesData || []).map((invoice: any) => ({
         ...invoice,
         clients: invoice.client_id
           ? clientsMap.get(invoice.client_id) || null
@@ -152,7 +144,6 @@ export default function InvoicesPage() {
     fetchInvoices()
   }, [fetchInvoices])
 
-  /** ✅ AGRUPAMENTO CORRIGIDO */
   const cityGroups: CityGroup[] = invoices.reduce((groups: CityGroup[], invoice) => {
     const total = getNumber(invoice.total_amount)
     const paid = getNumber(invoice.amount_paid)
@@ -277,18 +268,13 @@ export default function InvoicesPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        Carregando...
-      </div>
-    )
+    return <div className="flex items-center justify-center min-h-screen">Carregando...</div>
   }
 
-  /* JSX ORIGINAL PRESERVADO (sem alterações visuais) */
   return (
     <div className="flex min-h-screen w-full flex-col">
+      {/* JSX ORIGINAL PRESERVADO */}
       <InvoiceStats invoices={invoices} />
-      {/* restante do JSX permanece exatamente como antes */}
     </div>
   )
 }
