@@ -128,31 +128,7 @@ export default function InvoicesPage() {
         setLoading(false)
         return
       }
-
-      const clientIds = [...new Set(invoicesData?.map((inv) => inv.client_id).filter(Boolean))]
-
-      const { data: clientsData, error: clientsError } = await supabase
-        .from("clients")
-        .select("id, name, document, document_type, city, state")
-        .in("id", clientIds)
-
-      if (clientsError) {
-        console.error("[v0] Error fetching clients:", clientsError)
-      }
-
-      const clientsMap = new Map(clientsData?.map((client) => [client.id, client]) || [])
-
-      const invoicesWithClients = invoicesData?.map((invoice) => ({
-        ...invoice,
-        clients: invoice.client_id ? clientsMap.get(invoice.client_id) || null : null,
-      }))
-
-      console.log("[v0] Total invoices fetched:", invoicesWithClients?.length)
-      console.log("[v0] Total clients fetched:", clientsData?.length)
-      console.log("[v0] Invoices with client data:", invoicesWithClients?.filter((inv) => inv.clients).length)
-      console.log("[v0] Invoices without client data:", invoicesWithClients?.filter((inv) => !inv.clients).length)
-
-      setInvoices(invoicesWithClients || [])
+      
     } catch (error) {
       console.error("Error fetching invoices:", error)
       router.push("/auth/login")
