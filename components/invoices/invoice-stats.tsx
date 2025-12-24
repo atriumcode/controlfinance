@@ -1,6 +1,3 @@
-throw new Error("TESTE INVOICE STATS")
-
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle, Clock, DollarSign, FileText } from "lucide-react"
 
