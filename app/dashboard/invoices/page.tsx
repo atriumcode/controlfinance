@@ -100,11 +100,28 @@ export default function InvoicesPage() {
       }
 
       const { data: invoicesData, error: invoicesError } = await supabase
-        .from("invoices")
-        .select("*")
-        .eq("company_id", profileData.company_id)
-        .order("created_at", { ascending: false })
-        .limit(200)
+      .from("invoices")
+      .select(`
+        id,
+        invoice_number,
+        total_amount,
+        amount_paid,
+        status,
+        issue_date,
+        due_date,
+        client_id,
+        clients (
+          name,
+          document,
+          document_type,
+          city,
+          state
+        )
+      `)
+      .eq("company_id", profileData.company_id)
+      .order("created_at", { ascending: false })
+      .limit(200)
+
 
       if (invoicesError) {
         console.error("[v0] Error fetching invoices:", invoicesError)
