@@ -1,14 +1,16 @@
-"use client"
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileText, DollarSign, Clock, CheckCircle } from "lucide-react"
+import { CheckCircle, Clock, DollarSign, FileText } from "lucide-react"
 
 interface Invoice {
-  id: string
-  total_amount: number
-  amount_paid?: number
+  total_amount: number | string | null
+  amount_paid: number | string | null
   status: string
-  issue_date: string
+}
+
+/** Blindagem contra NaN, null e undefined */
+const getNumber = (value: any): number => {
+  const n = Number(value)
+  return isNaN(n) ? 0 : n
 }
 
 interface InvoiceStatsProps {
@@ -17,40 +19,29 @@ interface InvoiceStatsProps {
 
 export function InvoiceStats({ invoices }: InvoiceStatsProps) {
   const totalInvoices = invoices.length
-  const totalAmount = invoices.reduce((sum, invoice) => sum + invoice.total_amount, 0)
-  const paidInvoices = invoices.filter((invoice) => invoice.status === "paid").length
-  const partialInvoices = invoices.filter((invoice) => invoice.status === "Parcial").length
-  const pendingInvoices = invoices.filter((invoice) => invoice.status === "pending").length
-  const overdueInvoices = invoices.filter((invoice) => {
-    if (invoice.status === "overdue") return true
-    return false
-  }).length
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(amount)
-  }
+  const totalAmount = invoices.reduce(
+    (sum, inv) => sum + getNumber(inv.total_amount),
+    0
+  )
 
-  const paidAmount = invoices
-    .filter((invoice) => invoice.status === "paid")
-    .reduce((sum, invoice) => sum + invoice.total_amount, 0)
+  const totalPaid = invoices.reduce(
+    (sum, inv) => sum + getNumber(inv.amount_paid),
+    0
+  )
 
-  const partialAmount = invoices
-    .filter((invoice) => invoice.status === "Parcial")
-    .reduce((sum, invoice) => sum + (invoice.amount_paid || 0), 0)
+  const totalPending = totalAmount - totalPaid
 
-  const totalReceivedAmount = paidAmount + partialAmount
+  const paidInvoices = invoices.filter(
+    (inv) =>
+      getNumber(inv.amount_paid) >= getNumber(inv.total_amount) &&
+      getNumber(inv.total_amount) > 0
+  ).length
 
-  const pendingAmount = invoices.reduce((sum, invoice) => {
-    const amountPaid = invoice.amount_paid || 0
-    const remaining = invoice.total_amount - amountPaid
-    return sum + (remaining > 0 ? remaining : 0)
-  }, 0)
+  const pendingInvoices = totalInvoices - paidInvoices
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total de NF-e</CardTitle>
@@ -58,7 +49,9 @@ export function InvoiceStats({ invoices }: InvoiceStatsProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{totalInvoices}</div>
-          <p className="text-xs text-muted-foreground">Notas fiscais cadastradas</p>
+          <p className="text-xs text-muted-foreground">
+            Notas fiscais cadastradas
+          </p>
         </CardContent>
       </Card>
 
@@ -68,8 +61,12 @@ export function InvoiceStats({ invoices }: InvoiceStatsProps) {
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatCurrency(totalAmount)}</div>
-          <p className="text-xs text-muted-foreground">Valor total das NF-e</p>
+          <div className="text-2xl font-bold">
+            R$ {totalAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Valor total das NF-e
+          </p>
         </CardContent>
       </Card>
 
@@ -79,21 +76,27 @@ export function InvoiceStats({ invoices }: InvoiceStatsProps) {
           <CheckCircle className="h-4 w-4 text-green-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">{paidInvoices + partialInvoices}</div>
-          <p className="text-xs text-muted-foreground">{formatCurrency(totalReceivedAmount)}</p>
+          <div className="text-2xl font-bold text-green-600">
+            {paidInvoices}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            R$ {totalPaid.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+          </p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-          <Clock className="h-4 w-4 text-yellow-600" />
+          <Clock className="h-4 w-4 text-orange-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-yellow-600">
-            {pendingInvoices + overdueInvoices + partialInvoices}
+          <div className="text-2xl font-bold text-orange-500">
+            {pendingInvoices}
           </div>
-          <p className="text-xs text-muted-foreground">{formatCurrency(pendingAmount)}</p>
+          <p className="text-xs text-muted-foreground">
+            R$ {totalPending.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+          </p>
         </CardContent>
       </Card>
     </div>
