@@ -25,8 +25,8 @@ import { useToast } from "@/hooks/use-toast"
 interface Invoice {
   id: string
   invoice_number: string
-  total_amount: number
-  amount_paid: number
+  total_amount: number | string | null
+  amount_paid: number | string | null
   status: string
   issue_date: string
   due_date: string
@@ -36,8 +36,9 @@ interface Invoice {
     document_type: string
     city: string
     state: string
-  }
+  } | null
 }
+
 
 interface ClientGroup {
   client: {
