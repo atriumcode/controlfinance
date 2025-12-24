@@ -453,7 +453,9 @@ export default function InvoicesPage() {
                                         {getNumber(invoice.amount_paid) > 0 && (
                                           <p className="text-sm text-green-600">
                                             Pago: R${" "}
-                                            {invoice.amount_paid.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                            {getNumber(invoice.amount_paid).toLocaleString("pt-BR", {
+                                              minimumFractionDigits: 2,
+                                            })}
                                           </p>
                                         )}
                                       </div>
