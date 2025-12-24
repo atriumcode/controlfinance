@@ -110,7 +110,7 @@ export default function InvoicesPage() {
         issue_date,
         due_date,
         client_id,
-        clients (
+        clients:clients!invoices_client_id_fkey (
           name,
           document,
           document_type,
@@ -121,7 +121,6 @@ export default function InvoicesPage() {
       .eq("company_id", profileData.company_id)
       .order("created_at", { ascending: false })
       .limit(200)
-
 
       if (invoicesError) {
         console.error("[v0] Error fetching invoices:", invoicesError)
