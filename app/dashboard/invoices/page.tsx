@@ -39,7 +39,6 @@ interface Invoice {
   } | null
 }
 
-
 interface ClientGroup {
   client: {
     name: string
@@ -66,7 +65,7 @@ interface CityGroup {
 }
 
 /** Blindagem contra NaN, null e undefined */
-  const getNumber = (value: any): number => {
+const getNumber = (value: any): number => {
   const n = Number(value)
   return isNaN(n) ? 0 : n
 }
@@ -101,7 +100,6 @@ export default function InvoicesPage() {
       }
 
       const { data: invoicesData, error: invoicesError } = await supabase
-      //corrigido de invoices para invoices_dashboard
         .from("invoices_dashboard")
         .select("*")
         .eq("company_id", profileData.company_id)
@@ -152,78 +150,66 @@ export default function InvoicesPage() {
   }, [fetchInvoices])
 
   const cityGroups: CityGroup[] = invoices.reduce((groups: CityGroup[], invoice) => {
-  const total = getNumber(invoice.total_amount)
-  const paid = getNumber(invoice.amount_paid)
-  const pending = total - paid
+    const total = getNumber(invoice.total_amount)
+    const paid = getNumber(invoice.amount_paid)
+    const pending = total - paid
 
-  const hasClient =
-    invoice.clients &&
-    invoice.clients.city &&
-    invoice.clients.state
+    const hasClient = invoice.clients && invoice.clients.city && invoice.clients.state
 
-  const cityKey = hasClient
-    ? `${invoice.clients.city}, ${invoice.clients.state}`
-    : "Cidade não informada"
+    const cityKey = hasClient ? `${invoice.clients.city}, ${invoice.clients.state}` : "Cidade não informada"
 
-  let cityGroup = groups.find(
-    (g) => `${g.city}, ${g.state}` === cityKey
-  )
+    let cityGroup = groups.find((g) => `${g.city}, ${g.state}` === cityKey)
 
-  if (!cityGroup) {
-    cityGroup = {
-      city: hasClient ? invoice.clients.city : "Cidade não informada",
-      state: hasClient ? invoice.clients.state : "",
-      clientGroups: [],
-      totalInvoices: 0,
-      totalAmount: 0,
-      totalPaid: 0,
-      totalPending: 0,
+    if (!cityGroup) {
+      cityGroup = {
+        city: hasClient ? invoice.clients.city : "Cidade não informada",
+        state: hasClient ? invoice.clients.state : "",
+        clientGroups: [],
+        totalInvoices: 0,
+        totalAmount: 0,
+        totalPaid: 0,
+        totalPending: 0,
+      }
+      groups.push(cityGroup)
     }
-    groups.push(cityGroup)
-  }
 
-  const clientKey = hasClient
-    ? invoice.clients.document
-    : "unknown-client"
+    const clientKey = hasClient ? invoice.clients.document : "unknown-client"
 
-  let clientGroup = cityGroup.clientGroups.find(
-    (g) => g.client.document === clientKey
-  )
+    let clientGroup = cityGroup.clientGroups.find((g) => g.client.document === clientKey)
 
-  if (!clientGroup) {
-    clientGroup = {
-      client: hasClient
-        ? invoice.clients
-        : {
-            name: "Cliente não identificado",
-            document: "N/A",
-            document_type: "N/A",
-            city: "N/A",
-            state: "N/A",
-          },
-      invoices: [],
-      totalInvoices: 0,
-      totalAmount: 0,
-      totalPaid: 0,
-      totalPending: 0,
+    if (!clientGroup) {
+      clientGroup = {
+        client: hasClient
+          ? invoice.clients
+          : {
+              name: "Cliente não identificado",
+              document: "N/A",
+              document_type: "N/A",
+              city: "N/A",
+              state: "N/A",
+            },
+        invoices: [],
+        totalInvoices: 0,
+        totalAmount: 0,
+        totalPaid: 0,
+        totalPending: 0,
+      }
+      cityGroup.clientGroups.push(clientGroup)
     }
-    cityGroup.clientGroups.push(clientGroup)
-  }
 
-  clientGroup.invoices.push(invoice)
-  clientGroup.totalInvoices++
-  clientGroup.totalAmount += total
-  clientGroup.totalPaid += paid
-  clientGroup.totalPending += pending
+    clientGroup.invoices.push(invoice)
+    clientGroup.totalInvoices++
+    clientGroup.totalAmount += total
+    clientGroup.totalPaid += paid
+    clientGroup.totalPending += pending
 
-  cityGroup.totalInvoices++
-  cityGroup.totalAmount += total
-  cityGroup.totalPaid += paid
-  cityGroup.totalPending += pending
+    cityGroup.totalInvoices++
+    cityGroup.totalAmount += total
+    cityGroup.totalPaid += paid
+    cityGroup.totalPending += pending
 
-  return groups
-}, [])
-
+    return groups
+  }, [])
 
   const toggleCity = (cityKey: string) => {
     const newExpanded = new Set(expandedCities)
@@ -460,9 +446,11 @@ export default function InvoicesPage() {
                                       <div className="text-right">
                                         <p className="font-medium">
                                           R${" "}
-                                          {invoice.total_amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                                          {getNumber(invoice.total_amount).toLocaleString("pt-BR", {
+                                            minimumFractionDigits: 2,
+                                          })}
                                         </p>
-                                        {invoice.amount_paid > 0 && (
+                                        {getNumber(invoice.amount_paid) > 0 && (
                                           <p className="text-sm text-green-600">
                                             Pago: R${" "}
                                             {invoice.amount_paid.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
@@ -478,7 +466,7 @@ export default function InvoicesPage() {
                                         invoice.status === "partial" ||
                                         invoice.status === "Parcial" ||
                                         invoice.status === "parcial" ||
-                                        invoice.amount_paid < invoice.total_amount) && (
+                                        getNumber(invoice.amount_paid) < getNumber(invoice.total_amount)) && (
                                         <Button
                                           size="sm"
                                           variant="default"
