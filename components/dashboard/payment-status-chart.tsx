@@ -1,12 +1,10 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 
 interface Invoice {
-  id: string
-  total_amount: number
-  status: string
+  status: "paid" | "partial" | "pending"
 }
 
 interface PaymentStatusChartProps {
@@ -14,112 +12,55 @@ interface PaymentStatusChartProps {
 }
 
 export function PaymentStatusChart({ invoices }: PaymentStatusChartProps) {
-  const statusData = [
-    {
-      name: "Pagas",
-      value: invoices.filter((invoice) => invoice.status === "paid").length,
-      amount: invoices
-        .filter((invoice) => invoice.status === "paid")
-        .reduce((sum, invoice) => sum + invoice.total_amount, 0),
-      color: "#22c55e",
-    },
-    {
-      name: "Pendentes",
-      value: invoices.filter((invoice) => invoice.status === "pending").length,
-      amount: invoices
-        .filter((invoice) => invoice.status === "pending")
-        .reduce((sum, invoice) => sum + invoice.total_amount, 0),
-      color: "#eab308",
-    },
-    {
-      name: "Parciais",
-      value: invoices.filter((invoice) => invoice.status === "Parcial").length,
-      amount: invoices
-        .filter((invoice) => invoice.status === "Parcial")
-        .reduce((sum, invoice) => sum + invoice.total_amount, 0),
-      color: "#3b82f6",
-    },
-    {
-      name: "Vencidas",
-      value: invoices.filter((invoice) => invoice.status === "overdue").length,
-      amount: invoices
-        .filter((invoice) => invoice.status === "overdue")
-        .reduce((sum, invoice) => sum + invoice.total_amount, 0),
-      color: "#ef4444",
-    },
-    {
-      name: "Canceladas",
-      value: invoices.filter((invoice) => invoice.status === "cancelled").length,
-      amount: invoices
-        .filter((invoice) => invoice.status === "cancelled")
-        .reduce((sum, invoice) => sum + invoice.total_amount, 0),
-      color: "#6b7280",
-    },
-  ].filter((item) => item.value > 0)
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(amount)
+  const counts = {
+    paid: 0,
+    partial: 0,
+    pending: 0,
   }
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload
-      return (
-        <div className="bg-background border rounded-lg p-3 shadow-lg">
-          <p className="font-medium">{data.name}</p>
-          <p className="text-sm text-muted-foreground">
-            {data.value} NF-e - {formatCurrency(data.amount)}
-          </p>
-        </div>
-      )
-    }
-    return null
-  }
+  invoices.forEach((inv) => {
+    if (inv.status === "paid") counts.paid++
+    if (inv.status === "partial") counts.partial++
+    if (inv.status === "pending") counts.pending++
+  })
 
-  if (statusData.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Status dos Pagamentos</CardTitle>
-          <CardDescription>Distribuição por status</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-            Nenhuma nota fiscal encontrada
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+  const data = [
+    { name: "Pagas", value: counts.paid, color: "#16a34a" },
+    { name: "Parciais", value: counts.partial, color: "#facc15" },
+    { name: "Pendentes", value: counts.pending, color: "#f97316" },
+  ].filter(item => item.value > 0)
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Status dos Pagamentos</CardTitle>
-        <CardDescription>Distribuição por status</CardDescription>
+        <p className="text-sm text-muted-foreground">Distribuição por status</p>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={statusData}
-              cx="50%"
-              cy="50%"
-              outerRadius={80}
-              dataKey="value"
-              label={({ name, value }) => `${name}: ${value}`}
-            >
-              {statusData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
+
+      <CardContent className="h-[260px] flex items-center justify-center">
+        {data.length === 0 ? (
+          <span className="text-muted-foreground">
+            Nenhuma nota fiscal encontrada
+          </span>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={60}
+                outerRadius={90}
+                paddingAngle={4}
+              >
+                {data.map((entry, index) => (
+                  <Cell key={index} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
       </CardContent>
     </Card>
   )
