@@ -103,9 +103,8 @@ export default async function DashboardPage() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           <RevenueChart invoices={invoices || []} />
-          <PaymentStatusChart payments={payments || []} />
+          <PaymentStatusChart invoices={invoices || []} />
         </div>
-
 
         <div className="grid gap-6 lg:grid-cols-2">
           <RecentInvoices invoices={invoices?.slice(0, 5) || []} />
