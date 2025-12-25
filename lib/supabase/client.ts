@@ -13,6 +13,7 @@ export function createClient() {
       supabaseAnonKey
     )
   }
-
+  
   return supabaseInstance
 }
+export { createClient as createBrowserClient }
