@@ -62,20 +62,11 @@ export default async function DashboardPage() {
     .select("*", { count: "exact", head: true })
     .eq("company_id", user.company_id || ""),
 
-  supabase
-  .from("payments")
-  .select(`
-    payment_method,
-    amount,
-    invoices!inner(company_id)
-  `)
-  .eq("invoices.company_id", user.company_id || ""),
 ])
 
   const profile = profileResult.data
   const invoices = invoicesResult.data
   const clientsCount = clientsCountResult.count
-  const payments = paymentsResult.data
 
   if (!profile?.company_id) {
     return (
