@@ -11,7 +11,16 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const user = await requireAuth()
+  //const user = await requireAuth()
+
+  const user = {
+  id: "debug",
+  email: "debug@local",
+  full_name: "Debug",
+  role: "admin",
+  company_id: "debug",
+  is_active: true,
+}
 
   const supabase = createAdminClient()
   const { data: company } = await supabase.from("companies").select("name, cnpj").eq("id", user.company_id).single()
