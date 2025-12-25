@@ -155,7 +155,7 @@ export function InvoiceForm({ clients, invoice }: InvoiceFormProps) {
         // Create new invoice
         const { data: newInvoice, error: invoiceError } = await supabase
         //corrigido de invoices para invoices_dashboard
-          .from("invoices_dashboard")
+          .from("invoices")
           .insert([invoiceData])
           .select("id")
           .single()
