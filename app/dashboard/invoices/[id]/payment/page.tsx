@@ -1,41 +1,45 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
+import { createAdminClient } from "@/lib/supabase/server"
 import { PaymentForm } from "@/components/payments/payment-form"
-import { getAuthenticatedUser } from "@/lib/auth/server-auth"
+import { requireAuth } from "@/lib/auth/actions"
 
 interface PaymentPageProps {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 export default async function PaymentPage({ params }: PaymentPageProps) {
-  const { id } = await params
-  const supabase = await createClient()
+  const { id } = params
 
-  const user = await getAuthenticatedUser()
+  // Auth padronizado (MESMO do dashboard)
+  const user = await requireAuth()
 
-  if (!user) {
-    redirect("/auth/login")
-  }
+  const supabase = createAdminClient()
 
-  // Get user's company
-  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
+  // Buscar company do usuário
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("company_id")
+    .eq("id", user.id)
+    .single()
 
   if (!profile?.company_id) {
     redirect("/auth/login")
   }
 
-  // Get invoice data
+  // Buscar NF-e
   const { data: invoice } = await supabase
     .from("invoices")
-    .select(`
+    .select(
+      `
       *,
       clients (
         name,
         document,
         document_type
       )
-    `)
+    `
+    )
     .eq("id", id)
     .eq("company_id", profile.company_id)
     .single()
@@ -69,14 +73,12 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
       </header>
 
       <main className="flex-1 space-y-4 p-4 md:p-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight">Registrar Pagamento</h2>
-            <p className="text-muted-foreground">
-              Registre o pagamento da NF-e {invoice.invoice_number}
-              {invoice.clients && ` - ${invoice.clients.name}`}
-            </p>
-          </div>
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Registrar Pagamento</h2>
+          <p className="text-muted-foreground">
+            Registre o pagamento da NF-e {invoice.invoice_number}
+            {invoice.clients && ` - ${invoice.clients.name}`}
+          </p>
         </div>
 
         <div className="max-w-2xl">
