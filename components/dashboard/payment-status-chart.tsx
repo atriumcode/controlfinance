@@ -11,41 +11,6 @@ interface PaymentStatusChartProps {
   invoices: Invoice[]
 }
 
-interface Payment {
-  payment_method: string
-  amount: number
-}
-
-export function PaymentStatusChart({ payments }: { payments: Payment[] }) {
-  if (!payments.length) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Métodos de Pagamento</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Distribuição por método de pagamento
-          </p>
-        </CardHeader>
-        <CardContent className="h-[300px] flex items-center justify-center text-muted-foreground">
-          Nenhum pagamento registrado ainda
-        </CardContent>
-      </Card>
-    )
-  }
-
-  const grouped = payments.reduce((acc, p) => {
-    acc[p.payment_method] = (acc[p.payment_method] || 0) + p.amount
-    return acc
-  }, {} as Record<string, number>)
-
-  const data = Object.entries(grouped).map(([method, value]) => ({
-    name: method.toUpperCase(),
-    value,
-  }))
-
-  // render PieChart normalmente
-}
-
 
 export function PaymentStatusChart({ invoices }: PaymentStatusChartProps) {
   const counts = {
