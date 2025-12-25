@@ -2,6 +2,7 @@
 import { cookies } from "next/headers"
 import { createAdminClient } from "@/lib/supabase/server"
 import crypto from "crypto"
+import { redirect } from "next/navigation"
 
 const SESSION_COOKIE_NAME = "auth_session"
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 dias
@@ -111,7 +112,7 @@ export async function requireAuth(): Promise<User> {
   const { user } = await getSession()
 
   if (!user) {
-    throw new Error("Não autenticado")
+    redirect("/auth/login")
   }
 
   return user
