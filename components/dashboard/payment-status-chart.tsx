@@ -1,6 +1,5 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   PieChart,
   Pie,
@@ -9,97 +8,89 @@ import {
   Tooltip,
   Legend,
 } from "recharts"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-interface Invoice {
-  status: "paid" | "partial" | "pending"
+interface Payment {
+  payment_method: string
+  amount: number
 }
 
-interface PaymentStatusChartProps {
-  invoices: Invoice[]
-}
+const COLORS = [
+  "#16a34a", // verde
+  "#2563eb", // azul
+  "#f97316", // laranja
+  "#facc15", // amarelo
+  "#9333ea", // roxo
+  "#0ea5e9", // ciano
+]
 
-export function PaymentStatusChart({ invoices }: PaymentStatusChartProps) {
-  const counts = {
-    paid: 0,
-    partial: 0,
-    pending: 0,
+export function PaymentStatusChart({ payments }: { payments: Payment[] }) {
+  if (!payments || payments.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Métodos de Pagamento</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Distribuição por método de pagamento
+          </p>
+        </CardHeader>
+        <CardContent className="h-[300px] flex items-center justify-center text-muted-foreground">
+          Nenhum pagamento registrado ainda
+        </CardContent>
+      </Card>
+    )
   }
 
-  invoices.forEach((inv) => {
-    if (inv.status === "paid") counts.paid++
-    if (inv.status === "partial") counts.partial++
-    if (inv.status === "pending") counts.pending++
-  })
+  const grouped = payments.reduce<Record<string, number>>((acc, p) => {
+    acc[p.payment_method] = (acc[p.payment_method] || 0) + Number(p.amount)
+    return acc
+  }, {})
 
-  const data = [
-    { name: "Pagas", value: counts.paid, color: "#16a34a" },
-    { name: "Parciais", value: counts.partial, color: "#facc15" },
-    { name: "Pendentes", value: counts.pending, color: "#f97316" },
-  ].filter(item => item.value > 0)
-
-  const total = data.reduce((acc, item) => acc + item.value, 0)
+  const data = Object.entries(grouped).map(([method, value]) => ({
+    name: method.toUpperCase(),
+    value,
+  }))
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Status dos Pagamentos</CardTitle>
+        <CardTitle>Métodos de Pagamento</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Distribuição por status
+          Distribuição por método de pagamento
         </p>
       </CardHeader>
 
       <CardContent className="h-[320px]">
-        {data.length === 0 ? (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
-            Nenhuma nota fiscal encontrada
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={70}
-                outerRadius={110}
-                paddingAngle={4}
-              >
-                {data.map((entry, index) => (
-                  <Cell key={index} fill={entry.color} />
-                ))}
-              </Pie>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="name"
+              innerRadius={70}
+              outerRadius={110}
+              paddingAngle={4}
+            >
+              {data.map((_, index) => (
+                <Cell
+                  key={index}
+                  fill={COLORS[index % COLORS.length]}
+                />
+              ))}
+            </Pie>
 
-              {/* Total no centro */}
-              <text
-                x="50%"
-                y="50%"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className="fill-foreground text-xl font-bold"
-              >
-                {total}
-              </text>
-              <text
-                x="50%"
-                y="58%"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className="fill-muted-foreground text-sm"
-              >
-                NF-e
-              </text>
+            <Tooltip
+              formatter={(value: number) =>
+                new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(value)
+              }
+            />
 
-              <Tooltip
-                formatter={(value: number) => [`${value} NF-e`, "Quantidade"]}
-              />
-
-              <Legend
-                verticalAlign="bottom"
-                formatter={(value) => <span className="text-sm">{value}</span>}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        )}
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
       </CardContent>
     </Card>
   )

@@ -20,47 +20,62 @@ export default async function DashboardPage() {
 
   const supabase = createAdminClient()
 
-  const [profileResult, invoicesResult, clientsCountResult] = await Promise.all([
-    // Get user profile and company info
-    supabase
-      .from("profiles")
-      .select(`
-        *,
-        companies (
-          name,
-          cnpj
-        )
-      `)
-      .eq("id", user.id)
-      .single(),
+  const [
+  profileResult,
+  invoicesResult,
+  clientsCountResult,
+  paymentsResult,
+] = await Promise.all([
+  supabase
+    .from("profiles")
+    .select(`
+      *,
+      companies (
+        name,
+        cnpj
+      )
+    `)
+    .eq("id", user.id)
+    .single(),
 
-    // Get only last 90 days of invoices for performance (not ALL invoices)
-    supabase
-      .from("invoices")
-      .select(`
-        *,
-        amount_paid,
-        clients (
-          name,
-          document,
-          document_type
-        )
-      `)
-      .eq("company_id", user.company_id || "")
-      .gte("created_at", new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString())
-      .order("created_at", { ascending: false })
-      .limit(100), // Limit to 100 most recent
+  supabase
+    .from("invoices")
+    .select(`
+      *,
+      amount_paid,
+      clients (
+        name,
+        document,
+        document_type
+      )
+    `)
+    .eq("company_id", user.company_id || "")
+    .gte(
+      "created_at",
+      new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
+    )
+    .order("created_at", { ascending: false })
+    .limit(100),
 
-    // Get clients count
-    supabase
-      .from("clients")
-      .select("*", { count: "exact", head: true })
-      .eq("company_id", user.company_id || ""),
-  ])
+  supabase
+    .from("clients")
+    .select("*", { count: "exact", head: true })
+    .eq("company_id", user.company_id || ""),
+
+  supabase
+  .from("payments")
+  .select(`
+    payment_method,
+    amount,
+    invoices!inner(company_id)
+  `)
+  .eq("invoices.company_id", user.company_id || ""),
+])
 
   const profile = profileResult.data
   const invoices = invoicesResult.data
   const clientsCount = clientsCountResult.count
+  const payments = paymentsResult.data
 
   if (!profile?.company_id) {
     return (
@@ -97,8 +112,9 @@ export default async function DashboardPage() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           <RevenueChart invoices={invoices || []} />
-          <PaymentStatusChart invoices={invoices || []} />
+          <PaymentStatusChart payments={payments || []} />
         </div>
+
 
         <div className="grid gap-6 lg:grid-cols-2">
           <RecentInvoices invoices={invoices?.slice(0, 5) || []} />
