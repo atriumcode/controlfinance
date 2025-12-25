@@ -13,13 +13,9 @@ export default async function DashboardLayout({
 }) {
   //const user = await requireAuth()
 
-  const user = {
-  id: "debug",
-  email: "debug@local",
-  full_name: "Debug",
-  role: "admin",
-  company_id: "debug",
-  is_active: true,
+export default async function Page() {
+  const user = await requireAuth()
+  ...
 }
 
   const supabase = createAdminClient()
