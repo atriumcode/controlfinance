@@ -15,7 +15,13 @@ export interface User {
 }
 
 export async function requireAuth(): Promise<User> {
-  return requireAuthSession()
+  const user = await requireAuthSession()
+
+  if (!user) {
+    redirect("/auth/login")
+  }
+
+  return user
 }
 
 export async function registerUserAction(formData: FormData) {
