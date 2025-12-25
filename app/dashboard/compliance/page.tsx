@@ -19,7 +19,7 @@ export default async function CompliancePage() {
     const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
 
     if (!profile?.company_id) {
-      redirect("/dashboard")
+      redirect("/auth/login")
     }
 
     return (
