@@ -1,7 +1,14 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+} from "recharts"
 
 interface Invoice {
   status: "paid" | "partial" | "pending"
@@ -30,18 +37,22 @@ export function PaymentStatusChart({ invoices }: PaymentStatusChartProps) {
     { name: "Pendentes", value: counts.pending, color: "#f97316" },
   ].filter(item => item.value > 0)
 
+  const total = data.reduce((acc, item) => acc + item.value, 0)
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Status dos Pagamentos</CardTitle>
-        <p className="text-sm text-muted-foreground">Distribuição por status</p>
+        <p className="text-sm text-muted-foreground">
+          Distribuição por status
+        </p>
       </CardHeader>
 
-      <CardContent className="h-[260px] flex items-center justify-center">
+      <CardContent className="h-[320px]">
         {data.length === 0 ? (
-          <span className="text-muted-foreground">
+          <div className="flex h-full items-center justify-center text-muted-foreground">
             Nenhuma nota fiscal encontrada
-          </span>
+          </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -49,15 +60,43 @@ export function PaymentStatusChart({ invoices }: PaymentStatusChartProps) {
                 data={data}
                 dataKey="value"
                 nameKey="name"
-                innerRadius={60}
-                outerRadius={90}
+                innerRadius={70}
+                outerRadius={110}
                 paddingAngle={4}
               >
                 {data.map((entry, index) => (
                   <Cell key={index} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip />
+
+              {/* Total no centro */}
+              <text
+                x="50%"
+                y="50%"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="fill-foreground text-xl font-bold"
+              >
+                {total}
+              </text>
+              <text
+                x="50%"
+                y="58%"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="fill-muted-foreground text-sm"
+              >
+                NF-e
+              </text>
+
+              <Tooltip
+                formatter={(value: number) => [`${value} NF-e`, "Quantidade"]}
+              />
+
+              <Legend
+                verticalAlign="bottom"
+                formatter={(value) => <span className="text-sm">{value}</span>}
+              />
             </PieChart>
           </ResponsiveContainer>
         )}
