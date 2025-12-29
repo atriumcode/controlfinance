@@ -1,38 +1,33 @@
-export const dynamic = "force-dynamic"
-import { put } from "@vercel/blob"
 import { NextResponse } from "next/server"
+import fs from "fs"
+import path from "path"
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    console.log("[v0] Iniciando upload de arquivo")
-
-    const formData = await request.formData()
+    const formData = await req.formData()
     const file = formData.get("file") as File
 
     if (!file) {
-      console.log("[v0] Nenhum arquivo encontrado no formData")
-      return NextResponse.json({ error: "Nenhum arquivo enviado" }, { status: 400 })
+      return NextResponse.json({ error: "Arquivo não enviado" }, { status: 400 })
     }
 
-    console.log("[v0] Arquivo recebido:", file.name, "Tamanho:", file.size)
+    const buffer = Buffer.from(await file.arrayBuffer())
 
-    // Upload para Vercel Blob
-    const blob = await put(file.name, file, {
-      access: "public",
-      addRandomSuffix: true,
+    const uploadDir = path.join(process.cwd(), "uploads", "certificates")
+    await fs.promises.mkdir(uploadDir, { recursive: true })
+
+    const filename = `${Date.now()}-${file.name}`
+    const filePath = path.join(uploadDir, filename)
+
+    await fs.promises.writeFile(filePath, buffer)
+
+    return NextResponse.json({
+      success: true,
+      filename,
+      path: `/uploads/certificates/${filename}`,
     })
-
-    console.log("[v0] Upload concluído. URL:", blob.url)
-
-    return NextResponse.json({ url: blob.url })
   } catch (error) {
-    console.error("[v0] Erro no upload:", error)
-    return NextResponse.json(
-      {
-        error: "Erro ao fazer upload do arquivo",
-        details: error instanceof Error ? error.message : "Erro desconhecido",
-      },
-      { status: 500 },
-    )
+    console.error("[UPLOAD ERROR]", error)
+    return NextResponse.json({ error: "Erro ao fazer upload" }, { status: 500 })
   }
 }

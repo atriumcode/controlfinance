@@ -1,32 +1,36 @@
-export const dynamic = "force-dynamic"
 import { NextResponse } from "next/server"
+import fs from "fs"
+import path from "path"
 import { createAdminClient } from "@/lib/supabase/server"
-import { del } from "@vercel/blob"
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const supabase = createAdminClient()
 
-    // Buscar a certidão para obter a URL do arquivo
-    const { data: certificate } = await supabase.from("certificates").select("file_url").eq("id", params.id).single()
+    const { data: cert, error } = await supabase
+      .from("certificates")
+      .select("file_path")
+      .eq("id", params.id)
+      .single()
 
-    if (certificate?.file_url) {
-      // Deletar arquivo do Vercel Blob
-      try {
-        await del(certificate.file_url)
-      } catch (error) {
-        console.error("[v0] Erro ao deletar arquivo do blob:", error)
-      }
+    if (error || !cert) {
+      return NextResponse.json({ error: "Certidão não encontrada" }, { status: 404 })
     }
 
-    // Deletar do banco de dados
-    const { error } = await supabase.from("certificates").delete().eq("id", params.id)
+    const fullPath = path.join(process.cwd(), cert.file_path)
 
-    if (error) throw error
+    if (fs.existsSync(fullPath)) {
+      await fs.promises.unlink(fullPath)
+    }
+
+    await supabase.from("certificates").delete().eq("id", params.id)
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[v0] Erro ao deletar certidão:", error)
-    return NextResponse.json({ error: "Erro ao deletar certidão" }, { status: 500 })
+    console.error("[DELETE CERTIFICATE ERROR]", error)
+    return NextResponse.json({ error: "Erro ao excluir certidão" }, { status: 500 })
   }
 }
