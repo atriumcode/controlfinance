@@ -15,8 +15,8 @@ export default async function DashboardShell({
 
       <div className="flex min-h-screen flex-col">
         <DashboardHeader
-          userName={user.name}
-          companyName={user.company?.name}
+          userName={user?.name ?? ""}
+          companyName={user?.company?.name ?? ""}
         />
 
         <main className="flex-1 p-6">{children}</main>
