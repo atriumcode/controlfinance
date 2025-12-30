@@ -38,7 +38,7 @@ export async function updateCompany(input: UpdateCompanyInput) {
       logo_url: input.logo_url,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", user.company_id)
+    .eq("id", user.company.id)
 
   if (error) {
     console.error("[updateCompany]", error)
