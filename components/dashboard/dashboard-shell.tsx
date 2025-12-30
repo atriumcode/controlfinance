@@ -2,7 +2,11 @@ import { DashboardHeader } from "./dashboard-header"
 import { DashboardSidebar } from "./dashboard-sidebar"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
-export default async function DashboardShell({ children }) {
+export default async function DashboardShell({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   const user = await getAuthenticatedUser()
 
   return (
@@ -15,9 +19,7 @@ export default async function DashboardShell({ children }) {
           companyName={user.company?.name}
         />
 
-        <main className="flex-1 p-6">
-          {children}
-        </main>
+        <main className="flex-1 p-6">{children}</main>
       </div>
     </div>
   )
