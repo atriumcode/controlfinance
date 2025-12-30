@@ -1,5 +1,6 @@
 "use client"
 
+import { uploadCompanyLogo, updateCompany } from "@/app/actions/company.actions"
 import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -14,7 +15,6 @@ import Image from "next/image"
 /* ===================== TYPES ===================== */
 
 interface Company {
-  id?: string
   name: string
   cnpj: string
   email: string
@@ -56,7 +56,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
 
   /* ===================== LOGO ===================== */
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -80,24 +80,25 @@ export function CompanyForm({ company }: CompanyFormProps) {
 
     setUploadingLogo(true)
 
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const base64 = reader.result as string
-      setLogoPreview(base64)
-      setFormData((prev) => ({ ...prev, logo_url: base64 }))
-      setUploadingLogo(false)
-    }
+    try {
+      const url = await uploadCompanyLogo(file)
 
-    reader.onerror = () => {
+      setLogoPreview(url)
+      setFormData((prev) => ({ ...prev, logo_url: url }))
+
+      toast({
+        title: "Sucesso",
+        description: "Logo enviada com sucesso",
+      })
+    } catch (error: any) {
       toast({
         title: "Erro",
-        description: "Erro ao carregar imagem",
+        description: error.message || "Erro ao enviar logo",
         variant: "destructive",
       })
+    } finally {
       setUploadingLogo(false)
     }
-
-    reader.readAsDataURL(file)
   }
 
   const handleRemoveLogo = () => {
@@ -112,22 +113,7 @@ export function CompanyForm({ company }: CompanyFormProps) {
     setLoading(true)
 
     try {
-      const payload = company?.id
-        ? { ...formData, id: company.id } // PUT
-        : formData // POST
-
-      const response = await fetch("/api/company", {
-        method: company?.id ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      })
-
-      if (!response.ok) {
-        const err = await response.json()
-        throw new Error(err.error || "Erro ao salvar empresa")
-      }
+      await updateCompany(formData)
 
       toast({
         title: "Sucesso",
@@ -136,7 +122,6 @@ export function CompanyForm({ company }: CompanyFormProps) {
 
       router.push("/dashboard")
     } catch (error: any) {
-      console.error(error)
       toast({
         title: "Erro",
         description: error.message || "Erro ao salvar empresa",
