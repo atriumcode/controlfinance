@@ -12,22 +12,12 @@ export async function POST(request: Request) {
     const { company_id, name, description, file_url, file_size, expiration_date, created_by } = body
 
     // Validar campos obrigatórios
-    if (!company_id || !name || !file_url || !expiration_date || !created_by) {
-      console.log("[v0] Campos obrigatórios faltando")
+    if (!company_id || !name || !file_url) {
       return NextResponse.json(
-        {
-          error: "Campos obrigatórios faltando",
-          missing: {
-            company_id: !company_id,
-            name: !name,
-            file_url: !file_url,
-            expiration_date: !expiration_date,
-            created_by: !created_by,
-          },
-        },
-        { status: 400 },
+        { error: "Campos obrigatórios faltando" },
+        { status: 400 }
       )
-    }
+   }
 
     const supabase = createAdminClient()
     console.log("[v0] Cliente Supabase criado")
@@ -37,11 +27,11 @@ export async function POST(request: Request) {
       .insert({
         company_id,
         name,
-        description,
+        description: description || null,
         file_url,
-        file_size,
-        expiration_date,
-        created_by,
+        file_size: file_size || null,
+        expiration_date: expiration_date || null,
+        created_by: created_by || null,
       })
       .select()
       .single()
