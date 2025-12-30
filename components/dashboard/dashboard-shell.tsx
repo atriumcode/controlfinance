@@ -1,6 +1,6 @@
 import { DashboardHeader } from "./dashboard-header"
 import { DashboardSidebar } from "./dashboard-sidebar"
-import { getAuthenticatedUser } from "@/lib/auth/server"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
 export default async function DashboardShell({ children }) {
   const user = await getAuthenticatedUser()
