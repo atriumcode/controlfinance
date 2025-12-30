@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -9,8 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
-import { redirect } from "next/navigation"
-import { deleteSession } from "@/lib/auth/session"
+import { logoutAction } from "@/app/actions/auth-actions"
 
 interface DashboardHeaderProps {
   companyName?: string
@@ -29,7 +30,9 @@ export function DashboardHeader({ companyName, userName }: DashboardHeaderProps)
 
   return (
     <header className="fixed top-0 right-0 left-0 md:left-64 z-50 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:h-[60px] lg:px-6">
-      <div className="flex-1">{companyName && <p className="text-sm text-muted-foreground">{companyName}</p>}</div>
+      <div className="flex-1">
+        {companyName && <p className="text-sm text-muted-foreground">{companyName}</p>}
+      </div>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -40,22 +43,19 @@ export function DashboardHeader({ companyName, userName }: DashboardHeaderProps)
             <span className="sr-only">Toggle user menu</span>
           </Button>
         </DropdownMenuTrigger>
+
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{userName || "Usuário"}</DropdownMenuLabel>
           <DropdownMenuSeparator />
+
           <DropdownMenuItem asChild>
             <Link href="/dashboard/settings">Configurações</Link>
           </DropdownMenuItem>
+
           <DropdownMenuSeparator />
+
           <DropdownMenuItem asChild>
-            <form
-              action={async () => {
-                "use server"
-                await deleteSession()
-                redirect("/auth/login")
-              }}
-              className="w-full"
-            >
+            <form action={logoutAction} className="w-full">
               <button type="submit" className="w-full text-left">
                 Sair
               </button>
