@@ -5,8 +5,7 @@ import { CompanyForm } from "@/components/settings/company-form"
 
 export default async function SettingsPage() {
   const user = await getAuthenticatedUser()
-  console.log("USER:", user)
-
+  
   // 🔒 Redirect APENAS se não estiver autenticado
   if (!user) {
     redirect("/login")
@@ -17,7 +16,7 @@ export default async function SettingsPage() {
   const { data: company, error } = await supabase
     .from("companies")
     .select("*")
-    .eq("id", user.company_id)
+    .eq("id", user.company.id)
     .single()
 
   return (
