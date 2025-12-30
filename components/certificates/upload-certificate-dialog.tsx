@@ -1,9 +1,15 @@
 "use client"
 
 import type React from "react"
+import { useState, useEffect } from "react"
 
-import { useState } from "react"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,7 +25,25 @@ interface UploadCertificateDialogProps {
   userId: string
 }
 
-export function UploadCertificateDialog({ open, onOpenChange, companyId, userId }: UploadCertificateDialogProps) {
+export function UploadCertificateDialog({
+  open,
+  onOpenChange,
+  companyId,
+  userId,
+}: UploadCertificateDialogProps) {
+  /**
+   * 🔒 Guard de hidratação
+   * Necessário para Dialog (Portal) no App Router
+   * Evita React error #422 / #425
+   */
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) return null
+
   const [uploading, setUploading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [name, setName] = useState("")
@@ -28,20 +52,24 @@ export function UploadCertificateDialog({ open, onOpenChange, companyId, userId 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
-    if (selectedFile) {
-      const validTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"]
-      if (!validTypes.includes(selectedFile.type)) {
-        toast.error("Apenas arquivos PDF ou imagens (JPG, PNG) são permitidos")
-        return
-      }
-      if (selectedFile.size > 3 * 1024 * 1024) {
-        toast.error("O arquivo deve ter no máximo 3MB")
-        return
-      }
-      setFile(selectedFile)
-      if (!name) {
-        setName(selectedFile.name.replace(/\.(pdf|jpg|jpeg|png)$/i, ""))
-      }
+    if (!selectedFile) return
+
+    const validTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"]
+
+    if (!validTypes.includes(selectedFile.type)) {
+      toast.error("Apenas arquivos PDF ou imagens (JPG, PNG) são permitidos")
+      return
+    }
+
+    if (selectedFile.size > 3 * 1024 * 1024) {
+      toast.error("O arquivo deve ter no máximo 3MB")
+      return
+    }
+
+    setFile(selectedFile)
+
+    if (!name) {
+      setName(selectedFile.name.replace(/\.(pdf|jpg|jpeg|png)$/i, ""))
     }
   }
 
@@ -56,9 +84,7 @@ export function UploadCertificateDialog({ open, onOpenChange, companyId, userId 
     setUploading(true)
 
     try {
-      console.log("[v0] Iniciando upload do arquivo:", file.name)
-
-      // Upload do arquivo para Vercel Blob
+      // Upload do arquivo
       const formData = new FormData()
       formData.append("file", file)
 
@@ -67,52 +93,40 @@ export function UploadCertificateDialog({ open, onOpenChange, companyId, userId 
         body: formData,
       })
 
-      console.log("[v0] Resposta do upload:", uploadResponse.status)
-
       if (!uploadResponse.ok) {
         const errorData = await uploadResponse.json()
-        console.error("[v0] Erro no upload:", errorData)
-        throw new Error(errorData.details || "Erro ao fazer upload do arquivo")
+        throw new Error(errorData?.details || "Erro ao fazer upload do arquivo")
       }
 
       const { url } = await uploadResponse.json()
-      console.log("[v0] URL do arquivo:", url)
 
-      // Salvar no banco de dados
-      const certificateData = {
-        company_id: companyId,
-        name,
-        description,
-        file_url: url,
-        file_size: file.size,
-        expiration_date: expirationDate,
-        created_by: userId,
-      }
-
-      console.log("[v0] Salvando certidão no banco:", certificateData)
-
+      // Salvar no banco
       const response = await fetch("/api/certificates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(certificateData),
+        body: JSON.stringify({
+          company_id: companyId,
+          name,
+          description,
+          file_url: url,
+          file_size: file.size,
+          expiration_date: expirationDate,
+          created_by: userId,
+        }),
       })
-
-      console.log("[v0] Resposta do banco:", response.status)
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.error("[v0] Erro ao salvar:", errorData)
-        throw new Error(errorData.details || "Erro ao salvar certidão")
+        throw new Error(errorData?.details || "Erro ao salvar certidão")
       }
-
-      const savedCertificate = await response.json()
-      console.log("[v0] Certidão salva com sucesso:", savedCertificate)
 
       toast.success("Certidão adicionada com sucesso")
       onOpenChange(false)
+
+      // ⚠️ Idealmente trocar por refresh de estado futuramente
       window.location.reload()
     } catch (error) {
-      console.error("[v0] Erro geral:", error)
+      console.error("[UPLOAD CERTIFICATE ERROR]", error)
       toast.error(error instanceof Error ? error.message : "Erro ao adicionar certidão")
     } finally {
       setUploading(false)
@@ -120,13 +134,13 @@ export function UploadCertificateDialog({ open, onOpenChange, companyId, userId 
   }
 
   const handleClose = () => {
-    if (!uploading) {
-      setFile(null)
-      setName("")
-      setDescription("")
-      setExpirationDate("")
-      onOpenChange(false)
-    }
+    if (uploading) return
+
+    setFile(null)
+    setName("")
+    setDescription("")
+    setExpirationDate("")
+    onOpenChange(false)
   }
 
   return (
@@ -134,14 +148,17 @@ export function UploadCertificateDialog({ open, onOpenChange, companyId, userId 
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Nova Certidão</DialogTitle>
-          <DialogDescription>Adicione uma nova certidão negativa ou documento</DialogDescription>
+          <DialogDescription>
+            Adicione uma nova certidão negativa ou documento
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              <strong>Formato:</strong> PDF ou IMG • <strong>Tamanho máximo:</strong> 3MB
+              <strong>Formato:</strong> PDF ou IMG •{" "}
+              <strong>Tamanho máximo:</strong> 3MB
             </AlertDescription>
           </Alert>
 
@@ -162,14 +179,20 @@ export function UploadCertificateDialog({ open, onOpenChange, companyId, userId 
                     <FileText className="h-8 w-8 text-primary" />
                     <div className="text-left">
                       <p className="font-medium">{file.name}</p>
-                      <p className="text-sm text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <p className="text-sm text-muted-foreground">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">Solte seus arquivos aqui ou clique para selecionar</p>
-                    <p className="text-xs text-muted-foreground">Apenas arquivos PDF, IMG e com tamanho até 3MB</p>
+                    <p className="text-sm text-muted-foreground">
+                      Clique para selecionar um arquivo
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      PDF, JPG ou PNG até 3MB
+                    </p>
                   </div>
                 )}
               </label>
@@ -194,7 +217,7 @@ export function UploadCertificateDialog({ open, onOpenChange, companyId, userId 
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Adicione uma descrição opcional"
+              placeholder="Descrição opcional"
               disabled={uploading}
               rows={3}
             />
@@ -214,7 +237,12 @@ export function UploadCertificateDialog({ open, onOpenChange, companyId, userId 
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={handleClose} disabled={uploading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={uploading}
+            >
               Cancelar
             </Button>
             <Button type="submit" disabled={uploading || !file}>
