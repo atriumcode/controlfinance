@@ -4,45 +4,62 @@ import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 import { CertificatesContent } from "@/components/certificates/certificates-content"
 
 export default async function CertificatesPage() {
+  // Usuário autenticado
   const user = await getAuthenticatedUser()
   const supabase = createAdminClient()
 
-  // Get user's company
-  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
+  // Empresa do usuário
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("company_id")
+    .eq("id", user.id)
+    .single()
+
+  if (profileError) {
+    console.error("[PROFILE ERROR]", profileError)
+  }
 
   if (!profile?.company_id) {
     redirect("/dashboard/settings")
   }
 
-  // Get all certificates for the company
-  const { data: certificates } = await supabase
+  // Buscar certidões da empresa
+  const { data: certificates, error: certificatesError } = await supabase
     .from("certificates")
-    .select(`
-      *,
-      created_by_profile:profiles!certificates_created_by_fkey(full_name)
-    `)
+    .select("*") // ❗ JOIN removido para evitar erro silencioso
     .eq("company_id", profile.company_id)
-    .order("expiration_date", { ascending: true })
+    .order("created_at", { ascending: false })
 
+  if (certificatesError) {
+    console.error("[CERTIFICATES SELECT ERROR]", certificatesError)
+  }
+
+  // Data base (hoje)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
+  // Certidões vigentes
   const validCertificates = (certificates || []).filter((cert) => {
-    if (!cert.expiration_date) return true // SEM VALIDADE = VIGENTE
-  const expirationDate = new Date(cert.expiration_date)
-  expirationDate.setHours(0, 0, 0, 0)
-  return expirationDate >= today
-})
+    // Sem data de expiração = vigente
+    if (!cert.expiration_date) return true
 
+    const expirationDate = new Date(cert.expiration_date)
+    expirationDate.setHours(0, 0, 0, 0)
 
+    return expirationDate >= today
+  })
+
+  // Certidões vencidas
   const expiredCertificates = (certificates || []).filter((cert) => {
-    if (!cert.expiration_date) return false // SEM VALIDADE ≠ VENCIDA
-  const expirationDate = new Date(cert.expiration_date)
-  expirationDate.setHours(0, 0, 0, 0)
-  return expirationDate < today
-})
+    if (!cert.expiration_date) return false
 
+    const expirationDate = new Date(cert.expiration_date)
+    expirationDate.setHours(0, 0, 0, 0)
 
+    return expirationDate < today
+  })
+
+  // Renderização
   return (
     <CertificatesContent
       validCertificates={validCertificates}
