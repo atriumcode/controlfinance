@@ -172,7 +172,7 @@ export function DashboardSidebar({ className }: SidebarProps) {
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className={cn("hidden bg-muted/40 md:block w-64 fixed h-full", className)}>
+      <div className={cn("hidden md:block fixed inset-y-0 left-0 w-64 border-r bg-muted/40 z-30", className)}>
         <div className="flex h-full max-h-screen flex-col gap-2">
           <SidebarContent />
         </div>
