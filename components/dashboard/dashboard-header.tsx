@@ -11,7 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LogOut, User } from "lucide-react"
+import { LogOut } from "lucide-react"
+import { DashboardBreadcrumb } from "./breadcrumb"
+
 
 interface DashboardHeaderProps {
   userName: string
@@ -31,18 +33,17 @@ export function DashboardHeader({
       .toUpperCase() || "U"
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-background px-6">
-      {/* Empresa */}
-      <div className="flex flex-col leading-tight">
+    <header className="relative z-30 flex h-14 lg:h-[60px] items-center justify-between border-b bg-background px-4 lg:px-6">
+      {/* Nome da empresa (alinhado com NF-e System) */}
+      <div className="flex flex-col gap-0.5 leading-tight">
         <span className="text-sm font-medium">
-          {companyName}
+          {companyName || "Empresa"}
         </span>
-        <span className="text-xs text-muted-foreground">
-          Painel Administrativo
-        </span>
+
+        <DashboardBreadcrumb />
       </div>
 
-      {/* Avatar + Menu */}
+      {/* Avatar + Dropdown */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -50,13 +51,16 @@ export function DashboardHeader({
             className="relative h-9 w-9 rounded-full p-0"
           >
             <Avatar className="h-9 w-9">
-              <AvatarFallback>{initials}</AvatarFallback>
+              <AvatarFallback>
+                {initials}
+              </AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
           align="end"
+          sideOffset={8}
           className="w-56"
         >
           <DropdownMenuLabel className="flex flex-col">
