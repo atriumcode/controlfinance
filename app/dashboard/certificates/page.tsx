@@ -24,46 +24,20 @@ export default async function CertificatesPage() {
   }
 
   // Buscar certidões da empresa
-  const { data: certificates, error: certificatesError } = await supabase
+  const { data: certificates, error } = await supabase
     .from("certificates")
-    .select("*") // ❗ JOIN removido para evitar erro silencioso
+    .select("*")
     .eq("company_id", profile.company_id)
     .order("created_at", { ascending: false })
 
-  if (certificatesError) {
-    console.error("[CERTIFICATES SELECT ERROR]", certificatesError)
+  if (error) {
+    console.error("[CERTIFICATES SELECT ERROR]", error)
   }
 
-  // Data base (hoje)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  // Certidões vigentes
-  const validCertificates = (certificates || []).filter((cert) => {
-    // Sem data de expiração = vigente
-    if (!cert.expiration_date) return true
-
-    const expirationDate = new Date(cert.expiration_date)
-    expirationDate.setHours(0, 0, 0, 0)
-
-    return expirationDate >= today
-  })
-
-  // Certidões vencidas
-  const expiredCertificates = (certificates || []).filter((cert) => {
-    if (!cert.expiration_date) return false
-
-    const expirationDate = new Date(cert.expiration_date)
-    expirationDate.setHours(0, 0, 0, 0)
-
-    return expirationDate < today
-  })
-
-  // Renderização
+  // Renderização (dados crus → Client Component)
   return (
     <CertificatesContent
-      validCertificates={validCertificates}
-      expiredCertificates={expiredCertificates}
+      certificates={certificates || []}
       companyId={profile.company_id}
       userId={user.id}
     />
