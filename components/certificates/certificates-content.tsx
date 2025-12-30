@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,26 +14,54 @@ interface Certificate {
   name: string
   description: string | null
   file_url: string
-  file_size: number
-  uploaded_at: string
-  expiration_date: string
-  created_by_profile: { full_name: string } | null
+  file_size: number | null
+  expiration_date: string | null
+  created_at?: string
 }
 
 interface CertificatesContentProps {
-  validCertificates: Certificate[]
-  expiredCertificates: Certificate[]
+  certificates: Certificate[]
   companyId: string
   userId: string
 }
 
 export function CertificatesContent({
-  validCertificates,
-  expiredCertificates,
+  certificates,
   companyId,
   userId,
 }: CertificatesContentProps) {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
+
+  // Data base (hoje)
+  const today = useMemo(() => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    return d
+  }, [])
+
+  // Certidões vigentes
+  const validCertificates = useMemo(() => {
+    return certificates.filter((cert) => {
+      if (!cert.expiration_date) return true
+
+      const expirationDate = new Date(cert.expiration_date)
+      expirationDate.setHours(0, 0, 0, 0)
+
+      return expirationDate >= today
+    })
+  }, [certificates, today])
+
+  // Certidões vencidas
+  const expiredCertificates = useMemo(() => {
+    return certificates.filter((cert) => {
+      if (!cert.expiration_date) return false
+
+      const expirationDate = new Date(cert.expiration_date)
+      expirationDate.setHours(0, 0, 0, 0)
+
+      return expirationDate < today
+    })
+  }, [certificates, today])
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -55,7 +83,9 @@ export function CertificatesContent({
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Certidões</h2>
-            <p className="text-muted-foreground">Gerencie suas certidões negativas e documentos</p>
+            <p className="text-muted-foreground">
+              Gerencie suas certidões negativas e documentos
+            </p>
           </div>
         </div>
 
@@ -68,6 +98,7 @@ export function CertificatesContent({
                 {validCertificates.length}
               </span>
             </TabsTrigger>
+
             <TabsTrigger value="expired" className="gap-2">
               <FileText className="h-4 w-4" />
               Certidões Vencidas
@@ -82,7 +113,8 @@ export function CertificatesContent({
               <CardHeader>
                 <CardTitle>Certidões Vigentes</CardTitle>
                 <CardDescription>
-                  {validCertificates.length} certidão{validCertificates.length !== 1 ? "ões" : ""} válida
+                  {validCertificates.length} certidão
+                  {validCertificates.length !== 1 ? "ões" : ""} válida
                   {validCertificates.length !== 1 ? "s" : ""}
                 </CardDescription>
               </CardHeader>
@@ -97,7 +129,8 @@ export function CertificatesContent({
               <CardHeader>
                 <CardTitle>Certidões Vencidas</CardTitle>
                 <CardDescription>
-                  {expiredCertificates.length} certidão{expiredCertificates.length !== 1 ? "ões" : ""} vencida
+                  {expiredCertificates.length} certidão
+                  {expiredCertificates.length !== 1 ? "ões" : ""} vencida
                   {expiredCertificates.length !== 1 ? "s" : ""}
                 </CardDescription>
               </CardHeader>
