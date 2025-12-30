@@ -7,11 +7,11 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser()
 
-    if (!user || !user.company?.id) {
+    if (!user || !user.company_id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const companyId = user.company.id
+    const companyId = user.company_id
     const supabase = createAdminClient()
 
     // Export all company data

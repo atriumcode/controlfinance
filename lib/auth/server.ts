@@ -22,7 +22,7 @@ export async function getAuthUser(): Promise<AuthUser | null> {
     email: user.email,
     role: user.role as UserRole,
     full_name: user.full_name,
-    company_id: user.company.id,
+    company_id: user.company_id,
   }
 }
 

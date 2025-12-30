@@ -16,9 +16,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
     }
 
-    console.log("[v0] Usuário autenticado:", user.id, "company_id:", user.company.id)
+    console.log("[v0] Usuário autenticado:", user.id, "company_id:", user.company_id)
 
-    if (!user.company?.id) {
+    if (!user.company_id) {
       console.log("[v0] Empresa não configurada")
       return NextResponse.json({ error: "Empresa não configurada" }, { status: 400 })
     }
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       const { data: existingInvoice, error: checkError } = await supabase
         .from("invoices")
         .select("id")
-        .eq("company_id", user.company.id)
+        .eq("company_id", user.company_id)
         .eq("nfe_key", nfeData.invoice.nfe_key)
         .maybeSingle()
 
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
         const { data: existingClient, error: findError } = await supabase
           .from("clients")
           .select("id")
-          .eq("company_id", user.company.id)
+          .eq("company_id", user.company_id)
           .eq("document", nfeData.client.document)
           .maybeSingle()
 
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
         } else {
           console.log("[v0] Cliente não encontrado, criando novo...")
           console.log("[v0] Dados para inserção:", {
-            company_id: user.company.id,
+            company_id: user.company_id,
             name: nfeData.client.name,
             document: nfeData.client.document,
             document_type: nfeData.client.document_type,
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
           const { data: newClient, error: clientError } = await supabase
             .from("clients")
             .insert({
-              company_id: user.company.id,
+              company_id: user.company_id,
               name: nfeData.client.name,
               document: nfeData.client.document,
               document_type: nfeData.client.document_type,
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
     let invoice
     try {
       const invoiceData = {
-        company_id: user.company.id,
+        company_id: user.company_id,
         client_id: clientId,
         invoice_number: nfeData.invoice.number,
         nfe_key: nfeData.invoice.nfe_key,
@@ -264,7 +264,7 @@ export async function POST(request: NextRequest) {
     console.log("[v0] Registrando histórico...")
     try {
       await supabase.from("import_history").insert({
-        company_id: user.company.id,
+        company_id: user.company_id,
         file_name: fileName,
         file_type: "nfe",
         status: "success",

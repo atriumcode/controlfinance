@@ -15,7 +15,7 @@ export default async function UsersPage() {
   const { data: users, error: usersError } = await supabase
     .from("profiles")
     .select("id, email, full_name, role, created_at")
-    .eq("company_id", user.company.id)
+    .eq("company_id", user.company_id)
     .order("created_at", { ascending: false })
 
   if (usersError) {
