@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/server"
 const SESSION_COOKIE_NAME = "auth_session"
 
 export const getAuthenticatedUser = cache(async () => {
-  const cookieStore = await cookies()
+  const cookieStore = cookies()
   const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value
 
   if (!sessionToken) {
@@ -23,24 +23,41 @@ export const getAuthenticatedUser = cache(async () => {
         email,
         full_name,
         role,
-        company_name,
-        cnpj,
         company_id,
-        is_active
+        is_active,
+        companies:company_id (
+          id,
+          name,
+          cnpj
+        )
       )
     `)
     .eq("token", sessionToken)
     .single()
 
-  if (error || !data || !data.profiles) {
+  if (error || !data?.profiles) {
     return null
   }
 
-  // Check if session is expired
+  // Sessão expirada
   if (new Date(data.expires_at) < new Date()) {
     return null
   }
 
-  // Return the user profile (profiles is an object, not an array)
-  return data.profiles as any
+  const profile = data.profiles
+
+  return {
+    id: profile.id,
+    name: profile.full_name,
+    email: profile.email,
+    role: profile.role,
+    isActive: profile.is_active,
+    company: profile.companies
+      ? {
+          id: profile.companies.id,
+          name: profile.companies.name,
+          cnpj: profile.companies.cnpj,
+        }
+      : null,
+  }
 })
