@@ -117,10 +117,10 @@ export function CompanyForm({ company }: CompanyFormProps) {
 
       toast({
         title: "Sucesso",
-        description: "Empresa salva com sucesso",
+        description: "Dados da empresa atualizados com sucesso",
       })
 
-      router.push("/dashboard")
+      router.refresh() // mantém na tela e atualiza dados do server
     } catch (error: any) {
       toast({
         title: "Erro",
