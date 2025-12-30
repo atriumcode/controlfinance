@@ -15,11 +15,14 @@ export interface UpdateCompanyInput {
   logo_url?: string
 }
 
+/* ===================== UPDATE COMPANY ===================== */
+
 export async function updateCompany(input: UpdateCompanyInput) {
   const user = await getAuthenticatedUser()
 
-  if (!user?.company_id) {
-    throw new Error("Usuário não autorizado")
+  // ✅ VALIDAÇÃO CORRETA
+  if (!user?.company?.id) {
+    throw new Error("Usuário sem empresa vinculada")
   }
 
   const supabase = createAdminClient()
@@ -38,25 +41,28 @@ export async function updateCompany(input: UpdateCompanyInput) {
       logo_url: input.logo_url,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", user.company.id)
+    .eq("id", user.company.id) // ✅ SEMPRE ASSIM
 
   if (error) {
     console.error("[updateCompany]", error)
-    throw new Error("Erro ao salvar empresa")
+    throw new Error(error.message)
   }
 }
+
+/* ===================== UPLOAD LOGO ===================== */
 
 export async function uploadCompanyLogo(file: File) {
   const user = await getAuthenticatedUser()
 
-  if (!user?.company_id) {
-    throw new Error("Usuário não autorizado")
+  // ✅ VALIDAÇÃO CORRETA
+  if (!user?.company?.id) {
+    throw new Error("Usuário sem empresa vinculada")
   }
 
   const supabase = createAdminClient()
 
   const ext = file.name.split(".").pop()
-  const filePath = `logos/${user.company_id}.${ext}`
+  const filePath = `logos/${user.company.id}.${ext}` // ✅ AQUI TAMBÉM
 
   const { error } = await supabase.storage
     .from("companies")
