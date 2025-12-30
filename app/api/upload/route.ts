@@ -24,7 +24,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       filename,
-      path: `/uploads/certificates/${filename}`,
+      url: `/uploads/certificates/${filename}`,
+      file_path: `/uploads/certificates/${filename}`,
     })
   } catch (error) {
     console.error("[UPLOAD ERROR]", error)

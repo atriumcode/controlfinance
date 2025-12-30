@@ -12,25 +12,43 @@ export async function DELETE(
 
     const { data: cert, error } = await supabase
       .from("certificates")
-      .select("file_path")
+      .select("file_path, file_url")
       .eq("id", params.id)
       .single()
 
     if (error || !cert) {
-      return NextResponse.json({ error: "Certidão não encontrada" }, { status: 404 })
+      return NextResponse.json(
+        { error: "Certidão não encontrada" },
+        { status: 404 }
+      )
     }
 
-    const fullPath = path.join(process.cwd(), cert.file_path)
+    const relativePath = cert.file_path || cert.file_url
+
+    if (!relativePath) {
+      return NextResponse.json(
+        { error: "Arquivo da certidão não encontrado" },
+        { status: 400 }
+      )
+    }
+
+    const fullPath = path.join(process.cwd(), relativePath)
 
     if (fs.existsSync(fullPath)) {
       await fs.promises.unlink(fullPath)
     }
 
-    await supabase.from("certificates").delete().eq("id", params.id)
+    await supabase
+      .from("certificates")
+      .delete()
+      .eq("id", params.id)
 
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("[DELETE CERTIFICATE ERROR]", error)
-    return NextResponse.json({ error: "Erro ao excluir certidão" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Erro ao excluir certidão" },
+      { status: 500 }
+    )
   }
 }
