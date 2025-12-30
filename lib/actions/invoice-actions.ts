@@ -12,7 +12,7 @@ export async function deleteInvoice(invoiceId: string) {
       return { success: false, error: "Não autenticado" }
     }
 
-    if (!user.company_id) {
+    if (!user.company?.id) {
       return { success: false, error: "Empresa não encontrada" }
     }
 
@@ -24,7 +24,7 @@ export async function deleteInvoice(invoiceId: string) {
       .from("invoices")
       .select("id, company_id")
       .eq("id", invoiceId)
-      .eq("company_id", user.company_id)
+      .eq("company_id", user.company.id)
       .single()
 
     if (invoiceError || !invoice) {

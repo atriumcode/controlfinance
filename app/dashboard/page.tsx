@@ -49,7 +49,7 @@ export default async function DashboardPage() {
         document_type
       )
     `)
-    .eq("company_id", user.company_id || "")
+    .eq("company_id", user.company.id || "")
     .gte(
       "created_at",
       new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
@@ -60,7 +60,7 @@ export default async function DashboardPage() {
   supabase
     .from("clients")
     .select("*", { count: "exact", head: true })
-    .eq("company_id", user.company_id || ""),
+    .eq("company_id", user.company.id || ""),
 
 ])
 
