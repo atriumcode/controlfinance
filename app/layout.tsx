@@ -1,10 +1,6 @@
-import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-//import { Analytics } from "@vercel/analytics/next"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toaster"
-import { Suspense } from "react"
+import { Providers } from "./providers"
 import "./globals.css"
 
 const inter = Inter({
@@ -21,18 +17,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning>
       <body className={`font-sans ${inter.variable}`}>
-        <Suspense fallback={null}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            {children}
-            <Toaster />
-          </ThemeProvider>
-        </Suspense>
+        <Providers>{children}</Providers>
       </body>
     </html>
   )
