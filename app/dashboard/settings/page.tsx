@@ -6,9 +6,9 @@ import { CompanyForm } from "@/components/settings/company-form"
 export default async function SettingsPage() {
   const user = await getAuthenticatedUser()
 
-  // ✅ AQUI ESTÁ A CHAVE
-  if (!user || !user.company_id) {
-    redirect("/dashboard")
+  // 🔒 Redirect APENAS se não estiver autenticado
+  if (!user) {
+    redirect("/login")
   }
 
   const supabase = createAdminClient()
@@ -19,10 +19,6 @@ export default async function SettingsPage() {
     .eq("id", user.company_id)
     .single()
 
-  if (error || !company) {
-    redirect("/dashboard")
-  }
-
   return (
     <div className="space-y-6">
       <div>
@@ -32,8 +28,13 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      {/* 🔥 Agora o formulário recebe dados reais */}
-      <CompanyForm company={company} />
+      {error || !company ? (
+        <div className="rounded-lg border border-destructive p-4 text-sm text-destructive">
+          Não foi possível carregar os dados da empresa.
+        </div>
+      ) : (
+        <CompanyForm company={company} />
+      )}
     </div>
   )
 }
