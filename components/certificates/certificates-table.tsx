@@ -26,7 +26,7 @@ interface Certificate {
   file_url: string
   file_size: number
   uploaded_at: string
-  expiration_date: string
+  expiration_date: string | null
   created_by_profile: { full_name: string } | null
 }
 
@@ -59,13 +59,14 @@ export function CertificatesTable({ certificates, type }: CertificatesTableProps
     }
   }
 
-  const getDaysUntilExpiration = (expirationDate: string) => {
+  const getDaysUntilExpiration = (expirationDate: string | null) => {
+    if (!expirationDate) return null
     const expiration = new Date(expirationDate)
     expiration.setHours(0, 0, 0, 0)
     const diffTime = expiration.getTime() - today.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
+
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + " B"
@@ -168,7 +169,10 @@ export function CertificatesTable({ certificates, type }: CertificatesTableProps
             <TableBody>
               {certificates.map((certificate) => {
                 const daysUntilExpiration = getDaysUntilExpiration(certificate.expiration_date)
-                const isExpiringSoon = daysUntilExpiration <= 5 && daysUntilExpiration > 0
+                const isExpiringSoon =
+                  daysUntilExpiration !== null &&
+                  daysUntilExpiration <= 5 &&
+                  daysUntilExpiration > 0
 
                 return (
                   <TableRow key={certificate.id}>
@@ -188,11 +192,15 @@ export function CertificatesTable({ certificates, type }: CertificatesTableProps
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
-                        {new Date(certificate.expiration_date).toLocaleDateString("pt-BR")}
+                        {certificate.expiration_date
+                          ? new Date(certificate.expiration_date).toLocaleDateString("pt-BR")
+                          : "Sem validade"}
                       </div>
                     </TableCell>
                     <TableCell>
-                      {type === "valid" ? (
+                      {daysUntilExpiration === null ? (
+                        <Badge variant="default">Sem validade</Badge>
+                      ) : type === "valid" ? (
                         <Badge variant={isExpiringSoon ? "destructive" : "default"}>
                           {daysUntilExpiration === 0
                             ? "Vence hoje"
@@ -202,7 +210,8 @@ export function CertificatesTable({ certificates, type }: CertificatesTableProps
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="text-destructive">
-                          Vencida há {Math.abs(daysUntilExpiration)} dia{Math.abs(daysUntilExpiration) !== 1 ? "s" : ""}
+                          Vencida há {Math.abs(daysUntilExpiration)} dia
+                          {Math.abs(daysUntilExpiration) !== 1 ? "s" : ""}
                         </Badge>
                       )}
                     </TableCell>
