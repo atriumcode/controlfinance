@@ -1,79 +1,39 @@
-import { createAdminClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { CompanyForm } from "@/components/settings/company-form"
-import { ThemeSelector } from "@/components/settings/theme-selector"
-import { BackupForm } from "@/components/settings/backup-form"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { createAdminClient } from "@/lib/supabase/server"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
-
-export const dynamic = "force-dynamic"
+import { CompanyForm } from "@/components/settings/company-form"
 
 export default async function SettingsPage() {
   const user = await getAuthenticatedUser()
 
-  if (!user) {
-    redirect("/auth/login")
+  // ✅ AQUI ESTÁ A CHAVE
+  if (!user || !user.company_id) {
+    redirect("/dashboard")
   }
 
   const supabase = createAdminClient()
 
-  const { data: company } = await supabase
+  const { data: company, error } = await supabase
     .from("companies")
     .select("*")
-    .eq("id", user.company_id || "")
+    .eq("id", user.company_id)
     .single()
 
+  if (error || !company) {
+    redirect("/dashboard")
+  }
+
   return (
-    <div className="container mx-auto py-6 px-4">
-      <div className="mb-6">
+    <div className="space-y-6">
+      <div>
         <h1 className="text-3xl font-bold">Configurações</h1>
-        <p className="text-muted-foreground">Configure sua empresa e perfil de usuário</p>
+        <p className="text-muted-foreground">
+          Configure sua empresa e preferências do sistema
+        </p>
       </div>
 
-      <Tabs defaultValue="company" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="company">Empresa</TabsTrigger>
-          <TabsTrigger value="appearance">Aparência</TabsTrigger>
-          <TabsTrigger value="backup">Backup</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="company">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações da Empresa</CardTitle>
-              <CardDescription>Configure os dados da sua empresa para emissão de faturas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CompanyForm company={company} userId={user.id} profileId={user.id} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="appearance">
-          <Card>
-            <CardHeader>
-              <CardTitle>Aparência</CardTitle>
-              <CardDescription>Personalize a aparência da interface do sistema</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ThemeSelector />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="backup">
-          <Card>
-            <CardHeader>
-              <CardTitle>Backup dos Dados</CardTitle>
-              <CardDescription>Faça backup e restaure os dados da sua empresa</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <BackupForm companyId={user.company_id} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* 🔥 Agora o formulário recebe dados reais */}
+      <CompanyForm company={company} />
     </div>
   )
 }
