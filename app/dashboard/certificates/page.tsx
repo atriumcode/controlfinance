@@ -28,16 +28,20 @@ export default async function CertificatesPage() {
   today.setHours(0, 0, 0, 0)
 
   const validCertificates = (certificates || []).filter((cert) => {
-    const expirationDate = new Date(cert.expiration_date)
-    expirationDate.setHours(0, 0, 0, 0)
-    return expirationDate >= today
-  })
+    if (!cert.expiration_date) return true // SEM VALIDADE = VIGENTE
+  const expirationDate = new Date(cert.expiration_date)
+  expirationDate.setHours(0, 0, 0, 0)
+  return expirationDate >= today
+})
+
 
   const expiredCertificates = (certificates || []).filter((cert) => {
-    const expirationDate = new Date(cert.expiration_date)
-    expirationDate.setHours(0, 0, 0, 0)
-    return expirationDate < today
-  })
+    if (!cert.expiration_date) return false // SEM VALIDADE ≠ VENCIDA
+  const expirationDate = new Date(cert.expiration_date)
+  expirationDate.setHours(0, 0, 0, 0)
+  return expirationDate < today
+})
+
 
   return (
     <CertificatesContent
