@@ -11,27 +11,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
-import { logoutAction } from "@/app/actions/auth-actions"
+import { logoutAction } from "@/app/actions/logout"
 
 interface DashboardHeaderProps {
-  companyName?: string
-  userName?: string
+  companyName: string
+  userName: string
 }
 
 export function DashboardHeader({ companyName, userName }: DashboardHeaderProps) {
   const initials = userName
-    ? userName
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "U"
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
 
   return (
-    <header className="fixed top-0 right-0 left-0 md:left-64 z-50 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:h-[60px] lg:px-6">
+    <header className="fixed top-0 right-0 left-0 md:left-64 z-50 flex h-14 items-center gap-4 border-b bg-background/95 px-4">
       <div className="flex-1">
-        {companyName && <p className="text-sm text-muted-foreground">{companyName}</p>}
+        <p className="text-sm text-muted-foreground">{companyName}</p>
       </div>
 
       <DropdownMenu>
@@ -40,26 +38,18 @@ export function DashboardHeader({ companyName, userName }: DashboardHeaderProps)
             <Avatar className="h-8 w-8">
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <span className="sr-only">Toggle user menu</span>
           </Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end">
-          <DropdownMenuLabel>{userName || "Usuário"}</DropdownMenuLabel>
+          <DropdownMenuLabel>{userName}</DropdownMenuLabel>
           <DropdownMenuSeparator />
-
           <DropdownMenuItem asChild>
             <Link href="/dashboard/settings">Configurações</Link>
           </DropdownMenuItem>
-
           <DropdownMenuSeparator />
-
-          <DropdownMenuItem asChild>
-            <form action={logoutAction} className="w-full">
-              <button type="submit" className="w-full text-left">
-                Sair
-              </button>
-            </form>
+          <DropdownMenuItem onSelect={() => logoutAction()}>
+            Sair
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
