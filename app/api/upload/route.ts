@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
-import path from "path"
-import fs from "fs/promises"
+import { createAdminClient } from "@/lib/supabase/server"
 
 export const dynamic = "force-dynamic"
 
@@ -10,13 +9,9 @@ export async function POST(req: Request) {
     const file = formData.get("file") as File | null
 
     if (!file) {
-      return NextResponse.json(
-        { error: "Arquivo não enviado" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Arquivo não enviado" }, { status: 400 })
     }
 
-    // Validações básicas
     const allowedTypes = [
       "application/pdf",
       "image/jpeg",
@@ -38,35 +33,30 @@ export async function POST(req: Request) {
       )
     }
 
-    // Diretório de destino
-    const uploadDir = path.join(
-      process.cwd(),
-      "public",
-      "uploads",
-      "certificates"
-    )
+    const supabase = createAdminClient()
 
-    // Garante que o diretório existe
-    await fs.mkdir(uploadDir, { recursive: true })
-
-    // Nome único
-    const timestamp = Date.now()
+    const ext = file.name.split(".").pop()
     const safeName = file.name.replace(/\s+/g, "-")
-    const filename = `${timestamp}-${safeName}`
+    const filePath = `certificates/${Date.now()}-${safeName}`
 
-    const filePath = path.join(uploadDir, filename)
+    const { error: uploadError } = await supabase.storage
+      .from("certificates")
+      .upload(filePath, file, {
+        contentType: file.type,
+        upsert: false,
+      })
 
-    // Salvar arquivo
-    const buffer = Buffer.from(await file.arrayBuffer())
-    await fs.writeFile(filePath, buffer)
+    if (uploadError) {
+      console.error("[UPLOAD ERROR]", uploadError)
+      throw uploadError
+    }
 
-    // URL pública
-    const fileUrl = `/uploads/certificates/${filename}`
-
-    console.log("[UPLOAD] Arquivo salvo:", fileUrl)
+    const { data } = supabase.storage
+      .from("certificates")
+      .getPublicUrl(filePath)
 
     return NextResponse.json({
-      url: fileUrl,
+      url: data.publicUrl,
       name: file.name,
       size: file.size,
       type: file.type,

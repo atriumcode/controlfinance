@@ -76,12 +76,13 @@ export function CertificatesTable({ certificates, type }: CertificatesTableProps
 
   const handleDownload = async (certificate: Certificate) => {
     try {
+      const ext = certificate.file_url.split(".").pop()
       const response = await fetch(certificate.file_url)
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = certificate.name
+      a.download = `${certificate.name}.${ext}`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
