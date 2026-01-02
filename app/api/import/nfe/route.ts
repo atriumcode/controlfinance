@@ -16,12 +16,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
     }
 
-    console.log("[v0] Usuário autenticado:", user.id, "company_id:", user.company_id)
+    console.log("[v0] Usuário autenticado:", user.id, "company_id:", user.company?.id)
 
-    if (!user.company_id) {
+    if (!user.company?.id) {
       console.log("[v0] Empresa não configurada")
       return NextResponse.json({ error: "Empresa não configurada" }, { status: 400 })
     }
+
+const companyId = user.company.id
+
 
     console.log("[v0] Lendo dados da requisição...")
     let xmlContent, fileName
@@ -80,12 +83,13 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Verificando duplicatas...")
     try {
-      const { data: existingInvoice, error: checkError } = await supabase
+      const { data: existingInvoice } = await supabase
         .from("invoices")
         .select("id")
-        .eq("company_id", user.company_id)
+        .eq("company_id", companyId)
         .eq("nfe_key", nfeData.invoice.nfe_key)
         .maybeSingle()
+
 
       if (checkError) {
         console.log("[v0] Erro na query de duplicatas:", checkError)
@@ -142,10 +146,10 @@ export async function POST(request: NextRequest) {
             zip_code: nfeData.client.zip_code,
           })
 
-          const { data: newClient, error: clientError } = await supabase
+          const { data: newClient } = await supabase
             .from("clients")
             .insert({
-              company_id: user.company_id,
+              company_id: companyId,
               name: nfeData.client.name,
               document: nfeData.client.document,
               document_type: nfeData.client.document_type,
@@ -186,7 +190,7 @@ export async function POST(request: NextRequest) {
     let invoice
     try {
       const invoiceData = {
-        company_id: user.company_id,
+        company_id: companyId,
         client_id: clientId,
         invoice_number: nfeData.invoice.number,
         nfe_key: nfeData.invoice.nfe_key,
@@ -264,13 +268,14 @@ export async function POST(request: NextRequest) {
     console.log("[v0] Registrando histórico...")
     try {
       await supabase.from("import_history").insert({
-        company_id: user.company_id,
+        company_id: companyId,
         file_name: fileName,
         file_type: "nfe",
         status: "success",
         records_imported: nfeData.items.length,
         imported_by: user.id,
       })
+
       console.log("[v0] Histórico registrado")
     } catch (historyError) {
       console.log("[v0] Erro ao registrar histórico (não crítico):", historyError)
