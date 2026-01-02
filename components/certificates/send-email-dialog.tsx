@@ -40,17 +40,16 @@ export function SendEmailDialog({
    * no App Router antes do DOM existir.
    */
   const [mounted, setMounted] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [email, setEmail] = useState("")
+  const [subject, setSubject] = useState("Certidões - Envio de Documentos")
+  const [message, setMessage] = useState("")
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   if (!mounted) return null
-
-  const [sending, setSending] = useState(false)
-  const [email, setEmail] = useState("")
-  const [subject, setSubject] = useState("Certidões - Envio de Documentos")
-  const [message, setMessage] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
