@@ -114,40 +114,27 @@ const companyId = user.company.id
 
 
     console.log("[v0] Processando cliente...")
-    let clientId = null
-    console.log("[v0] nfeData.client existe?", !!nfeData.client)
-    console.log("[v0] Dados do cliente:", JSON.stringify(nfeData.client, null, 2))
+    let clientId: string | null = null
 
     if (nfeData.client) {
       try {
-        console.log("[v0] Buscando cliente existente com documento:", nfeData.client.document)
-        const { data: existingClient, error: findError } = await supabase
+        const { data: existingClient, error } = await supabase
           .from("clients")
           .select("id")
-          .eq("company_id", user.company_id)
+          .eq("company_id", companyId)
           .eq("document", nfeData.client.document)
           .maybeSingle()
 
-        console.log("[v0] Resultado da busca:", { existingClient, findError })
+        if (error) {
+          console.log("[v0] Erro ao buscar cliente:", error)
+          throw error
+        }
 
         if (existingClient) {
           clientId = existingClient.id
           console.log("[v0] Cliente existente encontrado:", clientId)
         } else {
-          console.log("[v0] Cliente não encontrado, criando novo...")
-          console.log("[v0] Dados para inserção:", {
-            company_id: user.company_id,
-            name: nfeData.client.name,
-            document: nfeData.client.document,
-            document_type: nfeData.client.document_type,
-            email: nfeData.client.email,
-            address: nfeData.client.address,
-            city: nfeData.client.city,
-            state: nfeData.client.state,
-            zip_code: nfeData.client.zip_code,
-          })
-
-          const { data: newClient } = await supabase
+          const { data: newClient, error: insertError } = await supabase
             .from("clients")
             .insert({
               company_id: companyId,
@@ -163,21 +150,20 @@ const companyId = user.company.id
             .select("id")
             .single()
 
-          console.log("[v0] Resultado da criação:", { newClient, clientError })
-
-          if (clientError) {
-            console.log("[v0] Erro ao criar cliente:", clientError)
-            return NextResponse.json({ error: "Erro ao criar cliente", details: clientError.message }, { status: 500 })
+          if (insertError) {
+            console.log("[v0] Erro ao criar cliente:", insertError)
+            throw insertError
           }
+
           clientId = newClient.id
           console.log("[v0] Novo cliente criado:", clientId)
         }
-      } catch (clientError) {
-        console.log("[v0] Erro ao processar cliente:", clientError)
+      } catch (err) {
+        console.log("[v0] Erro ao processar cliente:", err)
         return NextResponse.json(
           {
             error: "Erro ao processar cliente",
-            details: clientError instanceof Error ? clientError.message : String(clientError),
+            details: err instanceof Error ? err.message : String(err),
           },
           { status: 500 },
         )
@@ -185,6 +171,7 @@ const companyId = user.company.id
     } else {
       console.log("[v0] AVISO: nfeData.client é null/undefined - nota será criada sem cliente!")
     }
+
 
     console.log("[v0] clientId final antes de criar nota:", clientId)
     console.log("[v0] Criando nota fiscal...")
