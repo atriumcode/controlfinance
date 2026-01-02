@@ -1,19 +1,30 @@
 import { NextResponse } from "next/server"
-import fs from "fs"
+import fs from "fs/promises"
 import path from "path"
 import { createAdminClient } from "@/lib/supabase/server"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
+
+export const dynamic = "force-dynamic"
 
 export async function DELETE(
-  req: Request,
+  _: Request,
   { params }: { params: { id: string } }
 ) {
   try {
+    const user = await getAuthenticatedUser()
+
+    if (!user || !user.company?.id) {
+      return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
+    }
+
     const supabase = createAdminClient()
 
+    // 🔎 Buscar certidão garantindo a empresa
     const { data: cert, error } = await supabase
       .from("certificates")
-      .select("file_path, file_url")
+      .select("id, file_url")
       .eq("id", params.id)
+      .eq("company_id", user.company.id)
       .single()
 
     if (error || !cert) {
@@ -23,25 +34,27 @@ export async function DELETE(
       )
     }
 
-    const relativePath = cert.file_path || cert.file_url
+    // 🗂️ Caminho físico correto
+    // file_url = /uploads/certificates/arquivo.pdf
+    const fullPath = path.join(
+      process.cwd(),
+      "public",
+      cert.file_url.replace(/^\/+/, "")
+    )
 
-    if (!relativePath) {
-      return NextResponse.json(
-        { error: "Arquivo da certidão não encontrado" },
-        { status: 400 }
-      )
+    // 🗑️ Apagar arquivo
+    try {
+      await fs.unlink(fullPath)
+    } catch (err) {
+      console.warn("[DELETE] Arquivo não encontrado no disco:", fullPath)
     }
 
-    const fullPath = path.join(process.cwd(), relativePath)
-
-    if (fs.existsSync(fullPath)) {
-      await fs.promises.unlink(fullPath)
-    }
-
+    // 🗑️ Apagar registro
     await supabase
       .from("certificates")
       .delete()
       .eq("id", params.id)
+      .eq("company_id", user.company.id)
 
     return NextResponse.json({ success: true })
   } catch (error) {
