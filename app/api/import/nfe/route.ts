@@ -83,34 +83,35 @@ const companyId = user.company.id
 
     console.log("[v0] Verificando duplicatas...")
     try {
-      const { data: existingInvoice } = await supabase
+      const { data: existingInvoice, error } = await supabase
         .from("invoices")
         .select("id")
         .eq("company_id", companyId)
         .eq("nfe_key", nfeData.invoice.nfe_key)
         .maybeSingle()
 
-
-      if (checkError) {
-        console.log("[v0] Erro na query de duplicatas:", checkError)
-        throw checkError
+      if (error) {
+        console.log("[v0] Erro na query de duplicatas:", error)
+        throw error
       }
 
       if (existingInvoice) {
         console.log("[v0] XML já importado")
         return NextResponse.json({ error: "XML já importado anteriormente" }, { status: 409 })
       }
+
       console.log("[v0] Nenhuma duplicata encontrada")
-    } catch (checkError) {
-      console.log("[v0] Erro ao verificar duplicatas:", checkError)
+    } catch (err) {
+      console.log("[v0] Erro ao verificar duplicatas:", err)
       return NextResponse.json(
         {
           error: "Erro ao verificar duplicatas",
-          details: checkError instanceof Error ? checkError.message : String(checkError),
+          details: err instanceof Error ? err.message : String(err),
         },
         { status: 500 },
       )
     }
+
 
     console.log("[v0] Processando cliente...")
     let clientId = null
