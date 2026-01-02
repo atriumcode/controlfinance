@@ -37,18 +37,17 @@ export function UploadCertificateDialog({
    * Evita React error #422 / #425
    */
   const [mounted, setMounted] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const [name, setName] = useState("")
+  const [description, setDescription] = useState("")
+  const [expirationDate, setExpirationDate] = useState("")
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   if (!mounted) return null
-
-  const [uploading, setUploading] = useState(false)
-  const [file, setFile] = useState<File | null>(null)
-  const [name, setName] = useState("")
-  const [description, setDescription] = useState("")
-  const [expirationDate, setExpirationDate] = useState("")
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
