@@ -24,27 +24,20 @@ export async function requireAuth(): Promise<User> {
   return user
 }
 
-export async function registerUserAction(formData: FormData) {
-  const email = formData.get("email") as string
-  const password = formData.get("password") as string
-  const confirmPassword = formData.get("confirmPassword") as string
-  const fullName = formData.get("fullName") as string
-  const role = formData.get("role") as string
-  const cnpj = formData.get("cnpj") as string
-  const companyName = formData.get("companyName") as string
+export async function registerUserAction(data: {
+  email: string
+  password: string
+  fullName: string
+  role: string
+  companyId: string
+}) {
+  const { email, password, fullName, role, companyId } = data
 
   // Validações
-  if (!email || !password || !fullName) {
+  if (!email || !password || !fullName || !companyId) {
     return {
       success: false,
       error: "Preencha todos os campos obrigatórios",
-    }
-  }
-
-  if (password !== confirmPassword) {
-    return {
-      success: false,
-      error: "As senhas não coincidem",
     }
   }
 
@@ -55,6 +48,7 @@ export async function registerUserAction(formData: FormData) {
       error: passwordValidation.error,
     }
   }
+
 
   try {
     const supabase = createAdminClient()
@@ -101,14 +95,13 @@ export async function registerUserAction(formData: FormData) {
     const { data: newUser, error: insertError } = await supabase
       .from("profiles")
       .insert({
-        email,
-        full_name: fullName,
-        role: finalRole,
-        cnpj: cnpj || null,
-        company_name: companyName || null,
-        password_hash: passwordHash,
-        is_active: true,
-      })
+      email,
+      full_name: fullName,
+      role: finalRole,
+      company_id: companyId,
+      password_hash: passwordHash,
+      is_active: true,
+    })
       .select()
       .single()
 

@@ -12,77 +12,69 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { registerUserAction } from "@/lib/auth/actions"
 
-export function NewUserForm() {
+export function NewUserForm({ companyId }: { companyId: string }) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [role, setRole] = useState("")
   const [success, setSuccess] = useState(false)
   const router = useRouter()
-
+  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError(null)
+  e.preventDefault()
+  setIsLoading(true)
+  setError(null)
 
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get("email") as string
-    const password = formData.get("password") as string
-    const confirmPassword = formData.get("confirmPassword") as string
-    const fullName = formData.get("fullName") as string
+  const formData = new FormData(e.currentTarget)
 
-    if (password !== confirmPassword) {
-      setError("As senhas não coincidem")
-      setIsLoading(false)
-      return
-    }
+  const email = formData.get("email") as string
+  const password = formData.get("password") as string
+  const confirmPassword = formData.get("confirmPassword") as string
+  const fullName = formData.get("fullName") as string
 
-    if (password.length < 6) {
-      setError("A senha deve ter pelo menos 6 caracteres")
-      setIsLoading(false)
-      return
-    }
-
-    try {
-      const response = await fetch("/api/user/profile")
-      if (!response.ok) {
-        setError("Usuário não autenticado")
-        setIsLoading(false)
-        return
-      }
-
-      const { company_id } = await response.json()
-      if (!company_id) {
-        setError("Empresa não encontrada")
-        setIsLoading(false)
-        return
-      }
-
-      // Use our custom registration action
-      const result = await registerUserAction({
-        email,
-        password,
-        fullName,
-        role,
-        companyId: company_id,
-      })
-
-      if (!result.success) {
-        setError(result.error || "Erro ao criar usuário")
-        setIsLoading(false)
-        return
-      }
-
-      setSuccess(true)
-      setTimeout(() => {
-        router.push("/dashboard/users?success=user-created")
-      }, 2000)
-    } catch (error: any) {
-      console.error("Unexpected error:", error)
-      setError(error.message || "Erro inesperado na criação do usuário")
-    } finally {
-      setIsLoading(false)
-    }
+  if (password !== confirmPassword) {
+    setError("As senhas não coincidem")
+    setIsLoading(false)
+    return
   }
+
+  if (password.length < 6) {
+    setError("A senha deve ter pelo menos 6 caracteres")
+    setIsLoading(false)
+    return
+  }
+
+  if (!companyId) {
+    setError("Empresa inválida. Recarregue a página.")
+    setIsLoading(false)
+    return
+  }
+
+  try {
+    const result = await registerUserAction({
+      email,
+      password,
+      fullName,
+      role,
+      companyId,
+    })
+
+    if (!result.success) {
+      setError(result.error || "Erro ao criar usuário")
+      setIsLoading(false)
+      return
+    }
+
+    setSuccess(true)
+    setTimeout(() => {
+      router.push("/dashboard/users?success=user-created")
+    }, 2000)
+  } catch (error: any) {
+    console.error("Unexpected error:", error)
+    setError(error.message || "Erro inesperado na criação do usuário")
+  } finally {
+    setIsLoading(false)
+  }
+}
 
   if (success) {
     return (
