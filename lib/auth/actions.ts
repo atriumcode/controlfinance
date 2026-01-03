@@ -220,7 +220,72 @@ export async function loginUserAction(formData: FormData) {
 
 export async function createCompanyOnboardingAction(data: {
   name: string
+  cnpj?: string
+  email?: string
 }) {
+  if (!data.name) {
+    return { success: false, error: "Nome da empresa é obrigatório" }
+  }
+
+  try {
+    const supabase = createAdminClient()
+    const user = await requireAuthSession()
+
+    if (!user) {
+      return { success: false, error: "Usuário não autenticado" }
+    }
+
+    let companyId: string | null = null
+
+    // 1️⃣ Procurar empresa existente por nome
+    const { data: existingCompany } = await supabase
+      .from("companies")
+      .select("id")
+      .ilike("name", data.name)
+      .single()
+
+    if (existingCompany) {
+      companyId = existingCompany.id
+    }
+
+    // 2️⃣ Se não existir, criar empresa
+    if (!companyId) {
+      const { data: newCompany, error: companyError } = await supabase
+        .from("companies")
+        .insert({
+          name: data.name,
+          cnpj: data.cnpj || null,
+          email: data.email || null,
+        })
+        .select()
+        .single()
+
+      if (companyError || !newCompany) {
+        console.error(companyError)
+        return { success: false, error: "Erro ao criar empresa" }
+      }
+
+      companyId = newCompany.id
+    }
+
+    // 3️⃣ Associar usuário à empresa
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ company_id: companyId })
+      .eq("id", user.id)
+
+    if (profileError) {
+      console.error(profileError)
+      return { success: false, error: "Erro ao associar empresa ao usuário" }
+    }
+
+    return { success: true }
+  } catch (err) {
+    console.error(err)
+    return { success: false, error: "Erro inesperado no onboarding" }
+  }
+}
+
   if (!data.name) {
     return { success: false, error: "Nome da empresa é obrigatório" }
   }
