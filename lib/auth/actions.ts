@@ -49,13 +49,13 @@ export async function registerUserAction(data: {
     }
   }
 
-
   try {
     const supabase = createAdminClient()
 
-    const { data: existingUsers, error: countError } = await supabase
+    const { count, error: countError } = await supabase
       .from("profiles")
       .select("id", { count: "exact", head: true })
+      .eq("company_id", companyId)
 
     if (countError) {
       console.error("Error checking users:", countError)
@@ -70,7 +70,9 @@ export async function registerUserAction(data: {
       }
     }
 
-    const isFirstUser = !countError && (!existingUsers || existingUsers.length === 0)
+   // const isFirstUser = !countError && (!existingUsers || existingUsers.length === 0)
+   
+    const isFirstUser = !countError && count === 0
 
     // Verificar se o email já existe
     const { data: existingUser, error: checkError } = await supabase
@@ -213,6 +215,51 @@ export async function loginUserAction(formData: FormData) {
       success: false,
       error: "Erro ao fazer login. Tente novamente.",
     }
+  }
+}
+
+export async function createCompanyOnboardingAction(data: {
+  name: string
+}) {
+  if (!data.name) {
+    return { success: false, error: "Nome da empresa é obrigatório" }
+  }
+
+  try {
+    const supabase = createAdminClient()
+    const user = await requireAuthSession()
+
+    if (!user) {
+      return { success: false, error: "Usuário não autenticado" }
+    }
+
+    // Criar empresa
+    const { data: company, error: companyError } = await supabase
+      .from("companies")
+      .insert({ name: data.name })
+      .select()
+      .single()
+
+    if (companyError) {
+      console.error(companyError)
+      return { success: false, error: "Erro ao criar empresa" }
+    }
+
+    // Associar usuário à empresa
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ company_id: company.id })
+      .eq("id", user.id)
+
+    if (profileError) {
+      console.error(profileError)
+      return { success: false, error: "Erro ao associar empresa" }
+    }
+
+    return { success: true }
+  } catch (err) {
+    console.error(err)
+    return { success: false, error: "Erro inesperado no onboarding" }
   }
 }
 

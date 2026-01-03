@@ -7,9 +7,14 @@ export const dynamic = "force-dynamic"
 export default async function NewUserPage() {
   const user = await getAuthenticatedUser()
 
-  if (!user || !user.company_id) {
-    redirect("/dashboard")
-  }
+  if (!user) {
+  redirect("/auth/login")
+}
+
+if (!user.company_id) {
+  redirect("/onboarding")
+}
+
 
   return (
     <div className="space-y-6">
