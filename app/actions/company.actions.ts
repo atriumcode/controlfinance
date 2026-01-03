@@ -20,7 +20,6 @@ export interface UpdateCompanyInput {
 export async function updateCompany(input: UpdateCompanyInput) {
   const user = await getAuthenticatedUser()
 
-  // ✅ VALIDAÇÃO CORRETA
   if (!user?.company?.id) {
     throw new Error("Usuário sem empresa vinculada")
   }
@@ -41,7 +40,7 @@ export async function updateCompany(input: UpdateCompanyInput) {
       logo_url: input.logo_url,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", user.company.id) // ✅ SEMPRE ASSIM
+    .eq("id", user.company.id)
 
   if (error) {
     console.error("[updateCompany]", error)
@@ -52,27 +51,30 @@ export async function updateCompany(input: UpdateCompanyInput) {
 /* ===================== UPLOAD LOGO ===================== */
 
 export async function uploadCompanyLogo(file: File) {
-  const user = await ()
+  const user = await getAuthenticatedUser() // ✅ CORREÇÃO AQUI
 
-  // ✅ VALIDAÇÃO CORRETA
   if (!user?.company?.id) {
     throw new Error("Usuário sem empresa vinculada")
+  }
+
+  if (!file) {
+    throw new Error("Arquivo não informado")
   }
 
   const supabase = createAdminClient()
 
   const ext = file.name.split(".").pop()
-  const filePath = `logos/${user.company.id}.${ext}` // ✅ AQUI TAMBÉM
+  const filePath = `logos/${user.company.id}.${ext}`
 
-  const { error } = await supabase.storage
+  const { error: uploadError } = await supabase.storage
     .from("companies")
     .upload(filePath, file, {
       upsert: true,
       contentType: file.type,
     })
 
-  if (error) {
-    console.error("[uploadCompanyLogo]", error)
+  if (uploadError) {
+    console.error("[uploadCompanyLogo]", uploadError)
     throw new Error("Erro ao enviar logo")
   }
 
