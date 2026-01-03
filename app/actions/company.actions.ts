@@ -52,7 +52,7 @@ export async function updateCompany(input: UpdateCompanyInput) {
 /* ===================== UPLOAD LOGO ===================== */
 
 export async function uploadCompanyLogo(file: File) {
-  const user = await getAuthenticatedUser()
+  const user = await ()
 
   // ✅ VALIDAÇÃO CORRETA
   if (!user?.company?.id) {

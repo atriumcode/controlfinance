@@ -1,10 +1,9 @@
 import { cookies } from "next/headers"
-import { cache } from "react"
 import { createAdminClient } from "@/lib/supabase/server"
 
 const SESSION_COOKIE_NAME = "auth_session"
 
-export const getAuthenticatedUser = cache(async () => {
+export async function getAuthenticatedUser() {
   const cookieStore = cookies()
   const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value
 
@@ -46,12 +45,19 @@ export const getAuthenticatedUser = cache(async () => {
 
   const profile = data.profiles
 
+  if (!profile.is_active) {
+    return null
+  }
+
   return {
     id: profile.id,
     name: profile.full_name,
     email: profile.email,
     role: profile.role,
-    isActive: profile.is_active,
+
+    // ✅ ESSENCIAL
+    company_id: profile.company_id,
+
     company: profile.companies
       ? {
           id: profile.companies.id,
@@ -60,4 +66,4 @@ export const getAuthenticatedUser = cache(async () => {
         }
       : null,
   }
-})
+}
