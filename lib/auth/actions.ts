@@ -145,34 +145,39 @@ export async function loginUserAction(formData: FormData) {
   try {
     const supabase = createAdminClient()
 
-    // Buscar usuário
-    const { data: user, error: userError } = await supabase
+    // 🔎 Buscar profile
+    let { data: user } = await supabase
       .from("profiles")
-      .select("id, email, password_hash, is_active")
+      .select("id, email, password_hash, is_active, company_id, role")
       .eq("email", email)
       .single()
 
-    if (userError) {
-      console.error("Database error:", userError)
+    // ❌ Não existe profile → cria automaticamente (SEM senha)
+    if (!user) {
+      const { data: newUser, error: insertError } = await supabase
+        .from("profiles")
+        .insert({
+          email,
+          full_name: email.split("@")[0],
+          role: "admin",
+          company_id: null,
+          is_active: true,
+        })
+        .select()
+        .single()
 
-      // Check if table doesn't exist
-      if (userError.code === "42P01" || userError.message.includes("does not exist")) {
+      if (insertError || !newUser) {
+        console.error("Erro ao criar profile automático:", insertError)
         return {
           success: false,
-          error: "Sistema não configurado. Execute o script SQL primeiro.",
-          details: "Tabela 'profiles' não existe no banco de dados",
+          error: "Erro ao inicializar usuário no sistema",
         }
       }
+
+      user = newUser
     }
 
-    if (!user) {
-      return {
-        success: false,
-        error: "Email ou senha incorretos",
-        details: "Usuário não encontrado no banco de dados",
-      }
-    }
-
+    // 🔒 Verificar se está ativo
     if (!user.is_active) {
       return {
         success: false,
@@ -180,32 +185,33 @@ export async function loginUserAction(formData: FormData) {
       }
     }
 
-    // Verificar senha
-    const isPasswordValid = await verifyPassword(password, user.password_hash)
+    // 🔑 Verificar senha (somente se existir hash)
+    if (user.password_hash) {
+      const isPasswordValid = await verifyPassword(password, user.password_hash)
 
-    if (!isPasswordValid) {
-      return {
-        success: false,
-        error: "Email ou senha incorretos",
-        details: "Senha não corresponde ao hash armazenado",
+      if (!isPasswordValid) {
+        return {
+          success: false,
+          error: "Email ou senha incorretos",
+        }
       }
     }
 
-    // Atualizar último login
-    await supabase.from("profiles").update({ last_login: new Date().toISOString() }).eq("id", user.id)
+    // 🕒 Atualizar último login
+    await supabase
+      .from("profiles")
+      .update({ last_login: new Date().toISOString() })
+      .eq("id", user.id)
 
-    // Criar sessão
+    // 🔐 Criar sessão
     await createSession(user.id)
 
-    return {
-      success: true,
-    }
+    return { success: true }
   } catch (error) {
     console.error("Login error:", error)
     return {
       success: false,
       error: "Erro ao fazer login. Tente novamente.",
-      details: error instanceof Error ? error.message : "Erro desconhecido",
     }
   }
 }
