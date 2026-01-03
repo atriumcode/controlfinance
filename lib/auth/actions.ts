@@ -177,16 +177,37 @@ export async function loginUserAction(formData: FormData) {
 }
 
 /* =======================
-   ONBOARDING (EMPRESA)
+   LISTAR EMPRESAS
 ======================= */
+export async function listCompaniesAction() {
+  try {
+    const supabase = createAdminClient()
 
-export async function createCompanyOnboardingAction(data: {
-  name: string
-  cnpj?: string
-  email?: string
+    const { data, error } = await supabase
+      .from("companies")
+      .select("id, name")
+      .order("name")
+
+    if (error) {
+      console.error(error)
+      return { success: false, companies: [] }
+    }
+
+    return { success: true, companies: data }
+  } catch (err) {
+    console.error(err)
+    return { success: false, companies: [] }
+  }
+}
+
+/* =======================
+   ASSOCIAR EMPRESA (ONBOARDING)
+======================= */
+export async function associateCompanyOnboardingAction(data: {
+  companyId: string
 }) {
-  if (!data.name) {
-    return { success: false, error: "Nome da empresa é obrigatório" }
+  if (!data.companyId) {
+    return { success: false, error: "Empresa não selecionada" }
   }
 
   try {
@@ -197,47 +218,13 @@ export async function createCompanyOnboardingAction(data: {
       return { success: false, error: "Usuário não autenticado" }
     }
 
-    let companyId: string | null = null
-
-    // Procurar empresa existente pelo nome
-    const { data: existingCompany } = await supabase
-      .from("companies")
-      .select("id")
-      .ilike("name", data.name)
-      .single()
-
-    if (existingCompany) {
-      companyId = existingCompany.id
-    }
-
-    // Criar se não existir
-    if (!companyId) {
-      const { data: newCompany, error } = await supabase
-        .from("companies")
-        .insert({
-          name: data.name,
-          cnpj: data.cnpj || null,
-          email: data.email || null,
-        })
-        .select()
-        .single()
-
-      if (error || !newCompany) {
-        console.error(error)
-        return { success: false, error: "Erro ao criar empresa" }
-      }
-
-      companyId = newCompany.id
-    }
-
-    // Associar usuário
-    const { error: profileError } = await supabase
+    const { error } = await supabase
       .from("profiles")
-      .update({ company_id: companyId })
+      .update({ company_id: data.companyId })
       .eq("id", user.id)
 
-    if (profileError) {
-      console.error(profileError)
+    if (error) {
+      console.error(error)
       return { success: false, error: "Erro ao associar empresa" }
     }
 
@@ -247,6 +234,7 @@ export async function createCompanyOnboardingAction(data: {
     return { success: false, error: "Erro no onboarding" }
   }
 }
+
 
 /* =======================
    LOGOUT

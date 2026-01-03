@@ -1,21 +1,46 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { createCompanyOnboardingAction } from "@/lib/auth/actions"
+import {
+  listCompaniesAction,
+  associateCompanyOnboardingAction,
+} from "@/lib/auth/actions"
+
+type Company = {
+  id: string
+  name: string
+}
 
 export function OnboardingForm() {
-  const [name, setName] = useState("")
-  const [loading, setLoading] = useState(false)
+  const [companies, setCompanies] = useState<Company[]>([])
+  const [companyId, setCompanyId] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    async function loadCompanies() {
+      const res = await listCompaniesAction()
+      if (res.success) {
+        setCompanies(res.companies)
+      }
+    }
+    loadCompanies()
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
     setError(null)
 
-    const result = await createCompanyOnboardingAction({ name })
+    if (!companyId) {
+      setError("Selecione uma empresa")
+      return
+    }
+
+    setLoading(true)
+
+    const result = await associateCompanyOnboardingAction({ companyId })
 
     if (!result.success) {
       setError(result.error)
@@ -23,19 +48,26 @@ export function OnboardingForm() {
       return
     }
 
+    router.refresh()
     router.push("/dashboard")
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium">Nome da Empresa</label>
-        <input
+        <label className="block text-sm font-medium">Empresa</label>
+        <select
           className="w-full border rounded px-3 py-2"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
+          value={companyId}
+          onChange={(e) => setCompanyId(e.target.value)}
+        >
+          <option value="">Selecione uma empresa</option>
+          {companies.map((company) => (
+            <option key={company.id} value={company.id}>
+              {company.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -44,7 +76,7 @@ export function OnboardingForm() {
         disabled={loading}
         className="w-full bg-primary text-white py-2 rounded"
       >
-        {loading ? "Criando..." : "Criar Empresa"}
+        {loading ? "Associando..." : "Continuar"}
       </button>
     </form>
   )
