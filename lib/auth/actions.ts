@@ -123,15 +123,20 @@ export async function loginUserAction(formData: FormData) {
   try {
     const supabase = createAdminClient()
 
-    let { data: user } = await supabase
+    let { data: user, error } = await supabase
       .from("profiles")
       .select("id, email, password_hash, is_active, company_id, role")
       .eq("email", email)
-      .single()
+      .maybeSingle()
 
-    // Criar profile automaticamente se não existir
+    if (error) {
+      console.error(error)
+      return { success: false, error: "Erro ao buscar usuário" }
+    }
+
+    // ✅ Criar profile automaticamente se não existir
     if (!user) {
-      const { data: newUser, error } = await supabase
+      const { data: newUser, error: insertError } = await supabase
         .from("profiles")
         .insert({
           email,
@@ -143,8 +148,8 @@ export async function loginUserAction(formData: FormData) {
         .select()
         .single()
 
-      if (error || !newUser) {
-        console.error(error)
+      if (insertError || !newUser) {
+        console.error(insertError)
         return { success: false, error: "Erro ao inicializar usuário" }
       }
 
@@ -175,6 +180,7 @@ export async function loginUserAction(formData: FormData) {
     return { success: false, error: "Erro ao fazer login" }
   }
 }
+
 
 /* =======================
    LISTAR EMPRESAS
