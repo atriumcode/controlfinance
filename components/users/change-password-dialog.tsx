@@ -97,7 +97,7 @@ export function ChangePasswordDialog({
             <div className="text-sm text-red-600 bg-red-50 border border-red-200 p-2 rounded">
               {error}
             </div>
-          }
+          )}
 
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
