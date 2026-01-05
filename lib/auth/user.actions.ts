@@ -52,7 +52,7 @@ export async function updateUserAction(data: {
     .from("profiles")
     .select("id")
     .eq("id", data.userId)
-    .eq("company_id", currentUser.company!.id)
+    .eq("company_id", currentUser.company.id)
     .single()
 
   if (!targetUser) {
@@ -69,7 +69,7 @@ export async function updateUserAction(data: {
       updated_at: new Date().toISOString(),
     })
     .eq("id", data.userId)
-    .eq("company_id", currentUser.company_id)
+    .eq("company_id", currentUser.company.id)
 
   if (error) {
     console.error(error)
@@ -114,7 +114,7 @@ export async function changeUserPasswordAction(data: {
       updated_at: new Date().toISOString(),
     })
     .eq("id", data.userId)
-    .eq("company_id", currentUser.company_id)
+    .eq("company_id", currentUser.company.id)
 
   if (error) {
     console.error(error)
@@ -143,7 +143,7 @@ export async function deactivateUserAction(userId: string) {
   const { count } = await supabase
     .from("profiles")
     .select("id", { count: "exact", head: true })
-    .eq("company_id", currentUser.company_id)
+    .eq("company_id", currentUser.company.id)
     .eq("role", "admin")
     .eq("is_active", true)
 
@@ -161,7 +161,7 @@ export async function deactivateUserAction(userId: string) {
       updated_at: new Date().toISOString(),
     })
     .eq("id", userId)
-    .eq("company_id", currentUser.company_id)
+    .eq("company_id", currentUser.company.id)
 
   if (error) {
     console.error(error)

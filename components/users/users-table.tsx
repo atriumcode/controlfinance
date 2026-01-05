@@ -125,15 +125,21 @@ export function UsersTable({ users }: UsersTableProps) {
             </TableHeader>
             <TableBody>
               {filteredUsers.map((user) => (
-                <TableRow key={user.id} className="cursor-pointer hover:bg-muted/50">
-                  <TableCell className="font-medium" onClick={() => handleUserClick(user.id)}>
+                <TableRow key={user.id} className="hover:bg-muted/50">
+                  <TableCell className="font-medium cursor-pointer" onClick={() => handleUserClick(user.id)}>
                     {user.full_name}
+                  </TableCell>
+                  <TableCell
+                    className="cursor-pointer"
+                    onClick={() => handleUserClick(user.id)}
+                  >
+                    {user.email}
                   </TableCell>
                   <TableCell onClick={() => handleUserClick(user.id)}>{user.email}</TableCell>
                   <TableCell onClick={() => handleUserClick(user.id)}>
                     <Badge variant={roleColors[user.role]}>{roleLabels[user.role]}</Badge>
                   </TableCell>
-                  <TableCell onClick={(e) => e.stopPropagation()}>
+                  <TableCell>
                     <UserActions user={user} />
                   </TableCell>
                 </TableRow>
