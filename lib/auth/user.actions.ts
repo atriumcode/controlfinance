@@ -52,7 +52,7 @@ export async function updateUserAction(data: {
     .from("profiles")
     .select("id")
     .eq("id", data.userId)
-    .eq("company_id", currentUser.company_id)
+    .eq("company_id", currentUser.company!.id)
     .single()
 
   if (!targetUser) {

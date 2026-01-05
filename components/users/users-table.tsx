@@ -133,7 +133,7 @@ export function UsersTable({ users }: UsersTableProps) {
                   <TableCell onClick={() => handleUserClick(user.id)}>
                     <Badge variant={roleColors[user.role]}>{roleLabels[user.role]}</Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <UserActions user={user} />
                   </TableCell>
                 </TableRow>
