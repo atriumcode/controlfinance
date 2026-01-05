@@ -24,6 +24,20 @@ export function NewUserForm({ companyId }: { companyId: string }) {
   setIsLoading(true)
   setError(null)
 
+  const ALLOWED_ROLES = [
+    "admin",
+    "manager",
+    "user",
+    "accountant",
+    "viewer",
+  ]
+
+  if (!ALLOWED_ROLES.includes(role)) {
+    setError("Perfil de acesso inválido")
+    setIsLoading(false)
+    return
+  }
+
   const formData = new FormData(e.currentTarget)
 
   const email = formData.get("email") as string
@@ -68,14 +82,15 @@ export function NewUserForm({ companyId }: { companyId: string }) {
     setTimeout(() => {
       router.push("/dashboard/users?success=user-created")
     }, 2000)
-  } catch (error: any) {
-    console.error("Unexpected error:", error)
-    setError(error.message || "Erro inesperado na criação do usuário")
+  } catch (err: any) {
+    console.error(err)
+    setError("Erro inesperado na criação do usuário")
   } finally {
     setIsLoading(false)
   }
 }
 
+    
   if (success) {
     return (
       <>
@@ -155,10 +170,27 @@ export function NewUserForm({ companyId }: { companyId: string }) {
                   <SelectValue placeholder="Selecione o nível de acesso" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="leitura">Leitura - Apenas visualizar dados</SelectItem>
-                  <SelectItem value="escrita">Escrita - Visualizar e editar dados</SelectItem>
-                  <SelectItem value="administrador">Administrador - Acesso completo</SelectItem>
+                  <SelectItem value="admin">
+                    Administrador – Acesso total
+                  </SelectItem>
+
+                  <SelectItem value="manager">
+                    Gerente – Gestão operacional
+                  </SelectItem>
+
+                  <SelectItem value="accountant">
+                    Contador – Financeiro e relatórios
+                  </SelectItem>
+
+                  <SelectItem value="user">
+                    Usuário – Operacional
+                  </SelectItem>
+
+                  <SelectItem value="viewer">
+                    Visualizador – Somente leitura
+                  </SelectItem>
                 </SelectContent>
+
               </Select>
             </div>
 
