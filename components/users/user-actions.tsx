@@ -49,13 +49,22 @@ export function UserActions({ user }: UserActionsProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
+          <Button
+            variant="ghost" 
+            className="h-8 w-8 p-0"
+            onClick={(e) => e.stopPropagation()}
+          >
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setEditOpen(true)}>
+          <DropdownMenuItem 
+            onClick={(e) => {
+              e.stopPropagation()
+              setEditOpen(true)
+            }}
+          >
             <Edit className="mr-2 h-4 w-4" />
             Editar usuário
           </DropdownMenuItem>
@@ -67,8 +76,10 @@ export function UserActions({ user }: UserActionsProps) {
 
           <DropdownMenuItem
             className="text-red-600"
-            onClick={handleDeactivate}
-            disabled={loading}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleDeactivate()
+            }}
           >
             <Ban className="mr-2 h-4 w-4" />
             Desativar usuário

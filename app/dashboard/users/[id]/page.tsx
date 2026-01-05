@@ -1,4 +1,5 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 import { notFound } from "next/navigation"
 import { UserDetailsForm } from "@/components/users/user-details-form"
 
@@ -11,10 +12,20 @@ interface UserDetailsPageProps {
 }
 
 export default async function UserDetailsPage({ params }: UserDetailsPageProps) {
-  const supabase = await createServerClient()
+  const currentUser = await getAuthenticatedUser()
 
-  // Fetch user details
-  const { data: user, error } = await supabase.from("profiles").select("*").eq("id", params.id).single()
+  if (!currentUser?.company?.id) {
+    notFound()
+  }
+
+  const supabase = createAdminClient()
+
+  const { data: user, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", params.id)
+    .eq("company_id", currentUser.company.id) // 🔑 ESSENCIAL
+    .single()
 
   if (error || !user) {
     notFound()
@@ -24,7 +35,9 @@ export default async function UserDetailsPage({ params }: UserDetailsPageProps) 
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Detalhes do Usuário</h1>
-        <p className="text-muted-foreground">Visualize e edite informações do usuário</p>
+        <p className="text-muted-foreground">
+          Visualize e edite informações do usuário
+        </p>
       </div>
 
       <UserDetailsForm user={user} />
