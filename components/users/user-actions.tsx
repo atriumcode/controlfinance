@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { deactivateUserAction } from "@/app/actions/user.actions"
+import { deactivateUserAction } from "@/lib/auth/user.actions"
 import { EditUserDialog } from "./edit-user-dialog"
 import { ChangePasswordDialog } from "./change-password-dialog"
 

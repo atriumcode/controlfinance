@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { changeUserPasswordAction } from "@/app/actions/user.actions"
+import { changeUserPasswordAction } from "@/lib/auth/user.actions"
 
 interface ChangePasswordDialogProps {
   open: boolean

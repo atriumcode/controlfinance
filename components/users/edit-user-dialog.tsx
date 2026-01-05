@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { updateUserAction } from "@/app/actions/user.actions"
+import { updateUserAction } from "@/lib/auth/user.actions"
 
 interface EditUserDialogProps {
   open: boolean
