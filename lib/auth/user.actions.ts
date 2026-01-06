@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/server"
 import { requireAuth } from "@/lib/auth/actions"
 import { hashPassword, validatePassword } from "@/lib/auth/password"
+import { revalidatePath } from "next/cache"
 
 // ROLES PERMITIDOS (deve bater com o CHECK do banco)
 const ALLOWED_ROLES = [
@@ -75,6 +76,8 @@ export async function updateUserAction(data: {
     console.error(error)
     return { success: false, error: "Erro ao atualizar usuário" }
   }
+
+  revalidatePath("/dashboard/users")
 
   return { success: true }
 }

@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useRouter } from "next/navigation"
 import {
   Select,
   SelectContent,
@@ -46,6 +47,7 @@ export function EditUserDialog({ open, onOpenChange, user }: EditUserDialogProps
   const [isActive, setIsActive] = useState(user.is_active)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   async function handleSave() {
     setLoading(true)
@@ -66,7 +68,7 @@ export function EditUserDialog({ open, onOpenChange, user }: EditUserDialogProps
     }
 
     onOpenChange(false)
-    window.location.reload()
+    router.refresh()
   }
 
   return (
