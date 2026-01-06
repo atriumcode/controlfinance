@@ -1,10 +1,16 @@
-export type UserRole = "admin" | "manager" | "user" | "accountant"
+export type UserRole =
+  | "admin"
+  | "manager"
+  | "accountant"
+  | "user"
+  | "viewer"
 
 export const ROLES = {
   USER: "user" as const,
   ACCOUNTANT: "accountant" as const,
   MANAGER: "manager" as const,
   ADMIN: "admin" as const,
+  VIEWER: "viewer" as const,
 }
 
 export const ROLE_PERMISSIONS = {
@@ -44,6 +50,15 @@ export const ROLE_PERMISSIONS = {
     canManageCompany: true,
     canViewReports: true,
   },
+  [ROLES.VIEWER]: {
+  canRead: true,
+  canWrite: false,
+  canDelete: false,
+  canManageUsers: false,
+  canAccessAdmin: false,
+  canManageCompany: false,
+  canViewReports: false,
+},
 }
 
 export function hasPermission(userRole: UserRole, permission: keyof (typeof ROLE_PERMISSIONS)[UserRole]) {
@@ -91,7 +106,7 @@ export function getRoleLabel(role: UserRole): string {
     manager: "Gerente",
     admin: "Administrador",
   }
-  return labels[role]
+return labels[role] ?? "Desconhecido"
 }
 
 export function getRoleDescription(role: UserRole): string {
@@ -101,11 +116,17 @@ export function getRoleDescription(role: UserRole): string {
     manager: "Gerenciar equipe e configurações da empresa",
     admin: "Acesso completo ao sistema e configurações",
   }
-  return descriptions[role]
+return descriptions[role] ?? "Nível de acesso não definido"
 }
 
 export function getRoleHierarchy(): UserRole[] {
-  return [ROLES.USER, ROLES.ACCOUNTANT, ROLES.MANAGER, ROLES.ADMIN]
+return [
+  ROLES.VIEWER,
+  ROLES.USER,
+  ROLES.ACCOUNTANT,
+  ROLES.MANAGER,
+  ROLES.ADMIN,
+]
 }
 
 export function isRoleHigherOrEqual(userRole: UserRole, requiredRole: UserRole): boolean {
