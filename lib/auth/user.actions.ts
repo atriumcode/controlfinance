@@ -5,7 +5,6 @@ import { requireAuth } from "@/lib/auth/actions"
 import { hashPassword, validatePassword } from "@/lib/auth/password"
 import { revalidatePath } from "next/cache"
 
-// ROLES PERMITIDOS (deve bater com o CHECK do banco)
 const ALLOWED_ROLES = [
   "admin",
   "manager",
@@ -14,7 +13,9 @@ const ALLOWED_ROLES = [
   "viewer",
 ] as const
 
-//EDITAR USUÁRIO
+// ======================
+// EDITAR USUÁRIO
+// ======================
 export async function updateUserAction(data: {
   userId: string
   fullName: string
@@ -23,22 +24,22 @@ export async function updateUserAction(data: {
 }) {
   const currentUser = await requireAuth()
 
-  // 1️⃣ Permissão
+  if (!currentUser || !currentUser.company_id) {
+    return { success: false, error: "Usuário sem empresa vinculada" }
+  }
+
   if (currentUser.role !== "admin") {
     return { success: false, error: "Permissão negada" }
   }
 
-  // 2️⃣ VALIDAR ROLE (OBRIGATÓRIO)
   if (!ALLOWED_ROLES.includes(data.role as any)) {
     return { success: false, error: "Perfil de acesso inválido" }
   }
 
-  // 3️⃣ Impedir desativar a si mesmo
   if (currentUser.id === data.userId && !data.isActive) {
     return { success: false, error: "Você não pode desativar a si mesmo" }
   }
 
-  // 4️⃣ Impedir alterar o próprio role
   if (currentUser.id === data.userId && data.role !== currentUser.role) {
     return {
       success: false,
@@ -48,19 +49,17 @@ export async function updateUserAction(data: {
 
   const supabase = createAdminClient()
 
-  // 5️⃣ Garantir que o usuário existe
   const { data: targetUser } = await supabase
     .from("profiles")
     .select("id")
     .eq("id", data.userId)
-    .eq("company_id", currentUser.company.id)
+    .eq("company_id", currentUser.company_id)
     .single()
 
   if (!targetUser) {
     return { success: false, error: "Usuário não encontrado" }
   }
 
-  // 6️⃣ Atualização
   const { error } = await supabase
     .from("profiles")
     .update({
@@ -70,7 +69,7 @@ export async function updateUserAction(data: {
       updated_at: new Date().toISOString(),
     })
     .eq("id", data.userId)
-    .eq("company_id", currentUser.company.id)
+    .eq("company_id", currentUser.company_id)
 
   if (error) {
     console.error(error)
@@ -78,22 +77,26 @@ export async function updateUserAction(data: {
   }
 
   revalidatePath("/dashboard/users")
-
   return { success: true }
 }
 
-//TROCAR SENHA DO USUÁRIO
+// ======================
+// TROCAR SENHA
+// ======================
 export async function changeUserPasswordAction(data: {
   userId: string
   newPassword: string
 }) {
   const currentUser = await requireAuth()
 
+  if (!currentUser || !currentUser.company_id) {
+    return { success: false, error: "Usuário sem empresa vinculada" }
+  }
+
   if (currentUser.role !== "admin") {
     return { success: false, error: "Permissão negada" }
   }
 
-  // 🔒 Impedir trocar a própria senha por aqui (opcional)
   if (currentUser.id === data.userId) {
     return {
       success: false,
@@ -107,7 +110,6 @@ export async function changeUserPasswordAction(data: {
   }
 
   const passwordHash = await hashPassword(data.newPassword)
-
   const supabase = createAdminClient()
 
   const { error } = await supabase
@@ -117,7 +119,7 @@ export async function changeUserPasswordAction(data: {
       updated_at: new Date().toISOString(),
     })
     .eq("id", data.userId)
-    .eq("company_id", currentUser.company.id)
+    .eq("company_id", currentUser.company_id)
 
   if (error) {
     console.error(error)
@@ -127,10 +129,15 @@ export async function changeUserPasswordAction(data: {
   return { success: true }
 }
 
-
-//DESTAIVAR USUÁRIO
+// ======================
+// DESATIVAR USUÁRIO
+// ======================
 export async function deactivateUserAction(userId: string) {
   const currentUser = await requireAuth()
+
+  if (!currentUser || !currentUser.company_id) {
+    return { success: false, error: "Usuário sem empresa vinculada" }
+  }
 
   if (currentUser.role !== "admin") {
     return { success: false, error: "Permissão negada" }
@@ -142,11 +149,10 @@ export async function deactivateUserAction(userId: string) {
 
   const supabase = createAdminClient()
 
-  // 🚨 Verificar se é o último admin ativo
   const { count } = await supabase
     .from("profiles")
     .select("id", { count: "exact", head: true })
-    .eq("company_id", currentUser.company.id)
+    .eq("company_id", currentUser.company_id)
     .eq("role", "admin")
     .eq("is_active", true)
 
@@ -164,7 +170,7 @@ export async function deactivateUserAction(userId: string) {
       updated_at: new Date().toISOString(),
     })
     .eq("id", userId)
-    .eq("company_id", currentUser.company.id)
+    .eq("company_id", currentUser.company_id)
 
   if (error) {
     console.error(error)
@@ -174,9 +180,15 @@ export async function deactivateUserAction(userId: string) {
   return { success: true }
 }
 
-//DELETAR USUARIO
+// ======================
+// DELETAR USUÁRIO
+// ======================
 export async function deleteUserAction(userId: string) {
   const currentUser = await requireAuth()
+
+  if (!currentUser || !currentUser.company_id) {
+    return { success: false, error: "Usuário sem empresa vinculada" }
+  }
 
   if (currentUser.role !== "admin") {
     return { success: false, error: "Permissão negada" }
@@ -188,12 +200,12 @@ export async function deleteUserAction(userId: string) {
     .from("profiles")
     .delete()
     .eq("id", userId)
+    .eq("company_id", currentUser.company_id)
 
   if (error) {
     return { success: false, error: error.message }
   }
 
   revalidatePath("/dashboard/users")
-
   return { success: true }
 }
