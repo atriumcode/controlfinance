@@ -1,6 +1,6 @@
 "use client"
 
-import { logout } from "@/app/actions/logout"
+import { logoutAction } from "@/lib/auth/actions"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
@@ -45,19 +45,15 @@ export function DashboardHeader({
 
       {/* Avatar + Dropdown */}
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="relative h-9 w-9 rounded-full p-0"
-          >
-            <Avatar className="h-9 w-9">
-              <AvatarFallback>
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-          </Button>
+        <DropdownMenuTrigger
+          className="relative h-9 w-9 rounded-full flex items-center justify-center hover:bg-muted cursor-pointer"
+        >
+          <Avatar className="h-9 w-9">
+            <AvatarFallback>
+              {initials}
+            </AvatarFallback>
+          </Avatar>
         </DropdownMenuTrigger>
-
         <DropdownMenuContent
           align="end"
           sideOffset={8}
@@ -74,7 +70,7 @@ export function DashboardHeader({
 
           <DropdownMenuSeparator />
 
-          <form action={logout}>
+          <form action={logoutAction}>
             <DropdownMenuItem asChild>
               <button
                 type="submit"

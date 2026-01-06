@@ -1,5 +1,6 @@
 "use server"
 
+import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { createAdminClient } from "@/lib/supabase/server"
 import { hashPassword, verifyPassword, validatePassword } from "./password"
