@@ -1,16 +1,13 @@
+import { requireAuth } from "@/lib/auth/require-auth"
 import { redirect } from "next/navigation"
-import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 import { OnboardingForm } from "@/components/onboarding/onboarding-form"
 
 export const dynamic = "force-dynamic"
 
 export default async function OnboardingPage() {
-  const user = await getAuthenticatedUser()
+  const user = await requireAuth()
 
-  if (!user) {
-    redirect("/auth/login")
-  }
-
+  // 🔒 Se já tem empresa, não pode acessar onboarding
   if (user.company_id) {
     redirect("/dashboard")
   }
