@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LogOut } from "lucide-react"
+import { LogOut, User } from "lucide-react"
 import { DashboardBreadcrumb } from "./breadcrumb"
 
 
@@ -60,16 +60,24 @@ export function DashboardHeader({
           className="w-56"
         >
           <DropdownMenuLabel className="flex flex-col">
-            <span className="text-sm font-medium">
-              {userName}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {companyName}
-            </span>
+            <span className="text-sm font-medium">{userName}</span>
+            <span className="text-xs text-muted-foreground">{companyName}</span>
           </DropdownMenuLabel>
+
+          {/* 👤 PERFIL */}
+          <DropdownMenuItem asChild>
+            <a
+              href="/dashboard/settings/profile"
+              className="flex items-center gap-2"
+            >
+              <User className="h-4 w-4" />
+              Meu Perfil
+            </a>
+          </DropdownMenuItem>
 
           <DropdownMenuSeparator />
 
+          {/* 🚪 LOGOUT */}
           <form action={logoutAction}>
             <DropdownMenuItem asChild>
               <button
