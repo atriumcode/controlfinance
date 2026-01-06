@@ -57,20 +57,22 @@ export function RevenueChart({ invoices }: RevenueChartProps) {
         <CardDescription>Comparativo dos últimos 6 meses</CardDescription>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={monthsData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="month" />
-            <YAxis tickFormatter={formatCurrency} />
-            <Tooltip
-              formatter={(value: number) => [formatCurrency(value), ""]}
-              labelFormatter={(label) => `Mês: ${label}`}
-            />
-            <Bar dataKey="paid" stackId="a" fill="#22c55e" name="Recebido" />
-            <Bar dataKey="pending" stackId="a" fill="#eab308" name="Pendente" />
-          </BarChart>
-        </ResponsiveContainer>
-      </CardContent>
+  <div className="h-[300px] w-full">
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={monthsData}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="month" />
+        <YAxis tickFormatter={formatCurrency} />
+        <Tooltip
+          formatter={(value: number) => [formatCurrency(value), ""]}
+          labelFormatter={(label) => `Mês: ${label}`}
+        />
+        <Bar dataKey="paid" stackId="a" fill="#22c55e" name="Recebido" />
+        <Bar dataKey="pending" stackId="a" fill="#eab308" name="Pendente" />
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+</CardContent>
     </Card>
   )
 }
