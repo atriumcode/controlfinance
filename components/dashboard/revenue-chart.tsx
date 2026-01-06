@@ -36,11 +36,32 @@ export function RevenueChart({ invoices }: RevenueChartProps) {
     setMounted(true)
   }, [])
 
+  // ✅ Placeholder estável (NUNCA return null)
   if (!mounted) {
-    return null
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Faturamento por Mês</CardTitle>
+          <CardDescription>
+            Comparativo dos últimos 6 meses
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] w-full" />
+        </CardContent>
+      </Card>
+    )
   }
 
-  const monthsData = []
+  // ======================
+  // GERAR DADOS PRIMEIRO
+  // ======================
+  const monthsData: {
+    month: string
+    paid: number
+    pending: number
+  }[] = []
+
   const currentDate = new Date()
 
   for (let i = 5; i >= 0; i--) {
@@ -77,6 +98,31 @@ export function RevenueChart({ invoices }: RevenueChartProps) {
       paid: paidRevenue,
       pending: totalRevenue - paidRevenue,
     })
+  }
+
+  // ======================
+  // VALIDAR DEPOIS DE GERAR
+  // ======================
+  const hasData = monthsData.some(
+    (m) => m.paid > 0 || m.pending > 0
+  )
+
+  if (!hasData) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Faturamento por Mês</CardTitle>
+          <CardDescription>
+            Comparativo dos últimos 6 meses
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
+            Nenhum dado disponível para exibição
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   const formatCurrency = (value: number) =>
