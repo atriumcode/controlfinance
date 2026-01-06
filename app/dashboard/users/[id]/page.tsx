@@ -6,15 +6,19 @@ import { UserDetailsForm } from "@/components/users/user-details-form"
 export const dynamic = "force-dynamic"
 
 interface UserDetailsPageProps {
-  params: {
-    id: string
+  params?: {
+    id?: string
   }
 }
 
 export default async function UserDetailsPage({ params }: UserDetailsPageProps) {
+  if (!params?.id) {
+    notFound()
+  }
+
   const currentUser = await getAuthenticatedUser()
 
-  if (!currentUser?.company?.id) {
+  if (!currentUser || !currentUser.company_id) {
     notFound()
   }
 
@@ -24,7 +28,7 @@ export default async function UserDetailsPage({ params }: UserDetailsPageProps) 
     .from("profiles")
     .select("*")
     .eq("id", params.id)
-    .eq("company_id", currentUser.company.id) // 🔑 ESSENCIAL
+    .eq("company_id", currentUser.company_id) // ✅ CORRETO
     .single()
 
   if (error || !user) {
