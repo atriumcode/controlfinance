@@ -10,16 +10,20 @@ export default async function DashboardShell({
   const user = await getAuthenticatedUser()
 
   return (
-    <div className="min-h-screen md:pl-64">
+    <div className="flex min-h-screen min-w-0 bg-background">
+      {/* Sidebar */}
       <DashboardSidebar />
 
-      <div className="flex min-h-screen flex-col">
+      {/* Área principal */}
+      <div className="flex flex-1 flex-col min-h-0 min-w-0">
         <DashboardHeader
           userName={user?.name ?? ""}
           companyName={user?.company?.name ?? ""}
         />
 
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 min-h-0 min-w-0 overflow-auto p-6">
+          {children}
+        </main>
       </div>
     </div>
   )
