@@ -1,18 +1,31 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
+import Link from "next/link"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Trash2 } from "lucide-react"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { ArrowLeft, Trash2 } from "lucide-react"
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,14 +37,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import Link from "next/link"
+
+import { updateUserAction, deleteUserAction } from "@/lib/auth/user.actions"
 import { getRoleLabel, getRoleDescription, type UserRole } from "@/lib/auth/roles"
 
 interface User {
   id: string
   email: string
   full_name: string
-  role: UserRole | null
+  role: UserRole
   created_at: string
   company_id: string
 }
@@ -40,75 +54,57 @@ interface UserDetailsFormProps {
   user: User
 }
 
+const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
+  { value: "viewer", label: "Leitura – Apenas visualizar dados" },
+  { value: "user", label: "Escrita – Visualizar e editar dados" },
+  { value: "admin", label: "Administrador – Acesso completo" },
+]
+
 export function UserDetailsForm({ user }: UserDetailsFormProps) {
-  const [formData, setFormData] = useState({
-    fullName: user.full_name || "",
-    role: user.role || "administrador",
-  })
+  const router = useRouter()
+
+  const [fullName, setFullName] = useState(user.full_name)
+  const [role, setRole] = useState<UserRole>(user.role ?? "viewer")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
     setSuccess(null)
 
-    console.log("[v0] Updating user with data:", formData)
+    const result = await updateUserAction({
+      userId: user.id,
+      fullName,
+      role,
+    })
 
-    try {
-      const supabase = createClient()
+    setIsLoading(false)
 
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: formData.fullName,
-          role: formData.role,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id)
-
-      if (error) {
-        console.log("[v0] Database update error:", error)
-        throw error
-      }
-
-      console.log("[v0] User updated successfully")
-      setSuccess("Usuário atualizado com sucesso!")
-
-      // Refresh the page data
-      router.refresh()
-    } catch (error: any) {
-      console.log("[v0] Update failed:", error.message)
-      setError(error.message || "Erro ao atualizar usuário")
-    } finally {
-      setIsLoading(false)
+    if (!result.success) {
+      setError(result.error || "Erro ao atualizar usuário")
+      return
     }
+
+    setSuccess("Usuário atualizado com sucesso!")
+    router.refresh()
   }
 
-  const handleDelete = async () => {
+  async function handleDelete() {
     setIsLoading(true)
     setError(null)
 
-    try {
-      const supabase = createClient()
+    const result = await deleteUserAction(user.id)
 
-      // Delete from profiles table (this will cascade to auth.users via RLS)
-      const { error } = await supabase.from("profiles").delete().eq("id", user.id)
-
-      if (error) throw error
-
-      router.push("/dashboard/users?success=user-deleted")
-    } catch (error: any) {
-      setError(error.message || "Erro ao excluir usuário")
+    if (!result.success) {
+      setError(result.error || "Erro ao excluir usuário")
       setIsLoading(false)
+      return
     }
-  }
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    router.push("/dashboard/users?success=user-deleted")
   }
 
   return (
@@ -123,7 +119,7 @@ export function UserDetailsForm({ user }: UserDetailsFormProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* User Info Card */}
+        {/* INFORMAÇÕES DO USUÁRIO */}
         <Card>
           <CardHeader>
             <CardTitle>Informações do Usuário</CardTitle>
@@ -131,40 +127,48 @@ export function UserDetailsForm({ user }: UserDetailsFormProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-sm font-medium text-muted-foreground">Email</Label>
+              <Label className="text-sm text-muted-foreground">Email</Label>
               <p className="text-sm">{user.email}</p>
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-muted-foreground">Nível de Acesso</Label>
+              <Label className="text-sm text-muted-foreground">
+                Nível de Acesso
+              </Label>
               <div className="flex items-center gap-2 mt-1">
                 <Badge
                   variant={
-                    (user.role || "administrador") === "administrador"
+                    role === "admin"
                       ? "destructive"
-                      : (user.role || "administrador") === "escrita"
-                        ? "default"
-                        : "secondary"
+                      : role === "user"
+                      ? "default"
+                      : "secondary"
                   }
                 >
-                  {getRoleLabel(user.role || "administrador")}
+                  {getRoleLabel(role)}
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">{getRoleDescription(user.role || "administrador")}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {getRoleDescription(role)}
+              </p>
             </div>
 
             <div>
-              <Label className="text-sm font-medium text-muted-foreground">Criado em</Label>
-              <p className="text-sm">{new Date(user.created_at).toLocaleDateString("pt-BR")}</p>
+              <Label className="text-sm text-muted-foreground">Criado em</Label>
+              <p className="text-sm">
+                {new Date(user.created_at).toLocaleDateString("pt-BR")}
+              </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Edit Form */}
+        {/* FORMULÁRIO DE EDIÇÃO */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Editar Usuário</CardTitle>
-            <CardDescription>Atualize as informações do usuário</CardDescription>
+            <CardDescription>
+              Atualize as informações do usuário
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -172,35 +176,32 @@ export function UserDetailsForm({ user }: UserDetailsFormProps) {
                 <Label htmlFor="fullName">Nome Completo</Label>
                 <Input
                   id="fullName"
-                  value={formData.fullName}
-                  onChange={(e) => handleInputChange("fullName", e.target.value)}
-                  placeholder="Digite o nome completo"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="role">Nível de Acesso</Label>
-                <Select value={formData.role} onValueChange={(value) => handleInputChange("role", value)}>
+                <Label>Nível de Acesso</Label>
+                <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o nível de acesso" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="leitura">Leitura - Apenas visualizar dados</SelectItem>
-                    <SelectItem value="escrita">Escrita - Visualizar e editar dados</SelectItem>
-                    <SelectItem value="administrador">Administrador - Acesso completo</SelectItem>
+                    {ROLE_OPTIONS.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>
+                        {r.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-                {!user.role && (
-                  <p className="text-xs text-muted-foreground">
-                    Seu usuário não possui nível de acesso definido. Selecione "Administrador" para ter acesso completo
-                    ao sistema.
-                  </p>
-                )}
               </div>
 
               {error && (
-                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">{error}</div>
+                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                  {error}
+                </div>
               )}
 
               {success && (
@@ -213,7 +214,11 @@ export function UserDetailsForm({ user }: UserDetailsFormProps) {
                 <Button type="submit" disabled={isLoading}>
                   {isLoading ? "Salvando..." : "Salvar Alterações"}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => router.back()}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.back()}
+                >
                   Cancelar
                 </Button>
               </div>
@@ -221,10 +226,12 @@ export function UserDetailsForm({ user }: UserDetailsFormProps) {
 
             <Separator className="my-6" />
 
-            {/* Danger Zone */}
+            {/* ZONA DE PERIGO */}
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-medium text-red-600">Zona de Perigo</h3>
+                <h3 className="text-lg font-medium text-red-600">
+                  Zona de Perigo
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   Ações irreversíveis que afetam permanentemente este usuário.
                 </p>
@@ -232,22 +239,32 @@ export function UserDetailsForm({ user }: UserDetailsFormProps) {
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" size="sm" disabled={isLoading}>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={isLoading}
+                  >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Excluir Usuário
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                    <AlertDialogTitle>
+                      Confirmar Exclusão
+                    </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Tem certeza que deseja excluir o usuário <strong>{user.full_name}</strong>? Esta ação não pode ser
-                      desfeita e o usuário perderá acesso ao sistema.
+                      Tem certeza que deseja excluir o usuário{" "}
+                      <strong>{user.full_name}</strong>? Esta ação não pode ser
+                      desfeita.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                    <AlertDialogAction
+                      onClick={handleDelete}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
                       Excluir
                     </AlertDialogAction>
                   </AlertDialogFooter>
