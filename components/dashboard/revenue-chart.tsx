@@ -142,34 +142,37 @@ export function RevenueChart({ invoices }: RevenueChartProps) {
       </CardHeader>
 
       <CardContent>
-        <div className="h-[300px] w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={monthsData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis tickFormatter={formatCurrency} />
-              <Tooltip
-                formatter={(value: number) => [
-                  formatCurrency(value),
-                  "",
-                ]}
-              />
-              <Bar
-                dataKey="paid"
-                stackId="a"
-                fill="#22c55e"
-                name="Recebido"
-              />
-              <Bar
-                dataKey="pending"
-                stackId="a"
-                fill="#eab308"
-                name="Pendente"
-              />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="overflow-x-auto">
+          <BarChart
+            width={600}
+            height={300}
+            data={monthsData}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="month" />
+            <YAxis tickFormatter={formatCurrency} />
+            <Tooltip
+              formatter={(value: number) => [
+                formatCurrency(value),
+                "",
+              ]}
+            />
+            <Bar
+              dataKey="paid"
+              stackId="a"
+              fill="#22c55e"
+              name="Recebido"
+            />
+            <Bar
+              dataKey="pending"
+              stackId="a"
+              fill="#eab308"
+              name="Pendente"
+            />
+          </BarChart>
         </div>
       </CardContent>
+
     </Card>
   )
 }
