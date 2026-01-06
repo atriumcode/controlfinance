@@ -173,3 +173,27 @@ export async function deactivateUserAction(userId: string) {
 
   return { success: true }
 }
+
+//DELETAR USUARIO
+export async function deleteUserAction(userId: string) {
+  const currentUser = await requireAuth()
+
+  if (currentUser.role !== "admin") {
+    return { success: false, error: "Permissão negada" }
+  }
+
+  const supabase = createAdminClient()
+
+  const { error } = await supabase
+    .from("profiles")
+    .delete()
+    .eq("id", userId)
+
+  if (error) {
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath("/dashboard/users")
+
+  return { success: true }
+}
