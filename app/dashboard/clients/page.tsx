@@ -8,21 +8,32 @@ import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
 export default async function ClientsPage() {
   const user = await getAuthenticatedUser()
+
+  if (!user) {
+    redirect("/login")
+  }
+
   const supabase = createAdminClient()
 
-  // Get user's company
-  const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", user.id).single()
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("company_id")
+    .eq("id", user.id)
+    .single()
 
-  if (!profile?.company_id) {
+  if (profileError || !profile?.company_id) {
     redirect("/dashboard/settings")
   }
 
-  // Get clients for the company
-  const { data: clients } = await supabase
+  const { data: clients, error: clientsError } = await supabase
     .from("clients")
     .select("*")
     .eq("company_id", profile.company_id)
     .order("created_at", { ascending: false })
+
+  if (clientsError) {
+    throw new Error("Erro ao carregar clientes")
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -51,12 +62,11 @@ export default async function ClientsPage() {
           <CardHeader>
             <CardTitle>Lista de Clientes</CardTitle>
             <CardDescription>
-              {clients?.length || 0} cliente{clients?.length !== 1 ? "s" : ""} cadastrado
-              {clients?.length !== 1 ? "s" : ""}
+              {clients.length} cliente{clients.length !== 1 ? "s" : ""} cadastrado
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ClientsTable clients={clients || []} />
+            <ClientsTable clients={clients} />
           </CardContent>
         </Card>
       </main>
