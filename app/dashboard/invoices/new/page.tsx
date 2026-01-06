@@ -1,18 +1,31 @@
 import { createClient } from "@/lib/supabase/server"
 import { InvoiceForm } from "@/components/invoices/invoice-form"
+import { redirect } from "next/navigation"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
 export default async function NewInvoicePage() {
   const supabase = await createClient()
 
+  // 1️⃣ Usuário autenticado
+  const user = await getAuthenticatedUser()
+
+  if (!user) {
+    redirect("/auth/login")
+  }
+
+  // 2️⃣ Buscar profile DO USUÁRIO
   const { data: profile } = await supabase
     .from("profiles")
     .select("company_id")
+    .eq("id", user.id)
     .single()
 
+  // 3️⃣ Onboarding obrigatório
   if (!profile?.company_id) {
-    throw new Error("Empresa não vinculada ao usuário")
+    redirect("/dashboard/onboarding")
   }
 
+  // 4️⃣ Buscar clientes da empresa correta
   const { data: clients } = await supabase
     .from("clients")
     .select("id, name, document, document_type")
