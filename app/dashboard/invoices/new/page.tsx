@@ -22,7 +22,7 @@ export default async function NewInvoicePage() {
 
   // 3️⃣ Onboarding obrigatório
   if (!profile?.company_id) {
-    redirect("/dashboard/onboarding")
+    redirect("/onboarding")
   }
 
   // 4️⃣ Buscar clientes da empresa correta
