@@ -1,69 +1,23 @@
-import type { Metadata } from "next"
-import localFont from "next/font/local"
-import "./globals.css"
-import { Providers } from "./providers"
+import { ReactNode } from "react"
+import { Breadcrumbs } from "@/components/layout/breadcrumbs"
+import { ThemeSwitcher } from "@/components/layout/theme-switcher"
 
-/**
- * Fonte local (Inter)
- * Evita problemas de build com fonts.gstatic.com
- */
-const inter = localFont({
-  src: [
-    {
-      path: "../public/fonts/inter/Inter-Regular.woff2",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/inter/Inter-Medium.woff2",
-      weight: "500",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/inter/Inter-SemiBold.woff2",
-      weight: "600",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/inter/Inter-Bold.woff2",
-      weight: "700",
-      style: "normal",
-    },
-  ],
-  display: "swap",
-  variable: "--font-inter",
-})
-
-export const metadata: Metadata = {
-  title: {
-    default: "ControlFinance",
-    template: "%s | ControlFinance",
-  },
-  description: "Sistema de gestão financeira e notas fiscais",
-  applicationName: "ControlFinance",
-  lang: "pt-BR",
-}
-
-/**
- * RootLayout GLOBAL
- * - NÃO usar requireAuth
- * - NÃO usar requireCompany
- * - NÃO fazer redirects
- */
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
-      <body
-        className={`${inter.className} min-h-screen bg-background text-foreground antialiased`}
-      >
-        <Providers>
+    <div className="flex min-h-screen w-full">
+      {/* SIDEBAR já existente */}
+      <aside className="w-64 border-r bg-background hidden md:block" />
+
+      <main className="flex-1">
+        <header className="flex items-center justify-between border-b px-6 py-4">
+          <Breadcrumbs />
+          <ThemeSwitcher />
+        </header>
+
+        <section className="p-4 md:p-8">
           {children}
-        </Providers>
-      </body>
-    </html>
+        </section>
+      </main>
+    </div>
   )
 }
