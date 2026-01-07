@@ -7,9 +7,7 @@ import Link from "next/link"
 import { DashboardStats } from "@/components/dashboard/dashboard-stats"
 import { RecentInvoices } from "@/components/dashboard/recent-invoices"
 import { CreateInvoiceButton } from "@/components/invoices/create-invoice-button"
-
-
-
+import { DashboardCharts } from "@/components/dashboard/charts-client"
 
 export const dynamic = "force-dynamic"
 
@@ -26,66 +24,33 @@ export default async function DashboardPage() {
     profileResult,
     invoicesResult,
     clientsCountResult,
-    paymentsResult,
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select(`
-      *,
-      companies (
-        name,
-        cnpj
-      )
-    `)
+      .select("company_id")
       .eq("id", user.id)
       .single(),
 
     supabase
       .from("invoices")
-      .select(`
-      *,
-      amount_paid,
-      clients (
-        name,
-        document,
-        document_type
-      )
-    `)
-      .eq("company_id", user.company_id || "")
-      .gte(
-        "created_at",
-        new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
-      )
+      .select("*")
+      .eq("company_id", user.company_id!)
       .order("created_at", { ascending: false })
       .limit(100),
 
     supabase
       .from("clients")
       .select("*", { count: "exact", head: true })
-      .eq("company_id", user.company_id || ""),
-
+      .eq("company_id", user.company_id!),
   ])
 
   const profile = profileResult.data
-  const invoices = invoicesResult.data
-  const clientsCount = clientsCountResult.count
+  const invoices = invoicesResult.data || []
+  const clientsCount = clientsCountResult.count || 0
 
+  // 🚨 Empresa obrigatória
   if (!profile?.company_id) {
-    return (
-      <div className="flex min-h-screen w-full items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Configuração Necessária</CardTitle>
-            <CardDescription>Você precisa configurar sua empresa antes de continuar.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="w-full">
-              <Link href="/dashboard/settings">Configurar Empresa</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
+    redirect("/dashboard/settings")
   }
 
   return (
@@ -96,17 +61,20 @@ export default async function DashboardPage() {
             <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
             <p className="text-muted-foreground">Visão geral do seu negócio</p>
           </div>
+
           <Button asChild>
-            <Link href="/dashboard/reports">Ver Relatórios Detalhados</Link>
+            <Link href="/dashboard/reports">Ver Relatórios</Link>
           </Button>
         </div>
 
-        <DashboardStats invoices={invoices || []} clientsCount={clientsCount || 0} />
+        {/* Cards */}
+        <DashboardStats invoices={invoices} clientsCount={clientsCount} />
 
-
+        {/* 🔥 GRÁFICOS (CLIENT) */}
+        <DashboardCharts invoices={invoices} />
 
         <div className="grid gap-6 lg:grid-cols-2">
-          <RecentInvoices invoices={invoices?.slice(0, 5) || []} />
+          <RecentInvoices invoices={invoices.slice(0, 5)} />
 
           <Card>
             <CardHeader>
@@ -117,12 +85,16 @@ export default async function DashboardPage() {
               <Button asChild className="w-full">
                 <Link href="/dashboard/clients/new">Cadastrar Novo Cliente</Link>
               </Button>
+
+              {/* ✅ Agora funciona */}
               <CreateInvoiceButton />
-              <Button asChild variant="outline" className="w-full bg-transparent">
-                <Link href="/dashboard/import">Importar XML de NF-e</Link>
+
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/dashboard/import">Importar XML</Link>
               </Button>
-              <Button asChild variant="outline" className="w-full bg-transparent">
-                <Link href="/dashboard/reports">Ver Relatórios</Link>
+
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/dashboard/reports">Relatórios</Link>
               </Button>
             </CardContent>
           </Card>
