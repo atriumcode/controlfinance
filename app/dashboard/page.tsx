@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { DashboardStats } from "@/components/dashboard/dashboard-stats"
 import { RecentInvoices } from "@/components/dashboard/recent-invoices"
+import { CreateInvoiceButton } from "@/components/invoices/create-invoice-button"
+
 
 
 
@@ -115,9 +117,7 @@ export default async function DashboardPage() {
               <Button asChild className="w-full">
                 <Link href="/dashboard/clients/new">Cadastrar Novo Cliente</Link>
               </Button>
-              <Button asChild className="w-full">
-                <Link href="/invoices/new">Criar Nova Nota Fiscal</Link>
-              </Button>
+              <CreateInvoiceButton />
               <Button asChild variant="outline" className="w-full bg-transparent">
                 <Link href="/dashboard/import">Importar XML de NF-e</Link>
               </Button>
