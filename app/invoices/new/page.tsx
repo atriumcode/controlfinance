@@ -1,31 +1,46 @@
-import { createClient } from "@/lib/supabase/server"
-import { InvoiceForm } from "@/components/invoices/invoice-form"
 import { redirect } from "next/navigation"
-import { getAuthenticatedUser } from "@/lib/auth/server-auth"
+import { createAdminClient } from "@/lib/supabase/server"
+import { getSession } from "@/lib/auth/session"
+import { InvoiceForm } from "@/components/invoices/invoice-form"
+
+export const dynamic = "force-dynamic"
 
 export default async function NewInvoicePage() {
-  const supabase = await createClient()
+  // 🔐 Sessão (MESMO padrão do dashboard)
+  const { user } = await getSession()
 
-  // 1️⃣ Usuário autenticado
-  const user = await getAuthenticatedUser()
-  if (!user) redirect("/auth/login")
+  if (!user) {
+    redirect("/auth/login")
+  }
 
-  // 2️⃣ Buscar profile
-  const { data: profile } = await supabase
+  const supabase = createAdminClient()
+
+  // 🏢 Verificar empresa vinculada
+  const { data: profile, error } = await supabase
     .from("profiles")
     .select("company_id")
     .eq("id", user.id)
     .single()
 
-  // 3️⃣ Onboarding obrigatório
-  if (!profile?.company_id) redirect("/dashboard/settings")
+  if (error) {
+    console.error("[NewInvoicePage] erro ao buscar profile:", error)
+    redirect("/dashboard")
+  }
 
-  // 4️⃣ Clientes da empresa
-  const { data: clients } = await supabase
+  if (!profile?.company_id) {
+    redirect("/dashboard/settings")
+  }
+
+  // 👥 Clientes da empresa
+  const { data: clients, error: clientsError } = await supabase
     .from("clients")
     .select("id, name, document, document_type")
     .eq("company_id", profile.company_id)
     .order("name")
+
+  if (clientsError) {
+    console.error("[NewInvoicePage] erro ao buscar clientes:", clientsError)
+  }
 
   return (
     <div className="space-y-6 max-w-4xl">

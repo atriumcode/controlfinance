@@ -12,7 +12,7 @@ export default async function NewUserPage() {
 }
 
 if (!user.company_id) {
-  redirect("/onboarding")
+  redirect("/dashboard/settings")
 }
 
 if (user.role !== "admin") { 

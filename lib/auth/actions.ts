@@ -238,7 +238,7 @@ export async function associateCompanyOnboardingAction(data: {
     return { success: true }
   } catch (err) {
     console.error(err)
-    return { success: false, error: "Erro no onboarding" }
+    return { success: false, error: "Empresa não configurada" }
   }
 }
 
