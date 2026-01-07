@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-export function Breadcrumbs() {
+export function Breadcrumb() {
   const pathname = usePathname()
   const segments = pathname.split("/").filter(Boolean)
 

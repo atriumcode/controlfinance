@@ -1,5 +1,5 @@
 import { ReactNode } from "react"
-import { Breadcrumbs } from "@/components/layout/breadcrumbs"
+import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { ThemeSwitcher } from "@/components/layout/theme-switcher"
 
 export default function DashboardLayout({
@@ -14,7 +14,7 @@ export default function DashboardLayout({
 
       <main className="flex-1 flex flex-col">
         <header className="flex items-center justify-between border-b px-6 py-4">
-          <Breadcrumbs />
+          <Breadcrumb />
           <ThemeSwitcher />
         </header>
 
