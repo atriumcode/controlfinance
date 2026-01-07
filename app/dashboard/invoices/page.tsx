@@ -100,8 +100,8 @@ export default function InvoicesPage() {
       }
 
       const { data: invoicesData, error: invoicesError } = await supabase
-      .from("invoices")
-      .select(`
+        .from("invoices")
+        .select(`
         id,
         invoice_number,
         total_amount,
@@ -118,9 +118,9 @@ export default function InvoicesPage() {
           state
         )
       `)
-      .eq("company_id", profileData.company_id)
-      .order("created_at", { ascending: false })
-      .limit(200)
+        .eq("company_id", profileData.company_id)
+        .order("created_at", { ascending: false })
+        .limit(200)
 
       if (invoicesError) {
         console.error("[v0] Error fetching invoices:", invoicesError)
@@ -128,7 +128,7 @@ export default function InvoicesPage() {
         setLoading(false)
         return
       }
-      
+
       setInvoices(invoicesData || [])
 
     } catch (error) {
@@ -176,12 +176,12 @@ export default function InvoicesPage() {
         client: hasClient
           ? invoice.clients
           : {
-              name: "Cliente não identificado",
-              document: "N/A",
-              document_type: "N/A",
-              city: "N/A",
-              state: "N/A",
-            },
+            name: "Cliente não identificado",
+            document: "N/A",
+            document_type: "N/A",
+            city: "N/A",
+            state: "N/A",
+          },
         invoices: [],
         totalInvoices: 0,
         totalAmount: 0,
@@ -321,7 +321,9 @@ export default function InvoicesPage() {
             <Link href="/dashboard/import">Importar XML de NF-e</Link>
           </Button>
           <Button asChild>
-            <Link href="/invoices/new">Nova Nota Fiscal</Link>
+            <Link href="/invoices/new" prefetch={false}>
+              Nova Nota Fiscal
+            </Link>
           </Button>
         </div>
       </header>
@@ -463,19 +465,19 @@ export default function InvoicesPage() {
                                         invoice.status === "Parcial" ||
                                         invoice.status === "parcial" ||
                                         getNumber(invoice.amount_paid) < getNumber(invoice.total_amount)) && (
-                                        <Button
-                                          size="sm"
-                                          variant="default"
-                                          asChild
-                                          className="gap-2 shrink-0"
-                                          onClick={(e) => e.stopPropagation()}
-                                        >
-                                          <Link href={`/dashboard/invoices/${invoice.id}/payment`}>
-                                            <CreditCard className="h-4 w-4" />
-                                            Registrar Pagamento
-                                          </Link>
-                                        </Button>
-                                      )}
+                                          <Button
+                                            size="sm"
+                                            variant="default"
+                                            asChild
+                                            className="gap-2 shrink-0"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            <Link href={`/dashboard/invoices/${invoice.id}/payment`}>
+                                              <CreditCard className="h-4 w-4" />
+                                              Registrar Pagamento
+                                            </Link>
+                                          </Button>
+                                        )}
                                       <Button
                                         size="sm"
                                         variant="destructive"

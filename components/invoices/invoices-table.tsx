@@ -116,7 +116,9 @@ export function InvoicesTable({ invoices }: InvoicesTableProps) {
       <div className="text-center py-8">
         <p className="text-muted-foreground">Nenhuma nota fiscal cadastrada ainda.</p>
         <Button asChild className="mt-4">
-          <Link href="/invoices/new">Criar Primeira Nota Fiscal</Link>
+          <Link href="/invoices/new" prefetch={false}>
+            Criar Primeira Nota Fiscal
+          </Link>
         </Button>
       </div>
     )
@@ -219,10 +221,10 @@ export function InvoicesTable({ invoices }: InvoicesTableProps) {
                               {(invoice.status === "pending" ||
                                 invoice.status === "overdue" ||
                                 invoice.status === "Parcial") && (
-                                <DropdownMenuItem asChild>
-                                  <Link href={`/dashboard/invoices/${invoice.id}/payment`}>Registrar Pagamento</Link>
-                                </DropdownMenuItem>
-                              )}
+                                  <DropdownMenuItem asChild>
+                                    <Link href={`/dashboard/invoices/${invoice.id}/payment`}>Registrar Pagamento</Link>
+                                  </DropdownMenuItem>
+                                )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>

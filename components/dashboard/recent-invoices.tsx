@@ -77,7 +77,9 @@ export function RecentInvoices({ invoices }: RecentInvoicesProps) {
           <div className="text-center py-8">
             <p className="text-muted-foreground">Nenhuma nota fiscal encontrada</p>
             <Button asChild className="mt-4">
-              <Link href="/invoices/new">Criar Primeira NF-e</Link>
+              <Link href="/invoices/new" prefetch={false}>
+                Criar Primeira NF-e
+              </Link>
             </Button>
           </div>
         ) : (
@@ -96,7 +98,9 @@ export function RecentInvoices({ invoices }: RecentInvoicesProps) {
                 <div className="text-right">
                   <p className="font-medium">{formatCurrency(invoice.total_amount)}</p>
                   <Button asChild variant="ghost" size="sm">
-                    <Link href={`/invoices/${invoice.id}`}>Ver</Link>
+                    <Link href={`/dashboard/invoices/${invoice.id}`} prefetch={false}>
+                      Ver
+                    </Link>
                   </Button>
                 </div>
               </div>
