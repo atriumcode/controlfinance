@@ -321,7 +321,7 @@ export default function InvoicesPage() {
             <Link href="/dashboard/import">Importar XML de NF-e</Link>
           </Button>
           <Button asChild>
-            <Link href="/dashboard/invoices/new">Nova Nota Fiscal</Link>
+            <Link href="/invoices/new">Nova Nota Fiscal</Link>
           </Button>
         </div>
       </header>
