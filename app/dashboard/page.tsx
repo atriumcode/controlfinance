@@ -21,26 +21,26 @@ export default async function DashboardPage() {
   const supabase = createAdminClient()
 
   const [
-  profileResult,
-  invoicesResult,
-  clientsCountResult,
-  paymentsResult,
-] = await Promise.all([
-  supabase
-    .from("profiles")
-    .select(`
+    profileResult,
+    invoicesResult,
+    clientsCountResult,
+    paymentsResult,
+  ] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select(`
       *,
       companies (
         name,
         cnpj
       )
     `)
-    .eq("id", user.id)
-    .single(),
+      .eq("id", user.id)
+      .single(),
 
-  supabase
-    .from("invoices")
-    .select(`
+    supabase
+      .from("invoices")
+      .select(`
       *,
       amount_paid,
       clients (
@@ -49,20 +49,20 @@ export default async function DashboardPage() {
         document_type
       )
     `)
-    .eq("company_id", user.company_id || "")
-    .gte(
-      "created_at",
-      new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
-    )
-    .order("created_at", { ascending: false })
-    .limit(100),
+      .eq("company_id", user.company_id || "")
+      .gte(
+        "created_at",
+        new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
+      )
+      .order("created_at", { ascending: false })
+      .limit(100),
 
-  supabase
-    .from("clients")
-    .select("*", { count: "exact", head: true })
-    .eq("company_id", user.company_id || ""),
+    supabase
+      .from("clients")
+      .select("*", { count: "exact", head: true })
+      .eq("company_id", user.company_id || ""),
 
-])
+  ])
 
   const profile = profileResult.data
   const invoices = invoicesResult.data
@@ -118,8 +118,13 @@ export default async function DashboardPage() {
               <Button asChild className="w-full">
                 <Link href="/dashboard/clients/new">Cadastrar Novo Cliente</Link>
               </Button>
-              <Button asChild variant="outline" className="w-full bg-transparent">
-                <Link href="/invoices/new">Criar Nova Nota Fiscal</Link>
+              <Button
+                onClick={() => {
+                  window.location.href = "/invoices/new"
+                }}
+                className="w-full"
+              >
+                Criar Nova Nota Fiscal
               </Button>
               <Button asChild variant="outline" className="w-full bg-transparent">
                 <Link href="/dashboard/import">Importar XML de NF-e</Link>
