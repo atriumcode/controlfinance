@@ -1,23 +1,32 @@
-import { Sidebar } from "@/components/layout/sidebar"
-import { Header } from "@/components/layout/header"
+import { ReactNode } from "react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
-import { ThemeProvider } from "@/components/theme/theme-provider"
+import { ThemeSwitcher } from "@/components/layout/theme-switcher"
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export const dynamic = "force-dynamic"
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: ReactNode
+}) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <div className="flex h-screen">
-        <Sidebar />
+    <div className="flex min-h-screen w-full">
+      {/* SIDEBAR */}
+      <aside className="w-64 border-r bg-background hidden md:block">
+        {/* aqui entra seu Sidebar real */}
+      </aside>
 
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <Header />
+      {/* CONTEÚDO */}
+      <main className="flex-1 flex flex-col">
+        <header className="flex items-center justify-between border-b px-6 py-4">
           <Breadcrumb />
+          <ThemeSwitcher />
+        </header>
 
-          <main className="flex-1 overflow-y-auto bg-background p-6 md:p-8 space-y-6">
-            {children}
-          </main>
-        </div>
-      </div>
-    </ThemeProvider>
+        <section className="flex-1 p-4 md:p-8 space-y-6">
+          {children}
+        </section>
+      </main>
+    </div>
   )
 }
