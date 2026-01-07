@@ -1,15 +1,20 @@
+import { ThemeProvider } from "@/components/theme/theme-provider"
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <body>
-        <div style={{ padding: 40 }}>
-          <h1>ROOT OK</h1>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+        >
           {children}
-        </div>
+        </ThemeProvider>
       </body>
     </html>
   )
