@@ -1,4 +1,8 @@
+
 "use client"
+
+console.log("[ROLE_GUARD_LOADED]")
+
 
 import type React from "react"
 import { useState, useEffect, useCallback } from "react"
