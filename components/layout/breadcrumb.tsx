@@ -7,36 +7,24 @@ export function Breadcrumbs() {
   const pathname = usePathname()
   const segments = pathname.split("/").filter(Boolean)
 
-  if (segments.length <= 1) return null
-
   return (
-    <nav className="text-sm text-muted-foreground">
-      <ol className="flex flex-wrap gap-1">
-        <li>
-          <Link href="/dashboard" className="hover:text-foreground">
-            Dashboard
-          </Link>
-        </li>
-        {segments.slice(1).map((segment, index) => {
-          const href = "/" + segments.slice(0, index + 2).join("/")
-          const isLast = index === segments.length - 2
+    <nav className="text-sm text-muted-foreground flex items-center gap-1">
+      <Link href="/dashboard" className="hover:text-foreground">
+        Dashboard
+      </Link>
 
-          return (
-            <li key={href} className="flex gap-1">
-              <span>/</span>
-              {isLast ? (
-                <span className="text-foreground capitalize">
-                  {segment.replace("-", " ")}
-                </span>
-              ) : (
-                <Link href={href} className="hover:text-foreground capitalize">
-                  {segment.replace("-", " ")}
-                </Link>
-              )}
-            </li>
-          )
-        })}
-      </ol>
+      {segments.slice(1).map((segment, index) => {
+        const href = "/" + segments.slice(0, index + 2).join("/")
+
+        return (
+          <span key={href} className="flex items-center gap-1">
+            <span>/</span>
+            <Link href={href} className="hover:text-foreground capitalize">
+              {segment.replace("-", " ")}
+            </Link>
+          </span>
+        )
+      })}
     </nav>
   )
 }
