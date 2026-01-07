@@ -119,7 +119,7 @@ export default async function DashboardPage() {
                 <Link href="/dashboard/clients/new">Cadastrar Novo Cliente</Link>
               </Button>
               <Button asChild variant="outline" className="w-full bg-transparent">
-                <Link href="/dashboard/invoices/new">Criar Nova Nota Fiscal</Link>
+                <Link href="/invoices/new">Criar Nova Nota Fiscal</Link>
               </Button>
               <Button asChild variant="outline" className="w-full bg-transparent">
                 <Link href="/dashboard/import">Importar XML de NF-e</Link>
