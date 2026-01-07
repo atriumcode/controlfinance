@@ -5,9 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { DashboardStats } from "@/components/dashboard/dashboard-stats"
-import { RevenueChart } from "@/components/dashboard/revenue-chart"
 import { RecentInvoices } from "@/components/dashboard/recent-invoices"
-import { PaymentStatusChart } from "@/components/dashboard/payment-status-chart"
+
+
 
 export const dynamic = "force-dynamic"
 
@@ -101,10 +101,7 @@ export default async function DashboardPage() {
 
         <DashboardStats invoices={invoices || []} clientsCount={clientsCount || 0} />
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <RevenueChart invoices={invoices || []} />
-          <PaymentStatusChart invoices={invoices || []} />
-        </div>
+
 
         <div className="grid gap-6 lg:grid-cols-2">
           <RecentInvoices invoices={invoices?.slice(0, 5) || []} />
@@ -118,13 +115,8 @@ export default async function DashboardPage() {
               <Button asChild className="w-full">
                 <Link href="/dashboard/clients/new">Cadastrar Novo Cliente</Link>
               </Button>
-              <Button
-                onClick={() => {
-                  window.location.href = "/invoices/new"
-                }}
-                className="w-full"
-              >
-                Criar Nova Nota Fiscal
+              <Button asChild className="w-full">
+                <Link href="/invoices/new">Criar Nova Nota Fiscal</Link>
               </Button>
               <Button asChild variant="outline" className="w-full bg-transparent">
                 <Link href="/dashboard/import">Importar XML de NF-e</Link>
