@@ -18,7 +18,7 @@ export default async function NewInvoicePage() {
     .single()
 
   // 3️⃣ Onboarding obrigatório
-  if (!profile?.company_id) redirect("/onboarding")
+  if (!profile?.company_id) redirect("/dashboard/settings")
 
   // 4️⃣ Clientes da empresa
   const { data: clients } = await supabase
