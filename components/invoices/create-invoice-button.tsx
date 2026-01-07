@@ -9,7 +9,7 @@ export function CreateInvoiceButton() {
   return (
     <Button
       className="w-full"
-      onClick={() => router.push("/invoices/new")}
+      onClick={() => router.push("/dashboard/invoices/new")}
     >
       Criar Nova Nota Fiscal
     </Button>

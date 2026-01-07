@@ -116,7 +116,7 @@ export function InvoicesTable({ invoices }: InvoicesTableProps) {
       <div className="text-center py-8">
         <p className="text-muted-foreground">Nenhuma nota fiscal cadastrada ainda.</p>
         <Button asChild className="mt-4">
-          <Link href="/invoices/new" prefetch={false}>
+          <Link href="/dashboard/invoices/new" prefetch={false}>
             Criar Primeira Nota Fiscal
           </Link>
         </Button>

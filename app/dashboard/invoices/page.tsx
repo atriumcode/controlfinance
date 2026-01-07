@@ -308,26 +308,6 @@ export default function InvoicesPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-        <nav className="flex-1 flex items-center gap-4">
-          <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
-            Dashboard
-          </Link>
-          <span className="text-sm text-muted-foreground">/</span>
-          <h1 className="text-lg font-semibold">Notas Fiscais</h1>
-        </nav>
-        <div className="flex gap-2">
-          <Button variant="outline" asChild>
-            <Link href="/dashboard/import">Importar XML de NF-e</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/invoices/new" prefetch={false}>
-              Nova Nota Fiscal
-            </Link>
-          </Button>
-        </div>
-      </header>
-
       <main className="flex-1 space-y-6 p-4 md:p-8">
         <div className="flex items-center justify-between">
           <div>
@@ -335,6 +315,16 @@ export default function InvoicesPage() {
             <p className="text-muted-foreground">
               Gerencie suas notas fiscais eletrônicas agrupadas por cidade e cliente
             </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" asChild>
+              <Link href="/dashboard/import">Importar XML de NF-e</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/dashboard/invoices/new">
+                Nova Nota Fiscal
+              </Link>
+            </Button>
           </div>
         </div>
 

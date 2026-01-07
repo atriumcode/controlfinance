@@ -77,7 +77,7 @@ export function RecentInvoices({ invoices }: RecentInvoicesProps) {
           <div className="text-center py-8">
             <p className="text-muted-foreground">Nenhuma nota fiscal encontrada</p>
             <Button asChild className="mt-4">
-              <Link href="/invoices/new" prefetch={false}>
+              <Link href="/dashboard/invoices/new" prefetch={false}>
                 Criar Primeira NF-e
               </Link>
             </Button>
