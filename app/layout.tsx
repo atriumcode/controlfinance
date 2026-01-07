@@ -1,4 +1,5 @@
 import { ThemeProvider } from "@/components/theme/theme-provider"
+import "./globals.css"
 
 export default function RootLayout({
   children,

@@ -1,8 +1,7 @@
 import { ReactNode } from "react"
 import { Breadcrumb } from "@/components/layout/breadcrumb"
 import { ThemeSwitcher } from "@/components/layout/theme-switcher"
-
-export const dynamic = "force-dynamic"
+import { DashboardSidebar } from "@/components/layout/dashboard-sidebar"
 
 export default function DashboardLayout({
   children,
@@ -10,23 +9,21 @@ export default function DashboardLayout({
   children: ReactNode
 }) {
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-screen bg-background">
       {/* SIDEBAR */}
-      <aside className="w-64 border-r bg-background hidden md:block">
-        {/* aqui entra seu Sidebar real */}
-      </aside>
+      <DashboardSidebar />
 
       {/* CONTEÚDO */}
-      <main className="flex-1 flex flex-col">
+      <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-between border-b px-6 py-4">
           <Breadcrumb />
           <ThemeSwitcher />
         </header>
 
-        <section className="flex-1 p-4 md:p-8 space-y-6">
+        <main className="flex-1 p-6 md:p-8 space-y-6">
           {children}
-        </section>
-      </main>
+        </main>
+      </div>
     </div>
   )
 }
