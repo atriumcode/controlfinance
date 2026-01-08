@@ -49,7 +49,11 @@ export interface Invoice {
    PAGE
 ========================= */
 
-export default function InvoicesClientPage() {
+export default function InvoicesClientPage({
+  companyId,
+}: {
+  companyId: string
+}) {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -85,6 +89,7 @@ export default function InvoicesClientPage() {
             state
           )
         `)
+        .eq("company_id", companyId)
         .order("created_at", { ascending: false })
         .limit(200)
 
@@ -100,7 +105,7 @@ export default function InvoicesClientPage() {
     } finally {
       setLoading(false)
     }
-  }, [supabase, toast])
+  }, [companyId, supabase, toast])
 
   useEffect(() => {
     fetchInvoices()
