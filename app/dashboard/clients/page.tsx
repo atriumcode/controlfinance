@@ -4,12 +4,12 @@ import Link from "next/link"
 import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-
 import { PageHeader } from "@/components/layout/page-header"
 import { Button } from "@/components/ui/button"
 import { ClientsTable } from "@/components/clients/clients-table"
-
 import { useToast } from "@/hooks/use-toast"
+import { ClientsEmpty } from "@/components/clients/clients-empty"
+
 
 /* =========================
    TYPES
@@ -113,10 +113,11 @@ export default function ClientsPage() {
         }
       />
 
-      <ClientsTable
-        clients={clients}
-        onRefresh={fetchClients}
-      />
+      {clients.length === 0 ? (
+        <ClientsEmpty />
+      ) : (
+        <ClientsTable clients={clients} onRefresh={fetchClients} />
+      )}
     </div>
   )
 }

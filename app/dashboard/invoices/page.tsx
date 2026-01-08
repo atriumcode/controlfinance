@@ -9,6 +9,8 @@ import { PageHeader } from "@/components/layout/page-header"
 import { Button } from "@/components/ui/button"
 import { InvoiceStats } from "@/components/invoices/invoice-stats"
 import { InvoicesGroupedList } from "@/components/invoices/invoices-grouped-list"
+import { InvoicesEmpty } from "@/components/invoices/invoices-empty"
+
 
 import {
   AlertDialog,
@@ -169,13 +171,17 @@ export default function InvoicesPage() {
 
       <InvoiceStats invoices={invoices} />
 
-      <InvoicesGroupedList
-        invoices={invoices}
-        onRequestDelete={(id, number) => {
-          setInvoiceToDelete({ id, number })
-          setDeleteDialogOpen(true)
-        }}
-      />
+      {invoices.length === 0 ? (
+        <InvoicesEmpty />
+      ) : (
+        <InvoicesGroupedList
+          invoices={invoices}
+          onRequestDelete={(id, number) => {
+            setInvoiceToDelete({ id, number })
+            setDeleteDialogOpen(true)
+          }}
+        />
+      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

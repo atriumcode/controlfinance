@@ -1,6 +1,8 @@
 "use client"
 
 import Link from "next/link"
+import { Pencil } from "lucide-react"
+
 import { Client } from "@/app/dashboard/clients/page"
 
 import {
@@ -14,7 +16,6 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Pencil } from "lucide-react"
 
 interface ClientsTableProps {
   clients: Client[]
@@ -22,16 +23,22 @@ interface ClientsTableProps {
 }
 
 export function ClientsTable({ clients }: ClientsTableProps) {
+  /* =========================
+     EMPTY STATE (segurança extra)
+  ========================= */
   if (!clients.length) {
     return (
-      <div className="rounded-lg border p-8 text-center text-sm text-muted-foreground">
+      <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground animate-in fade-in duration-300">
         Nenhum cliente cadastrado
       </div>
     )
   }
 
+  /* =========================
+     TABLE
+  ========================= */
   return (
-    <div className="rounded-lg border">
+    <div className="rounded-lg border animate-in fade-in duration-300">
       <Table>
         <TableHeader>
           <TableRow>
@@ -45,7 +52,13 @@ export function ClientsTable({ clients }: ClientsTableProps) {
 
         <TableBody>
           {clients.map((client) => (
-            <TableRow key={client.id}>
+            <TableRow
+              key={client.id}
+              className="
+                transition-colors
+                hover:bg-muted/50
+              "
+            >
               <TableCell className="font-medium">
                 {client.name}
               </TableCell>
@@ -72,6 +85,7 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                   size="icon"
                   variant="ghost"
                   asChild
+                  className="transition-transform hover:scale-105"
                 >
                   <Link href={`/dashboard/clients/${client.id}`}>
                     <Pencil className="h-4 w-4" />
