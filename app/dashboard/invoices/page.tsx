@@ -176,11 +176,12 @@ export default function InvoicesPage() {
       ) : (
         <InvoicesGroupedList
           invoices={invoices}
-          onRequestDelete={(id, number) => {
+          onDelete={(id, number) => {
             setInvoiceToDelete({ id, number })
             setDeleteDialogOpen(true)
           }}
         />
+
       )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
