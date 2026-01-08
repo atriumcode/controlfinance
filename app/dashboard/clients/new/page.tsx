@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/server"
 import { ClientForm } from "@/components/clients/client-form"
 import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
