@@ -124,48 +124,23 @@ export async function loginUserAction(formData: FormData) {
   try {
     const supabase = createAdminClient()
 
-    let { data: user, error } = await supabase
+    const { data: user, error } = await supabase
       .from("profiles")
       .select("id, email, password_hash, is_active, company_id, role")
       .eq("email", email)
-      .maybeSingle()
+      .single()
 
-    if (error) {
-      console.error(error)
-      return { success: false, error: "Erro ao buscar usuário" }
-    }
-
-    // ✅ Criar profile automaticamente se não existir
-    if (!user) {
-      const { data: newUser, error: insertError } = await supabase
-        .from("profiles")
-        .insert({
-          email,
-          full_name: email.split("@")[0],
-          role: "admin",
-          company_id: null,
-          is_active: true,
-        })
-        .select()
-        .single()
-
-      if (insertError || !newUser) {
-        console.error(insertError)
-        return { success: false, error: "Erro ao inicializar usuário" }
-      }
-
-      user = newUser
+    if (error || !user) {
+      return { success: false, error: "Email ou senha incorretos" }
     }
 
     if (!user.is_active) {
       return { success: false, error: "Usuário inativo" }
     }
 
-    if (user.password_hash) {
-      const valid = await verifyPassword(password, user.password_hash)
-      if (!valid) {
-        return { success: false, error: "Email ou senha incorretos" }
-      }
+    const valid = await verifyPassword(password, user.password_hash)
+    if (!valid) {
+      return { success: false, error: "Email ou senha incorretos" }
     }
 
     await supabase
@@ -181,7 +156,6 @@ export async function loginUserAction(formData: FormData) {
     return { success: false, error: "Erro ao fazer login" }
   }
 }
-
 
 /* =======================
    LISTAR EMPRESAS
