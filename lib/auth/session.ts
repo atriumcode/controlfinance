@@ -43,14 +43,14 @@ export async function createSession(userId: string): Promise<string> {
     throw new Error("Erro ao criar sessão")
   }
 
-  const cookieStore = cookies()
-
+  // Salvar token no cookie
+  const cookieStore = await cookies()
   cookieStore.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: false,          // 🔴 FORÇADO PARA FUNCIONAR EM HTTP/IP
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    path: "/",
     maxAge: SESSION_DURATION / 1000,
+    path: "/",
   })
 
   return token

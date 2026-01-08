@@ -1,94 +1,66 @@
 "use server"
 
-import { createAdminClient } from "@/lib/supabase/server"
-import { requireAuthSafe } from "@/lib/auth/require-auth-safe"
-
-/* =========================
-   LIST INVOICES
-========================= */
-
-export async function listInvoices() {
-  const user = await requireAuthSafe()
-
-  if (!user || !user.company_id) {
-    return {
-      success: false,
-      error: "NOT_AUTHENTICATED",
-      data: [],
-    }
-  }
-
-  const supabase = createAdminClient()
-
-  const { data, error } = await supabase
-    .from("invoices")
-    .select(`
-      id,
-      invoice_number,
-      total_amount,
-      amount_paid,
-      status,
-      issue_date,
-      due_date,
-      created_at,
-      clients (
-        name,
-        document,
-        document_type,
-        city,
-        state
-      )
-    `)
-    .eq("company_id", user.company_id)
-    .order("created_at", { ascending: false })
-    .limit(200)
-
-  if (error) {
-    console.error(error)
-    return {
-      success: false,
-      error: "QUERY_ERROR",
-      data: [],
-    }
-  }
-
-  return {
-    success: true,
-    data: data ?? [],
-  }
-}
-
-/* =========================
-   DELETE INVOICE
-========================= */
+import { createClient } from "@/lib/supabase/server"
+import { revalidatePath } from "next/cache"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
 
 export async function deleteInvoice(invoiceId: string) {
-  const user = await requireAuthSafe()
+  try {
+    const user = await getAuthenticatedUser()
 
-  if (!user || !user.company_id) {
-    return {
-      success: false,
-      error: "NOT_AUTHENTICATED",
+    if (!user) {
+      return { success: false, error: "Não autenticado" }
     }
-  }
 
-  const supabase = createAdminClient()
-
-  const { error } = await supabase
-    .from("invoices")
-    .delete()
-    .eq("id", invoiceId)
-    .eq("company_id", user.company_id)
-
-  if (error) {
-    console.error(error)
-    return {
-      success: false,
-      error: "DELETE_ERROR",
+    if (!user.company_id) {
+      return { success: false, error: "Empresa não encontrada" }
     }
-  }
 
-  return {
-    success: true,
+    const supabase = await createClient()
+
+    // Verify the invoice belongs to the user's company
+    const { data: invoice, error: invoiceError } = await supabase
+    //corrigido de invoices para invoices_dashboard
+      .from("invoices")
+      .select("id, company_id")
+      .eq("id", invoiceId)
+      .eq("company_id", user.company_id)
+      .single()
+
+    if (invoiceError || !invoice) {
+      return { success: false, error: "Nota fiscal não encontrada" }
+    }
+
+    // Delete associated payments first (foreign key constraint)
+    const { error: paymentsError } = await supabase.from("payments").delete().eq("invoice_id", invoiceId)
+
+    if (paymentsError) {
+      console.error("[v0] Error deleting payments:", paymentsError)
+      return { success: false, error: "Erro ao excluir pagamentos associados" }
+    }
+
+    // Delete associated invoice items (foreign key constraint)
+    const { error: itemsError } = await supabase.from("invoice_items").delete().eq("invoice_id", invoiceId)
+
+    if (itemsError) {
+      console.error("[v0] Error deleting invoice items:", itemsError)
+      return { success: false, error: "Erro ao excluir itens da nota fiscal" }
+    }
+
+    // Finally, delete the invoice
+    const { error: deleteError } = await supabase.from("invoices").delete().eq("id", invoiceId)
+
+    if (deleteError) {
+      console.error("[v0] Error deleting invoice:", deleteError)
+      return { success: false, error: "Erro ao excluir nota fiscal" }
+    }
+
+    // Revalidate the invoices page to refresh the data
+    revalidatePath("/dashboard/invoices")
+
+    return { success: true }
+  } catch (error) {
+    console.error("[v0] Unexpected error deleting invoice:", error)
+    return { success: false, error: "Erro inesperado ao excluir nota fiscal" }
   }
 }

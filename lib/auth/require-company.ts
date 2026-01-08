@@ -1,26 +1,12 @@
-// lib/auth/require-company.ts
 import { redirect } from "next/navigation"
-import { createAdminClient } from "@/lib/supabase/server"
-import { getSession } from "@/lib/auth/session"
+import { requireAuth } from "./require-auth"
 
 export async function requireCompany() {
-  const { user } = await getSession()
+  const user = await requireAuth()
 
-  if (!user) {
-    redirect("/auth/login")
+  if (!user.company_id) {
+    redirect("/onboarding")
   }
 
-  const supabase = createAdminClient()
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("company_id")
-    .eq("id", user.id)
-    .single()
-
-  if (!profile?.company_id) {
-    redirect("/dashboard/settings")
-  }
-
-  return profile
+  return user
 }

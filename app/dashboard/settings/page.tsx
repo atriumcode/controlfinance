@@ -1,15 +1,40 @@
-import { requireAuth } from "@/lib/auth/actions"
+import { redirect } from "next/navigation"
+import { createAdminClient } from "@/lib/supabase/server"
+import { getAuthenticatedUser } from "@/lib/auth/server-auth"
+import { CompanyForm } from "@/components/settings/company-form"
 
 export default async function SettingsPage() {
-  const user = await requireAuth()
+  const user = await getAuthenticatedUser()
+  
+  // 🔒 Redirect APENAS se não estiver autenticado
+  if (!user) {
+    redirect("/login")
+  }
+
+  const supabase = createAdminClient()
+
+  const { data: company, error } = await supabase
+    .from("companies")
+    .select("*")
+    .eq("id", user.company.id)
+    .single()
 
   return (
-    <div className="p-6 space-y-4">
-      <h1 className="text-xl font-semibold">Configurações</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Configurações</h1>
+        <p className="text-muted-foreground">
+          Configure sua empresa e preferências do sistema
+        </p>
+      </div>
 
-      <pre className="bg-muted p-4 rounded">
-        {JSON.stringify(user, null, 2)}
-      </pre>
+      {error || !company ? (
+        <div className="rounded-lg border border-destructive p-4 text-sm text-destructive">
+          Não foi possível carregar os dados da empresa.
+        </div>
+      ) : (
+        <CompanyForm company={company} />
+      )}
     </div>
   )
 }
