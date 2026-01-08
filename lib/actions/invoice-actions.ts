@@ -3,11 +3,19 @@
 import { createAdminClient } from "@/lib/supabase/server"
 import { requireAuth } from "@/lib/auth/actions"
 
+/* =========================
+   LIST INVOICES
+========================= */
+
 export async function listInvoices() {
   const user = await requireAuth()
 
   if (!user.company_id) {
-    return { success: false, error: "Empresa não configurada", data: [] }
+    return {
+      success: false,
+      error: "Empresa não configurada",
+      data: [],
+    }
   }
 
   const supabase = createAdminClient()
@@ -37,8 +45,50 @@ export async function listInvoices() {
 
   if (error) {
     console.error(error)
-    return { success: false, error: "Erro ao listar notas", data: [] }
+    return {
+      success: false,
+      error: "Erro ao listar notas fiscais",
+      data: [],
+    }
   }
 
-  return { success: true, data }
+  return {
+    success: true,
+    data: data ?? [],
+  }
+}
+
+/* =========================
+   DELETE INVOICE
+========================= */
+
+export async function deleteInvoice(invoiceId: string) {
+  const user = await requireAuth()
+
+  if (!user.company_id) {
+    return {
+      success: false,
+      error: "Empresa não configurada",
+    }
+  }
+
+  const supabase = createAdminClient()
+
+  const { error } = await supabase
+    .from("invoices")
+    .delete()
+    .eq("id", invoiceId)
+    .eq("company_id", user.company_id)
+
+  if (error) {
+    console.error(error)
+    return {
+      success: false,
+      error: "Erro ao excluir nota fiscal",
+    }
+  }
+
+  return {
+    success: true,
+  }
 }
