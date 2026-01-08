@@ -1,10 +1,10 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { logoutUser } from "@/lib/auth/client"
 import { useRouter } from "next/navigation"
 import { LogOut } from "lucide-react"
 import { useState } from "react"
+import { logoutAction } from "@/lib/auth/actions"
 
 interface LogoutButtonProps {
   variant?: "default" | "ghost" | "outline"
@@ -12,14 +12,18 @@ interface LogoutButtonProps {
   className?: string
 }
 
-export function LogoutButton({ variant = "ghost", size = "default", className }: LogoutButtonProps) {
+export function LogoutButton({
+  variant = "ghost",
+  size = "default",
+  className,
+}: LogoutButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
   const handleLogout = async () => {
     setIsLoading(true)
     try {
-      await logoutUser()
+      await logoutAction()
       router.push("/auth/login")
     } catch (error) {
       console.error("Logout error:", error)
@@ -29,7 +33,13 @@ export function LogoutButton({ variant = "ghost", size = "default", className }:
   }
 
   return (
-    <Button variant={variant} size={size} onClick={handleLogout} disabled={isLoading} className={className}>
+    <Button
+      variant={variant}
+      size={size}
+      onClick={handleLogout}
+      disabled={isLoading}
+      className={className}
+    >
       <LogOut className="w-4 h-4 mr-2" />
       {isLoading ? "Saindo..." : "Sair"}
     </Button>
