@@ -1,10 +1,10 @@
 import { cookies } from "next/headers"
-import { createServerClient } from "@supabase/ssr"
+import { createServerClient as createSupabaseServerClient } from "@supabase/ssr"
 
-function createSupabaseServerClient() {
+function getServerSupabaseClient() {
   const cookieStore = cookies()
 
-  return createServerClient(
+  return createSupabaseServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -20,15 +20,15 @@ function createSupabaseServerClient() {
 }
 
 /**
- * ✅ Compatibilidade com código existente
+ * ✅ Compatibilidade com código antigo
  */
 export function createAdminClient() {
-  return createSupabaseServerClient()
+  return getServerSupabaseClient()
 }
 
 /**
- * ✅ Nome genérico para novos usos
+ * ✅ Nome genérico (server)
  */
 export function createServerClient() {
-  return createSupabaseServerClient()
+  return getServerSupabaseClient()
 }
