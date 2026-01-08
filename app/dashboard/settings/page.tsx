@@ -1,29 +1,15 @@
-import { createAdminClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
-import { CompanyForm } from "@/components/settings/company-form"
+import { requireAuth } from "@/lib/auth/actions"
 
 export default async function SettingsPage() {
-  const supabase = createAdminClient()
+  const user = await requireAuth()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  return (
+    <div className="p-6 space-y-4">
+      <h1 className="text-xl font-semibold">Configurações</h1>
 
-  if (!user) redirect("/auth/login")
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("company_id")
-    .eq("id", user.id)
-    .single()
-
-  if (!profile?.company_id) redirect("/dashboard")
-
-  const { data: company } = await supabase
-    .from("companies")
-    .select("*")
-    .eq("id", profile.company_id)
-    .single()
-
-  return <CompanyForm company={company} />
+      <pre className="bg-muted p-4 rounded">
+        {JSON.stringify(user, null, 2)}
+      </pre>
+    </div>
+  )
 }
