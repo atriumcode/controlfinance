@@ -155,6 +155,10 @@ export async function loginUserAction(formData: FormData) {
 
     await createSession(user.id)
 
+    // 🔥 redirect SERVER
+    redirect("/dashboard")
+
+
     return { success: true }
   } catch (err) {
     console.error(err)
