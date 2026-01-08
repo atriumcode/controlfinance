@@ -26,16 +26,31 @@ export default async function InvoiceDetailsPage({ params }: Props) {
       clients (
         name,
         document,
-        document_type
+        document_type,
+        city,
+        state
+      ),
+      payments (
+        id,
+        amount,
+        payment_date,
+        method
       )
     `)
     .eq("id", params.id)
     .eq("company_id", user.company_id)
     .single()
 
-  if (!invoice) {
-    redirect("/dashboard/invoices")
-  }
+  if (!invoice) redirect("/dashboard/invoices")
+
+  const total = Number(invoice.total_amount || 0)
+  const paid =
+    invoice.payments?.reduce(
+      (sum: number, p: any) => sum + Number(p.amount || 0),
+      0
+    ) ?? Number(invoice.amount_paid || 0)
+
+  const pending = total - paid
 
   return (
     <>
@@ -67,24 +82,57 @@ export default async function InvoiceDetailsPage({ params }: Props) {
 
           <div className="flex justify-between">
             <span>Cliente</span>
-            <span>{invoice.clients?.name}</span>
+            <span>
+              {invoice.clients?.name} —{" "}
+              {invoice.clients?.city}/{invoice.clients?.state}
+            </span>
           </div>
 
           <div className="flex justify-between">
             <span>Total</span>
             <span>
-              R$ {Number(invoice.total_amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              R$ {total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </span>
           </div>
 
           <div className="flex justify-between">
             <span>Pago</span>
             <span>
-              R$ {Number(invoice.amount_paid || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              R$ {paid.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+
+          <div className="flex justify-between font-semibold">
+            <span>Pendente</span>
+            <span>
+              R$ {pending.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </span>
           </div>
         </CardContent>
       </Card>
+
+      {invoice.payments?.length > 0 && (
+        <Card className="mt-6">
+          <CardContent className="pt-6 space-y-2">
+            <h3 className="font-semibold">Pagamentos</h3>
+
+            {invoice.payments.map((p: any) => (
+              <div
+                key={p.id}
+                className="flex justify-between text-sm text-muted-foreground"
+              >
+                <span>
+                  {new Date(p.payment_date).toLocaleDateString("pt-BR")} —{" "}
+                  {p.method}
+                </span>
+                <span>
+                  R$ {Number(p.amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </>
   )
 }
