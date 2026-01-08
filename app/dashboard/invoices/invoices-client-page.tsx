@@ -1,14 +1,14 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useEffect, useState, useTransition } from "react"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 
 import { PageHeader } from "@/components/layout/page-header"
 import { Button } from "@/components/ui/button"
 import { InvoiceStats } from "@/components/invoices/invoice-stats"
 import { InvoicesGroupedList } from "@/components/invoices/invoices-grouped-list"
 import { InvoicesEmpty } from "@/components/invoices/invoices-empty"
+import { useToast } from "@/hooks/use-toast"
 
 import {
   AlertDialog,
@@ -21,8 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
-import { deleteInvoice } from "@/lib/actions/invoice-actions"
-import { useToast } from "@/hooks/use-toast"
+import { listInvoices, deleteInvoice } from "@/lib/actions/invoice-actions"
 
 /* =========================
    TYPES
@@ -49,67 +48,39 @@ export interface Invoice {
    PAGE
 ========================= */
 
-export default function InvoicesClientPage({
-  companyId,
-}: {
-  companyId: string
-}) {
+export default function InvoicesClientPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
+  const [isPending, startTransition] = useTransition()
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [invoiceToDelete, setInvoiceToDelete] =
     useState<{ id: string; number: string } | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
 
-  const supabase = createClient()
   const { toast } = useToast()
 
   /* =========================
-     FETCH
+     FETCH (SERVER ACTION)
   ========================= */
 
-  const fetchInvoices = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from("invoices")
-        .select(`
-          id,
-          invoice_number,
-          total_amount,
-          amount_paid,
-          status,
-          issue_date,
-          due_date,
-          clients (
-            name,
-            document,
-            document_type,
-            city,
-            state
-          )
-        `)
-        .eq("company_id", companyId)
-        .order("created_at", { ascending: false })
-        .limit(200)
-
-      if (error) throw error
-
-      setInvoices(data || [])
-    } catch (err) {
-      console.error(err)
-      toast({
-        title: "Erro ao carregar notas fiscais",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }, [companyId, supabase, toast])
-
   useEffect(() => {
-    fetchInvoices()
-  }, [fetchInvoices])
+    startTransition(async () => {
+      const result = await listInvoices()
+
+      if (!result.success) {
+        toast({
+          title: "Erro",
+          description: result.error,
+          variant: "destructive",
+        })
+        setInvoices([])
+      } else {
+        setInvoices(result.data || [])
+      }
+
+      setLoading(false)
+    })
+  }, [toast])
 
   /* =========================
      DELETE
@@ -118,12 +89,12 @@ export default function InvoicesClientPage({
   const handleDeleteConfirm = async () => {
     if (!invoiceToDelete) return
 
-    setIsDeleting(true)
     const result = await deleteInvoice(invoiceToDelete.id)
 
     if (result.success) {
       toast({ title: "Nota fiscal excluída com sucesso" })
-      fetchInvoices()
+      const refreshed = await listInvoices()
+      setInvoices(refreshed.data || [])
     } else {
       toast({
         title: "Erro ao excluir",
@@ -132,12 +103,11 @@ export default function InvoicesClientPage({
       })
     }
 
-    setIsDeleting(false)
     setDeleteDialogOpen(false)
     setInvoiceToDelete(null)
   }
 
-  if (loading) {
+  if (loading || isPending) {
     return <div className="p-8">Carregando...</div>
   }
 
@@ -186,15 +156,12 @@ export default function InvoicesClientPage({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>
-              Cancelar
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              disabled={isDeleting}
               className="bg-destructive"
             >
-              {isDeleting ? "Excluindo..." : "Excluir"}
+              Excluir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
