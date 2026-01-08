@@ -1,19 +1,19 @@
 "use server"
 
 import { createAdminClient } from "@/lib/supabase/server"
-import { requireAuth } from "@/lib/auth/actions"
+import { requireAuthSafe } from "@/lib/auth/require-auth-safe"
 
 /* =========================
    LIST INVOICES
 ========================= */
 
 export async function listInvoices() {
-  const user = await requireAuth()
+  const user = await requireAuthSafe()
 
-  if (!user.company_id) {
+  if (!user || !user.company_id) {
     return {
       success: false,
-      error: "Empresa não configurada",
+      error: "NOT_AUTHENTICATED",
       data: [],
     }
   }
@@ -47,7 +47,7 @@ export async function listInvoices() {
     console.error(error)
     return {
       success: false,
-      error: "Erro ao listar notas fiscais",
+      error: "QUERY_ERROR",
       data: [],
     }
   }
@@ -63,12 +63,12 @@ export async function listInvoices() {
 ========================= */
 
 export async function deleteInvoice(invoiceId: string) {
-  const user = await requireAuth()
+  const user = await requireAuthSafe()
 
-  if (!user.company_id) {
+  if (!user || !user.company_id) {
     return {
       success: false,
-      error: "Empresa não configurada",
+      error: "NOT_AUTHENTICATED",
     }
   }
 
@@ -84,7 +84,7 @@ export async function deleteInvoice(invoiceId: string) {
     console.error(error)
     return {
       success: false,
-      error: "Erro ao excluir nota fiscal",
+      error: "DELETE_ERROR",
     }
   }
 
