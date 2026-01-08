@@ -115,8 +115,12 @@ export async function registerUserAction(data: {
 
 export async function loginUserAction(formData: FormData) {
   console.log("🔥 LOGIN ACTION DISPARADA")
+  
   const email = formData.get("email") as string
   const password = formData.get("password") as string
+
+  console.log("EMAIL RECEBIDO:", email)
+  console.log("SENHA RECEBIDA:", password, password?.length)
 
   if (!email || !password) {
     return { success: false, error: "Email e senha são obrigatórios" }
