@@ -72,7 +72,7 @@ export default function LoginPage() {
           setErrorDetails(result.details as string)
         }
       } else {
-        router.push("/dashboard")
+        router.push("/dashboard/invoices")
       }
     } catch (error) {
       console.error("Login error:", error)
