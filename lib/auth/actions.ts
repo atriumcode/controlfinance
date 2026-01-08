@@ -114,6 +114,7 @@ export async function registerUserAction(data: {
 ======================= */
 
 export async function loginUserAction(formData: FormData) {
+  console.log("🔥 LOGIN ACTION DISPARADA")
   const email = formData.get("email") as string
   const password = formData.get("password") as string
 
